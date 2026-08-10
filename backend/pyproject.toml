@@ -1,0 +1,27 @@
+[project]
+name = "abogadazo-api"
+version = "0.1.0"
+description = "Abogadazo modular FastAPI backend"
+requires-python = ">=3.11"
+dependencies = [
+  "alembic>=1.14",
+  "email-validator>=2.2",
+  "fastapi>=0.115,<0.116",
+  "psycopg[binary]>=3.2",
+  "pydantic-settings>=2.6",
+  "PyJWT>=2.10",
+  "pwdlib[argon2]>=0.2",
+  "sqlalchemy>=2.0",
+  "uvicorn[standard]>=0.32",
+]
+
+[dependency-groups]
+dev = ["httpx>=0.28", "pytest>=8.3"]
+ai = ["faiss-cpu>=1.9", "langchain-community>=0.3", "langchain-ollama>=0.2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100

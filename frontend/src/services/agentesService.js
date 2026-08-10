@@ -1,16 +1,18 @@
-export async function consultarAgente(placa,id_usuario) {
+import { API_URL, authHeaders } from './api';
+
+export async function consultarAgente(placa) {
   try {
-    const response = await fetch(`https://3568-2806-106e-1e-8e41-a5ce-2334-d890-509d.ngrok-free.app/api/agentes/consulta?placa=${placa}&id=${id_usuario}`,{
+    const response = await fetch(`${API_URL}/agents/${encodeURIComponent(placa)}`,{
       method: "GET",
       headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "1"
+        "Content-Type": "application/json", ...authHeaders()
       }
     });
     if (!response.ok) {
       throw new Error('El agente no está registrado en la Gaceta Oficial, puedes impugnar la multa ante el Tribunal de Justicia Administrativa de la CDMX.');
     }
-    return await response.json();
+    const agente = await response.json();
+    return { success: true, agente };
   } catch (error) {
     console.error("Error al consultar agente:", error);
     throw error;

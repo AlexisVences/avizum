@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { consultarAgente } from "../services/agentesService";
 import NavBar2 from "../components/NavBar2";
 import Footer from "../components/Footer";
-import authService from "../services/authService";
 import "../styles/BienvenidaAdmin.css"
 
 const ConsultarAgenteTransito = () => {
@@ -10,9 +9,6 @@ const ConsultarAgenteTransito = () => {
     const [agenteEncontrado, setAgenteEncontrado] = useState(null);
     const [errorBusqueda, setErrorBusqueda] = useState(null);
     const [cargando, setCargando] = useState(false);
-
-    const storedUser = authService.getCurrentUser();
-    const userId = storedUser?.id;
 
     const handleBuscarAgente = async () => {
         if (!placaBusqueda.trim()) {
@@ -25,7 +21,7 @@ const ConsultarAgenteTransito = () => {
         setAgenteEncontrado(null);
 
         try {
-            const resultado = await consultarAgente(placaBusqueda,userId);
+            const resultado = await consultarAgente(placaBusqueda);
             setAgenteEncontrado(resultado);
         } catch (error) {
             setErrorBusqueda(error.message || 'Error al buscar el agente');
@@ -79,8 +75,8 @@ const ConsultarAgenteTransito = () => {
                             <div className="card-body">
                                 <h5 className="card-title">Información del Agente</h5>
                                 <p className="card-text">
-                                    <strong>Placa:</strong> {agenteEncontrado.agente[1]}<br />
-                                    <strong>Nombre:</strong> {agenteEncontrado.agente[2]}<br/>
+                                    <strong>Placa:</strong> {agenteEncontrado.agente.plate}<br />
+                                    <strong>Nombre:</strong> {agenteEncontrado.agente.name}<br/>
                                     El agente consultado <strong>SI</strong> esta facultado para infraccionar en la CDMX.
                                 </p>
                             </div>
