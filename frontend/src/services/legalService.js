@@ -1,15 +1,13 @@
-const API_URL = 'https://3568-2806-106e-1e-8e41-a5ce-2334-d890-509d.ngrok-free.app/api/chat-legal/consulta';
-const FEEDBACK_URL = 'https://3568-2806-106e-1e-8e41-a5ce-2334-d890-509d.ngrok-free.app/api/chat-legal/feedback';
+import { API_URL, authHeaders } from './api';
 
-export const consultarChatLegal = async (pregunta,id_usuario) => {
+export const consultarChatLegal = async (pregunta) => {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(`${API_URL}/legal-consultations`, {
       method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "1"
+        "Content-Type": "application/json", ...authHeaders()
       },
-      body: JSON.stringify({ pregunta,id_usuario })
+      body: JSON.stringify({ question: pregunta })
     });
     
     if (!response.ok) {
@@ -18,36 +16,30 @@ export const consultarChatLegal = async (pregunta,id_usuario) => {
     
     const data = await response.json();
     
-    if (!data.success) {
-      throw new Error(data.error || 'Error en la consulta legal');
-    }
-    
-    return data;
+    return { success: true, respuesta: data.answer, fuentes: data.citations, id_respuesta: data.response_id };
   } catch (error) {
     console.error('Error al consultar el chat legal:', error);
     throw error;
   }
 };
 
-export const enviarFeedbackLegal = async ({ userId, pregunta, respuesta, rating }) => {
+export const enviarFeedbackLegal = async ({ respuesta, rating }) => {
   try {
-    const response = await fetch(FEEDBACK_URL, {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/legal-responses/${respuesta}/feedback`, {
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "1"
+        "Content-Type": "application/json", ...authHeaders()
       },
-      body: JSON.stringify({ userId, respuesta, rating })
+      body: JSON.stringify({ response_id: respuesta, rating })
     });
 
     if (!response.ok) {
       throw new Error('Error al enviar feedback');
     }
 
-    return await response.json();
+    return { success: true };
   } catch (error) {
     console.error('Error al enviar calificación:', error);
     throw error;
   }
 };
-

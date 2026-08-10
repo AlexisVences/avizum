@@ -1,28 +1,22 @@
 // src/services/authService.js
 import axios from 'axios';
-
-const API_URL = 'https://abogadazo-back.onrender.com/usuarios';
+import { API_URL } from './api';
 
 const login = async (credentials) => {
   try {
-    const response = await axios.post(`${API_URL}/login`, {
-      usuario: credentials.username,
-      password: credentials.password
-    });
+    const response = await axios.post(`${API_URL}/auth/login`, { username: credentials.username, password: credentials.password });
     
     const userData = {
-      id: response.data.usuario.id,
-      nombre: response.data.usuario.nombre,
-      apellido: response.data.usuario.apellido,
-      correo: response.data.usuario.email,
-      rol: response.data.usuario.rol
+      id: response.data.user.id,
+      nombre: response.data.user.first_name,
+      apellido: response.data.user.last_name,
+      correo: response.data.user.email,
+      rol: response.data.user.role
       // Agrega otros campos necesarios
     };
 
     // Si el backend devuelve un token en el objeto usuario, guárdalo
-    if (response.data.usuario.token) {
-      localStorage.setItem('token', response.data.usuario.token);
-    }
+    localStorage.setItem('token', response.data.access_token);
 
     localStorage.setItem('user', JSON.stringify(userData));
 
