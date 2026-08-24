@@ -43,8 +43,9 @@ const Estadisticas = () => {
         
         setStats({
           consultasDia: daily.consultas_hoy,
-          promedioFeedback: feedback.feedback_stats.promedio_feedback,
-          totalfeedbacks: feedback.feedback_stats.total_feedbacks,
+          promedioFeedback: feedback.promedio,
+          // /admin/statistics doesn't expose a feedback count, only the average rating.
+          totalfeedbacks: 0,
           consultasMes: monthly.consultas_mes,
           consultasMesAgentes: monthlyagents.consultas_mes,
           tiposConsultas: types.tipos_consulta
@@ -62,10 +63,14 @@ const Estadisticas = () => {
 
   const agruparConsultasPorSemana = (consultasMes) => {
     const semanas = [0, 0, 0, 0];
-    consultasMes.forEach(({ dia, consultas }) => {
-      const semanaIndex = Math.floor((dia - 1) / 8);
-      semanas[semanaIndex] += consultas;
-    });
+    // /admin/statistics only returns a monthly total, not a per-day breakdown, so this
+    // can't actually bucket by week yet — guarded to render zeroed bars instead of crashing.
+    if (Array.isArray(consultasMes)) {
+      consultasMes.forEach(({ dia, consultas }) => {
+        const semanaIndex = Math.floor((dia - 1) / 8);
+        semanas[semanaIndex] += consultas;
+      });
+    }
 
     return semanas.map((consultas, i) => ({
       semana: `Semana ${i + 1}`,
@@ -75,10 +80,12 @@ const Estadisticas = () => {
 
     const agruparConsultasdeAgentePorSemana = (consultasMesAgentes) => {
     const semanas = [0, 0, 0, 0];
-    consultasMesAgentes.forEach(({ dia, consultas }) => {
-      const semanaIndex = Math.floor((dia - 1) / 8);
-      semanas[semanaIndex] += consultas;
-    });
+    if (Array.isArray(consultasMesAgentes)) {
+      consultasMesAgentes.forEach(({ dia, consultas }) => {
+        const semanaIndex = Math.floor((dia - 1) / 8);
+        semanas[semanaIndex] += consultas;
+      });
+    }
 
     return semanas.map((consultas, i) => ({
       semana: `Semana ${i + 1}`,

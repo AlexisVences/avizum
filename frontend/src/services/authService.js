@@ -1,6 +1,6 @@
 // src/services/authService.js
 import axios from 'axios';
-import { API_URL } from './api';
+import { API_URL, extractErrorMessage } from './api';
 
 const login = async (credentials) => {
   try {
@@ -22,7 +22,7 @@ const login = async (credentials) => {
 
     return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Credenciales incorrectas');
+    throw new Error(extractErrorMessage(error.response?.data, 'Credenciales incorrectas'));
   }
 };
 

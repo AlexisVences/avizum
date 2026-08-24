@@ -1,4 +1,4 @@
-import { API_URL, authHeaders } from './api';
+import { API_URL, authHeaders, extractErrorMessage } from './api';
 
 export const createUser = async (userData) => {
   const response = await fetch(`${API_URL}/auth/register`, {
@@ -9,7 +9,7 @@ export const createUser = async (userData) => {
   const data = await response.json();
   
   if (!response.ok) {
-    throw new Error(data.message || 'Error al crear el usuario');
+    throw new Error(extractErrorMessage(data, 'Error al crear el usuario'));
   }
   
   return data;
@@ -31,6 +31,19 @@ export const updateUser = async (viejoUsuario,userData) => {
 
 export const deleteUser = async (userId) => {
   throw new Error('La eliminación de cuentas aún no está disponible en la nueva API.');
+};
+
+export const updateUserRole = async (userId, updates) => {
+  const response = await fetch(`${API_URL}/admin/users/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(updates),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(extractErrorMessage(data, 'Error al actualizar el usuario'));
+  }
+  return data;
 };
 
 export const getAllUsers = async () => {
