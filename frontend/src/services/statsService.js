@@ -18,9 +18,15 @@ export const getMonthlyStatsAgents = async () => {
 };
 
 export const getConsultationTypes = async () => {
-  const data = await requestStats(); return { success: true, tipos_consulta: data.consultations_by_category };
+  const data = await requestStats();
+  // Recharts' Pie needs an array of {name, value}, not the {category: count} dict the backend returns.
+  const tipos_consulta = Object.entries(data.consultations_by_category || {}).map(([name, value]) => ({ name, value }));
+  return { success: true, tipos_consulta };
 };
 
 export const getFeedbackStats = async () => {
-  const data = await requestStats(); return { success: true, promedio: data.average_feedback_rating };
+  const data = await requestStats();
+  // average_feedback_rating comes back as a numeric string (Postgres AVG -> Decimal) or null when there's no feedback yet.
+  const promedio = data.average_feedback_rating === null ? 0 : Number(data.average_feedback_rating);
+  return { success: true, promedio };
 };

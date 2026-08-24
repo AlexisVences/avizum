@@ -5,7 +5,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Footer from "../components/Footer";
 import NavBarAdmin from "../components/NavBarAdmin";
 import "../styles/AdministrarUsuario.css";
-import { getAllUsers, updateUser, deleteUser } from "../services/userService";
+import { getAllUsers, updateUserRole, deleteUser } from "../services/userService";
 
 const AdministrarUsuarios = () => {
   const [users, setUsers] = useState([]);
@@ -56,11 +56,9 @@ const AdministrarUsuarios = () => {
 
   const guardarCambios = async () => {
     try {
-      const updatedUser = { ...userToEdit, ...editData };
-      console.log(updatedUser)
-      await updateUser(userToEdit.usuario,updatedUser);
+      await updateUserRole(userToEdit.id, { role: editData.rol });
       setUsers(users.map((u) =>
-        u.usuario === userToEdit.usuario ? updatedUser : u
+        u.id === userToEdit.id ? { ...u, rol: editData.rol } : u
       ));
       setUserToEdit(null);
     } catch (error) {
