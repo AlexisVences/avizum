@@ -43,6 +43,9 @@ class LegalAIService:
             from langchain_community.vectorstores import FAISS
             from langchain_ollama import OllamaEmbeddings, OllamaLLM
         except ImportError as exc:
+            # TODO: message is inaccurate — `langchain` (langchain.chains/langchain.prompts) is
+            # imported above but not declared in the `ai` dependency group, so `uv sync --group ai`
+            # will not actually fix this.
             raise LegalAIUnavailable("Optional AI dependencies are not installed; run uv sync --group ai") from exc
         embeddings = OllamaEmbeddings(model=self.settings.ai_embedding_model, base_url=self.settings.ai_ollama_base_url)
         # LangChain's current FAISS format contains pickle metadata; this is opt-in above.
