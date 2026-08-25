@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaTrash, FaUser, FaEnvelope, FaSearch, FaEdit } from "react-icons/fa";
-import "bootstrap/dist/css/bootstrap.min.css";
 import Footer from "../components/Footer";
 import NavBarAdmin from "../components/NavBarAdmin";
 import "../styles/AdministrarUsuario.css";

@@ -71,7 +71,16 @@ Requires Ollama running with the configured chat/embedding models, `AI_ENABLED=t
 - `app/models/domain.py` holds all SQLAlchemy models: `User`, `AuthorizedAgent`, `AgentLookup`, `Consultation`, `LegalResponse`, `Feedback`. `Consultation` and `LegalResponse` are separate tables (one-to-one) so a consultation's question is recorded even if answer generation fails partway.
 - `app/services/legal_ai.py` is a lazy, optional Ollama/LangChain RAG adapter used by the `/legal-consultations` endpoint; it raises `LegalAIUnavailable` when AI is disabled/misconfigured, which the route converts to a 503.
 - Alembic migrations (`backend/migrations/`) are the source of truth for schema, mirrored conceptually in `database/schema.sql`. The new schema deliberately replaces legacy `usuario`/`consulta`-style tables from the old Flask/Express backends and does **not** auto-migrate an existing production database — a data migration must be planned and tested explicitly before deploying against one.
-- Tests use an in-memory SQLite database (see `backend/tests/conftest.py`), overriding the `get_db` dependency and creating/dropping all tables per test via a `client` fixture that yields `(test_client, session_factory)`.
+- Tests run against PostgreSQL (see `backend/tests/conftest.py`; requires the `db` service from `docker-compose.yml` running, or a `TEST_DATABASE_URL` override), overriding the `get_db` dependency and creating/dropping all tables per test via a `client` fixture that yields `(test_client, session_factory)`. This matches production so Postgres-only behavior (e.g. native enum columns) is actually exercised.
+
+## Introducing new technology
+
+When implementing a feature that introduces a new library, framework, or external technology not already used in this project, do two things before writing code:
+
+1. Use Context7 to pull current, version-specific documentation for it instead of relying on training data.
+2. Briefly check if a relevant Claude Code plugin exists for it and mention it if found — don't install anything without asking first.
+
+This does not apply to routine work using technology already established in this project (FastAPI, SQLAlchemy, React, etc.) — only when something genuinely new is being introduced.
 
 ## Conventions
 

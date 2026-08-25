@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: abogadazo
+      POSTGRES_PASSWORD: change-me
+      POSTGRES_DB: abogadazo
+    ports:
+      - "5432:5432"
+    volumes:
+      - abogadazo-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abogadazo -d abogadazo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  abogadazo-db:
