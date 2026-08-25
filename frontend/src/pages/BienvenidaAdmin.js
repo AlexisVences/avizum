@@ -2,7 +2,6 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FaChartBar, FaUsersCog } from "react-icons/fa";
-import "bootstrap/dist/css/bootstrap.min.css";
 import Footer from "../components/Footer";
 import NavBarAdmin from "../components/NavBarAdmin";
 import "../styles/BienvenidaAdmin.css"

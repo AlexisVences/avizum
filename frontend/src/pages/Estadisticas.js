@@ -8,7 +8,6 @@ import {
   PieChart, Pie, Cell, Legend
 } from "recharts";
 import { FaStar, FaChartLine, FaSearch } from "react-icons/fa";
-import "bootstrap/dist/css/bootstrap.min.css";
 import { 
   getDailyStats, 
   getMonthlyStats,
