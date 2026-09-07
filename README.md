@@ -28,26 +28,60 @@ Authentication is Bearer JWT. Passwords are Argon2 hashes via `pwdlib`; registra
 
 ## Local development
 
-From `backend/`:
+Prerequisites: [uv](https://docs.astral.sh/uv/), Node.js 18+/npm, and Docker (for PostgreSQL). On WSL, install Docker Desktop on Windows and enable **Settings → Resources → WSL Integration** for your distro — the CLI (`docker`, `docker compose`) is not installed inside WSL itself.
 
-```bash
-cp .env.example .env
-# edit DATABASE_URL and JWT_SECRET_KEY
-uv sync --group dev
-uv run alembic upgrade head
-uv run uvicorn app.main:app --reload
-uv run pytest
-```
+| Service    | Command                                    | Port | URL                              |
+|------------|---------------------------------------------|------|-----------------------------------|
+| PostgreSQL | `docker compose up -d db`                   | 5432 | `localhost:5432`                  |
+| Backend    | `uv run uvicorn app.main:app --reload`      | 8000 | `http://localhost:8000/api/v1`    |
+| Frontend   | `npm start`                                 | 3000 | `http://localhost:3000`           |
 
-After registering the first trusted user, a database operator can bootstrap administration explicitly:
+1. **Database** — from the repo root, start Postgres in Docker:
 
-```bash
-uv run python -m scripts.promote_admin <username>
-```
+   ```bash
+   docker compose up -d db
+   ```
 
-The API is then available at `http://localhost:8000/api/v1`, including `GET /health`.
+   This uses the same `abogadazo` / `change-me` credentials as `backend/.env.example`, on a persistent named volume, so data survives container restarts. Stop it with `docker compose down` (add `-v` to also wipe the volume).
 
-For the React client, set `REACT_APP_API_URL=http://localhost:8000/api/v1` if its default is unsuitable.
+2. **Backend** — from `backend/`:
+
+   ```bash
+   cp .env.example .env
+   # edit DATABASE_URL and JWT_SECRET_KEY if you changed the defaults above
+   uv sync --group dev
+   uv run alembic upgrade head
+   uv run uvicorn app.main:app --reload   # add --port to change from 8000
+   ```
+
+   `--reload` gives you hot-reload on code changes, which is what you want for debugging. Interactive API docs are at `http://localhost:8000/docs`.
+
+   Run the test suite (also needs the `db` container up, or set `TEST_DATABASE_URL`):
+
+   ```bash
+   uv run pytest
+   ```
+
+   After registering the first trusted user, a database operator can bootstrap administration explicitly:
+
+   ```bash
+   uv run python -m scripts.promote_admin <username>
+   ```
+
+   Load the authorized-agents CSV registry into the database (safe to re-run):
+
+   ```bash
+   uv run python -m scripts.seed_agents
+   ```
+
+3. **Frontend** — from `frontend/`, in a separate terminal:
+
+   ```bash
+   npm install
+   npm start
+   ```
+
+   This opens `http://localhost:3000` with hot reload. It talks to the backend at `http://localhost:8000/api/v1` by default; override with a `.env` file setting `REACT_APP_API_URL` if your backend runs elsewhere.
 
 ## AI / RAG
 

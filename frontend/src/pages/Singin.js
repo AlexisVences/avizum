@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../assets/logo.png";
 import { createUser } from "../services/userService";
+import Navbar from "../components/Navbar";
+import logo from "../assets/logo.png";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
 
 const SignUp = () => {
     const [formData, setFormData] = useState({
@@ -10,9 +13,11 @@ const SignUp = () => {
         apellido: '',
         email: '',
         password: '',
+        confirmPassword: '',
         rol: 'usuario'
     });
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -25,16 +30,14 @@ const SignUp = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Validar que las contraseñas coincidan
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        
-        if (password !== confirmPassword) {
+        setError('');
+
+        if (formData.password !== formData.confirmPassword) {
             setError('Las contraseñas no coinciden');
             return;
         }
 
+        setLoading(true);
         try {
             // Usamos el servicio importado en lugar de fetch directo
             await createUser({
@@ -43,116 +46,81 @@ const SignUp = () => {
             });
 
             // Redirigir a la página de login después de crear el usuario
-            navigate('/login');
+            navigate('/Login');
         } catch (err) {
             setError(err.message);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div className="container d-flex align-items-center justify-content-center vh-100">
-            <div className="card p-3 shadow-sm" style={{ maxWidth: "340px", width: "100%", fontSize: "0.9rem" }}>
-                
-                {/* Logo y Título */}
-                <div className="d-flex align-items-center justify-content-left mb-3" style={{ gap: "8px" }}>
-                <img src={logo} alt="Logo Abogadazo" style={{ height: "32px" }} />
-                <h4 className="m-0" style={{ fontSize: "1.7rem" }}>Crear cuenta</h4>
+        <>
+            <Navbar />
+            <main className="tw-pt-16">
+                <div className="tw-min-h-[calc(100vh-4rem)] tw-bg-gris tw-flex tw-items-center tw-justify-center tw-px-4 tw-py-10">
+                    <div className="tw-w-full tw-max-w-md tw-bg-paper-raised tw-border tw-border-rule tw-rounded-lg tw-shadow-sm tw-p-8">
+                        <div className="tw-flex tw-items-center tw-gap-2.5 tw-mb-6">
+                            <img src={logo} alt="Abogadazo" className="tw-h-8 tw-w-auto tw-shrink-0" />
+                            <h1 className="tw-font-display tw-text-2xl tw-font-semibold tw-text-ink tw-m-0">
+                                Crear cuenta
+                            </h1>
+                        </div>
+
+                        {error && (
+                            <div className="tw-bg-red-50 tw-border tw-border-red-200 tw-text-red-700 tw-text-sm tw-rounded tw-px-3.5 tw-py-2.5 tw-mb-4">
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="tw-grid tw-grid-cols-2 tw-gap-3 tw-mb-4">
+                                <Input label="Nombre" id="nombre" value={formData.nombre} onChange={handleChange} required />
+                                <Input label="Apellido" id="apellido" value={formData.apellido} onChange={handleChange} required />
+                            </div>
+                            <Input
+                                label="Correo electrónico"
+                                id="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                                className="tw-mb-4"
+                            />
+                            <Input
+                                label="Contraseña"
+                                id="password"
+                                type="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                required
+                                className="tw-mb-4"
+                            />
+                            <Input
+                                label="Confirmar contraseña"
+                                id="confirmPassword"
+                                type="password"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                required
+                                className="tw-mb-6"
+                            />
+
+                            <Button type="submit" variant="dark" size="lg" disabled={loading} className="tw-w-full">
+                                {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+                            </Button>
+                        </form>
+
+                        <p className="tw-text-center tw-text-sm tw-text-ink-soft tw-mt-6 tw-mb-0">
+                            ¿Ya tienes cuenta?{" "}
+                            <Link to="/Login" className="tw-font-semibold tw-text-azul hover:tw-text-magenta tw-no-underline">
+                                Inicia sesión
+                            </Link>
+                        </p>
+                    </div>
                 </div>
-
-                {/* Mostrar error si existe */}
-                {error && <div className="alert alert-danger">{error}</div>}
-
-                {/* Formulario */}
-                <form onSubmit={handleSubmit}>
-                <div className="mb-2">
-                    <label htmlFor="nombre" className="form-label">Nombre</label>
-                    <input 
-                        type="text" 
-                        className="form-control form-control-sm" 
-                        id="nombre" 
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        required 
-                    />
-                </div>
-
-                <div className="mb-2">
-                    <label htmlFor="apellido" className="form-label">Apellido</label>
-                    <input 
-                        type="text" 
-                        className="form-control form-control-sm" 
-                        id="apellido" 
-                        value={formData.apellido}
-                        onChange={handleChange}
-                        required 
-                    />
-                </div>
-
-                <div className="mb-2">
-                    <label htmlFor="email" className="form-label">Correo electrónico</label>
-                    <input 
-                        type="email" 
-                        className="form-control form-control-sm" 
-                        id="email" 
-                        value={formData.email}
-                        onChange={handleChange}
-                        required 
-                    />
-                </div>
-
-                <div className="mb-2">
-                    <label htmlFor="password" className="form-label">Contraseña</label>
-                    <input 
-                        type="password" 
-                        className="form-control form-control-sm" 
-                        id="password" 
-                        value={formData.password}
-                        onChange={handleChange}
-                        required 
-                    />
-                </div>
-
-                <div className="mb-3">
-                    <label htmlFor="confirmPassword" className="form-label">Confirmar contraseña</label>
-                    <input 
-                        type="password" 
-                        className="form-control form-control-sm" 
-                        id="confirmPassword" 
-                        required 
-                    />
-                </div>
-
-                <button type="submit" className="btn btn-dark w-100 btn-sm">Crear cuenta</button>
-                </form>
-
-                {/* Divider */}
-                <div className="text-center my-2">
-                <small className="text-muted">o regístrate con</small>
-                </div>
-
-                {/* Botones sociales compactos */}
-                <div className="d-flex justify-content-center mb-2" style={{ gap: "16px" }}>
-                <button type="button" className="btn btn-outline-dark rounded-circle p-1" style={{ width: "32px", height: "32px", fontSize: "0.85rem" }}>
-                    <i className="bi bi-apple"></i>
-                </button>
-                <button type="button" className="btn btn-outline-dark rounded-circle p-1" style={{ width: "32px", height: "32px", fontSize: "0.85rem" }}>
-                    <i className="bi bi-facebook"></i>
-                </button>
-                <button type="button" className="btn btn-outline-dark rounded-circle p-1" style={{ width: "32px", height: "32px", fontSize: "0.85rem" }}>
-                    <i className="bi bi-google"></i>
-                </button>
-                </div>
-
-                {/* Enlace a login */}
-                <div className="text-left mt-2">
-                <small className="text-muted">¿Ya tienes cuenta? </small>
-                <small className="text-muted">
-                    <Link to="/login" className="text-decoration-none">Inicia sesión</Link>
-                </small>
-                </div>
-
-            </div>
-        </div>
+            </main>
+        </>
     );
 };
 

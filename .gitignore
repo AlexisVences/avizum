@@ -17,3 +17,8 @@ venv/
 .DS_Store
 .idea/
 .vscode/
+
+# Semgrep Guardian plugin scratch state (regenerated per directory, not project config)
+.semgrep/
+# Playwright MCP browser automation scratch output
+.playwright-mcp/

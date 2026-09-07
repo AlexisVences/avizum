@@ -6,7 +6,7 @@ const VerMas = ({ title, description }) => {
         <div className="col-md-6 mb-4">
         <h5 className="fw-bold">{title}</h5>
         <p>{description}</p>
-        <Link to="/Login" class="btn btn-outline-dark">Ver más</Link>
+        <Link to="/Login" className="btn btn-outline-dark">Ver más</Link>
         </div>
     );
 };

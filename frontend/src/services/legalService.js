@@ -16,7 +16,7 @@ export const consultarChatLegal = async (pregunta) => {
     
     const data = await response.json();
     
-    return { success: true, respuesta: data.answer, fuentes: data.citations, id_respuesta: data.response_id };
+    return { success: true, respuesta: data.answer, fuentes: data.citations, categoria: data.category, id_respuesta: data.response_id };
   } catch (error) {
     console.error('Error al consultar el chat legal:', error);
     throw error;
