@@ -10,7 +10,7 @@ const RutaProtegida = ({ children }) => {
     const user = authService.getCurrentUser();
 
     if (!user) {
-        return <Navigate to="/" replace />;
+        return <Navigate to="/Login" replace />;
     }
 
     return children;

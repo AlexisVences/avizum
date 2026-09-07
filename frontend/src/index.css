@@ -11,8 +11,13 @@
    e.g. `tw-backdrop-blur-md` or `-tw-translate-x-full` silently no-op --
    the whole `transform`/`backdrop-filter` value is invalid without them.
    This block only defines custom properties (no visual reset), so it's
-   safe to keep even while Preflight stays off. */
+   safe to keep even while Preflight stays off. The same gap affects
+   `border-*` utilities: Preflight also sets a global `border-width:0;
+   border-style:solid; border-color:...` reset, patched here too. */
 *, ::before, ::after {
+  border-width: 0;
+  border-style: solid;
+  border-color: #DDD8CC; /* rule */
   --tw-translate-x: 0;
   --tw-translate-y: 0;
   --tw-rotate: 0;

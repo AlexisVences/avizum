@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/ui/Button';
@@ -36,6 +37,13 @@ const DOCUMENTOS = [
 ];
 
 const Home = () => {
+    const [placa, setPlaca] = useState('');
+    const navigate = useNavigate();
+
+    const irAVerificar = () => {
+        navigate(`/ConsultarAgenteTransito${placa.trim() ? `?placa=${encodeURIComponent(placa.trim())}` : ''}`);
+    };
+
     return (
         <>
             <Navbar />
@@ -64,9 +72,12 @@ const Home = () => {
                                     inputMode="numeric"
                                     placeholder="057 196"
                                     aria-label="Número de placa del agente"
+                                    value={placa}
+                                    onChange={(e) => setPlaca(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && irAVerificar()}
                                     className="tw-flex-1 tw-min-w-0 tw-font-mono tw-font-semibold tw-tracking-wider tw-text-[1.05rem] tw-border-[1.5px] tw-border-azul tw-rounded tw-bg-[#F4F6FC] tw-text-azul tw-text-center tw-px-3 tw-py-2.5 placeholder:tw-text-azul/50 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-azul/30"
                                 />
-                                <Button to="/ConsultarAgenteTransito" variant="dark" size="md">
+                                <Button onClick={irAVerificar} variant="dark" size="md">
                                     Verificar
                                 </Button>
                             </div>
@@ -81,7 +92,7 @@ const Home = () => {
                 <section className="tw-px-6 tw-py-11">
                     <div className="tw-mx-auto tw-max-w-5xl">
                         <div className="tw-font-mono tw-text-[11px] tw-tracking-widest tw-uppercase tw-text-ink-soft tw-mb-[18px]">
-                            Servicios a tu dispocisión 
+                            Servicios a tu disposición
                         </div>
                         <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-px tw-bg-rule tw-border tw-border-rule tw-rounded tw-overflow-hidden">
                             {OFRECEMOS.map((item) => (

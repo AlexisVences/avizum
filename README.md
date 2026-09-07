@@ -65,7 +65,7 @@ Prerequisites: [uv](https://docs.astral.sh/uv/), Node.js 18+/npm, and Docker (fo
    After registering the first trusted user, a database operator can bootstrap administration explicitly:
 
    ```bash
-   uv run python -m scripts.promote_admin <username>
+   uv run python -m scripts.promote_admin <email>
    ```
 
    Load the authorized-agents CSV registry into the database (safe to re-run):

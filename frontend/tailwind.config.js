@@ -15,6 +15,7 @@ module.exports = {
         magenta: "#C4005F",
         azul: "#1C3F94",
         verde: "#1B6E51",
+        danger: "#B3261E",
         // Neutral light-gray section background (was "arena", a warm sand tone).
         gris: "#E5E5E2",
       },

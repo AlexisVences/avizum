@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { consultarAgente } from "../services/agentesService";
 import NavBar2 from "../components/NavBar2";
 import Footer from "../components/Footer";
@@ -6,7 +7,8 @@ import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
 
 const ConsultarAgenteTransito = () => {
-    const [placaBusqueda, setPlacaBusqueda] = useState('');
+    const [searchParams] = useSearchParams();
+    const [placaBusqueda, setPlacaBusqueda] = useState(searchParams.get('placa') || '');
     const [agenteEncontrado, setAgenteEncontrado] = useState(null);
     const [errorBusqueda, setErrorBusqueda] = useState(null);
     const [cargando, setCargando] = useState(false);

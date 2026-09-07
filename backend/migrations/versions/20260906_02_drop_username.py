@@ -20,6 +20,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # nullable=True (not the original NOT NULL): a populated `users` table
+    # has no username values to backfill, and this path would be paired
+    # with reverting the application code anyway.
     op.add_column("users", sa.Column("username", sa.String(100), nullable=True))
     op.create_unique_constraint("users_username_key", "users", ["username"])
     op.create_index("ix_users_username", "users", ["username"])
