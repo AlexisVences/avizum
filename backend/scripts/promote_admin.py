@@ -9,15 +9,15 @@ from app.models.domain import User, UserRole
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("username")
+    parser.add_argument("email")
     args = parser.parse_args()
     with SessionLocal() as db:
-        user = db.scalar(select(User).where(User.username == args.username))
+        user = db.scalar(select(User).where(User.email == args.email))
         if user is None:
-            raise SystemExit(f"No user exists with username {args.username!r}")
+            raise SystemExit(f"No user exists with email {args.email!r}")
         user.role = UserRole.ADMIN
         db.commit()
-    print(f"Promoted {args.username!r} to admin.")
+    print(f"Promoted {args.email!r} to admin.")
 
 
 if __name__ == "__main__":
