@@ -22,3 +22,6 @@ venv/
 .semgrep/
 # Playwright MCP browser automation scratch output
 .playwright-mcp/
+
+# Subagent-driven-development scratch workspace (ledgers, briefs, reports)
+.superpowers/
