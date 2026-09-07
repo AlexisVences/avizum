@@ -8,7 +8,6 @@ import Button from "../components/ui/Button";
 
 const SignUp = () => {
     const [formData, setFormData] = useState({
-        usuario: '',
         nombre: '',
         apellido: '',
         email: '',
@@ -40,10 +39,7 @@ const SignUp = () => {
         setLoading(true);
         try {
             // Usamos el servicio importado en lugar de fetch directo
-            await createUser({
-                ...formData,
-                usuario: formData.usuario || formData.email
-            });
+            await createUser(formData);
 
             // Redirigir a la página de login después de crear el usuario
             navigate('/Login');
@@ -94,8 +90,12 @@ const SignUp = () => {
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
-                                className="tw-mb-4"
+                                minLength={8}
+                                className="tw-mb-1"
                             />
+                            <p className="tw-text-xs tw-text-ink-soft tw-mt-0 tw-mb-4">
+                                Mínimo 8 caracteres.
+                            </p>
                             <Input
                                 label="Confirmar contraseña"
                                 id="confirmPassword"

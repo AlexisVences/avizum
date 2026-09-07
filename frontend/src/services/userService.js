@@ -4,14 +4,14 @@ export const createUser = async (userData) => {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: userData.usuario, first_name: userData.nombre, last_name: userData.apellido, email: userData.email, password: userData.password }),
+    body: JSON.stringify({ first_name: userData.nombre, last_name: userData.apellido, email: userData.email, password: userData.password }),
   });
   const data = await response.json();
-  
+
   if (!response.ok) {
     throw new Error(extractErrorMessage(data, 'Error al crear el usuario'));
   }
-  
+
   return data;
 };
 
@@ -49,5 +49,5 @@ export const updateUserRole = async (userId, updates) => {
 export const getAllUsers = async () => {
   const response = await fetch(`${API_URL}/admin/users`, { headers: authHeaders() });
   const users = await response.json();
-  return { clientes: users.map((user) => ({ ...user, usuario: user.username, nombre: user.first_name, apellido: user.last_name, rol: user.role })) };
+  return { clientes: users.map((user) => ({ ...user, nombre: user.first_name, apellido: user.last_name, rol: user.role })) };
 };

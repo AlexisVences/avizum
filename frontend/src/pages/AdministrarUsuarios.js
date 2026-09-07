@@ -39,8 +39,8 @@ const AdministrarUsuarios = () => {
   const eliminarUsuario = async () => {
     try {
       if (userToDelete) {
-        await deleteUser(userToDelete.usuario); // Asegúrate que este campo es el identificador
-        setUsers(users.filter((u) => u.usuario !== userToDelete.usuario));
+        await deleteUser(userToDelete.email); // Asegúrate que este campo es el identificador
+        setUsers(users.filter((u) => u.email !== userToDelete.email));
         setUserToDelete(null);
       }
     } catch (error) {
@@ -50,7 +50,7 @@ const AdministrarUsuarios = () => {
 
   const abrirModalEdicion = (user) => {
     setUserToEdit(user);
-    setEditData({ usuario:user.email, nombre: user.nombre, apellido: user.apellido, email: user.email, rol: user.rol });
+    setEditData({ nombre: user.nombre, apellido: user.apellido, email: user.email, rol: user.rol });
   };
 
   const guardarCambios = async () => {
@@ -130,7 +130,7 @@ const AdministrarUsuarios = () => {
                         <div className="d-flex gap-2">
                           <button
                             className="btn btn-sm btn-outline-primary"
-                            onClick={() => abrirModalEdicion(user)} 
+                            onClick={() => abrirModalEdicion(user)}
                           >
                             <FaEdit className="me-1" /> Editar
                           </button>
@@ -211,7 +211,7 @@ const AdministrarUsuarios = () => {
                         type="email"
                         className="form-control"
                         value={editData.email}
-                        onChange={(e) => setEditData({ ...editData, email: e.target.value ,usuario: e.target.value})}
+                        onChange={(e) => setEditData({ ...editData, email: e.target.value })}
                       />
                     </div>
                     <div className="mb-3">

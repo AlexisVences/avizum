@@ -4,8 +4,8 @@ import { API_URL, extractErrorMessage } from './api';
 
 const login = async (credentials) => {
   try {
-    const response = await axios.post(`${API_URL}/auth/login`, { username: credentials.username, password: credentials.password });
-    
+    const response = await axios.post(`${API_URL}/auth/login`, { email: credentials.email, password: credentials.password });
+
     const userData = {
       id: response.data.user.id,
       nombre: response.data.user.first_name,
