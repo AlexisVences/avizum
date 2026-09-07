@@ -1,13 +1,64 @@
+/* Base and Preflight stay off until every page is migrated off Bootstrap
+   (Fase 2) -- Preflight's reset would fight Bootstrap's own on pages not
+   rebuilt yet. */
+@tailwind components;
+@tailwind utilities;
+
+/* Tailwind's transform/filter/ring utilities (translate, rotate, blur,
+   backdrop-blur, ring, shadow...) compose their final CSS value from
+   `--tw-*` custom properties that Preflight normally defines defaults for.
+   With Preflight off (see note above), those defaults never get set, so
+   e.g. `tw-backdrop-blur-md` or `-tw-translate-x-full` silently no-op --
+   the whole `transform`/`backdrop-filter` value is invalid without them.
+   This block only defines custom properties (no visual reset), so it's
+   safe to keep even while Preflight stays off. */
+*, ::before, ::after {
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-ring-inset: ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur: ;
+  --tw-brightness: ;
+  --tw-contrast: ;
+  --tw-grayscale: ;
+  --tw-hue-rotate: ;
+  --tw-invert: ;
+  --tw-saturate: ;
+  --tw-sepia: ;
+  --tw-drop-shadow: ;
+  --tw-backdrop-blur: ;
+  --tw-backdrop-brightness: ;
+  --tw-backdrop-contrast: ;
+  --tw-backdrop-grayscale: ;
+  --tw-backdrop-hue-rotate: ;
+  --tw-backdrop-invert: ;
+  --tw-backdrop-opacity: ;
+  --tw-backdrop-saturate: ;
+  --tw-backdrop-sepia: ;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  background-color: #F7F6F3;
+  color: #16181D;
+  font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Roboto', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: 'IBM Plex Mono', source-code-pro, Menlo, Monaco, Consolas,
+    'Courier New', monospace;
 }
