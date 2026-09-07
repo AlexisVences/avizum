@@ -60,8 +60,7 @@ const Perfil = () => {
 
         try {
             // Preparar datos para actualizar
-            const updatedData = {             
-                usuario: storedUser.correo,
+            const updatedData = {
                 nombre: inputs.nombre,
                 apellido: inputs.apellido,
                 rol: storedUser.rol,
@@ -69,14 +68,14 @@ const Perfil = () => {
             };
             // Llamar al servicio de actualización
             const response = await updateUser(storedUser.correo,updatedData);
-            
+
             if (!response) {
                 throw new Error("No se recibió respuesta del servidor");
             }
 
             // Actualizar el estado local con los nuevos datos
             setUserData(updatedData);
-            
+
             // Actualizar el usuario en el localStorage
             const updatedUser = {
                 ...storedUser,
@@ -87,11 +86,11 @@ const Perfil = () => {
 
             // Desactivar modo edición
             setEditando({ nombre: false, apellido: false });
-            
+
             // Mostrar mensaje de éxito
             setSuccessMessage("Cambios guardados correctamente");
             setTimeout(() => setSuccessMessage(null), 3000);
-            
+
         } catch (err) {
             setError(err.message || "Error al guardar los cambios");
             console.error("Update error:", err);

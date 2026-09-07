@@ -9,7 +9,7 @@ import Button from "../components/ui/Button";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -69,9 +69,9 @@ const LoginPage = () => {
             <form onSubmit={handleSubmit}>
               <Input
                 label="Correo electrónico"
-                id="username"
-                type="text"
-                value={formData.username}
+                id="email"
+                type="email"
+                value={formData.email}
                 onChange={handleChange}
                 required
                 className="tw-mb-4"
