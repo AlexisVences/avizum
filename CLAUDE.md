@@ -38,7 +38,7 @@ uv run alembic upgrade head                   # apply database migrations
 uv run uvicorn app.main:app --reload          # run API on http://localhost:8000
 uv run pytest                                 # run all tests
 uv run pytest tests/test_api.py::test_name    # run a single test
-uv run python -m scripts.promote_admin <username>  # bootstrap the first admin (after they register)
+uv run python -m scripts.promote_admin <email>  # bootstrap the first admin (after they register)
 ```
 
 The API is served under `/api/v1` (e.g. `GET /api/v1/health`).

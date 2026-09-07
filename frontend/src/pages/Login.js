@@ -61,7 +61,7 @@ const LoginPage = () => {
             </div>
 
             {error && (
-              <div className="tw-bg-red-50 tw-border tw-border-red-200 tw-text-red-700 tw-text-sm tw-rounded tw-px-3.5 tw-py-2.5 tw-mb-4">
+              <div className="tw-bg-danger/5 tw-border tw-border-danger/20 tw-text-danger tw-text-sm tw-rounded tw-px-3.5 tw-py-2.5 tw-mb-4">
                 {error}
               </div>
             )}
@@ -83,17 +83,8 @@ const LoginPage = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="tw-mb-4"
+                className="tw-mb-6"
               />
-
-              <label className="tw-flex tw-items-center tw-gap-2 tw-text-sm tw-text-ink-soft tw-mb-6 tw-cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  className="tw-rounded tw-border-rule tw-text-azul focus:tw-ring-azul/30"
-                />
-                Mantenerme conectado en este dispositivo
-              </label>
 
               <Button type="submit" variant="dark" size="lg" disabled={loading} className="tw-w-full">
                 {loading ? 'Cargando...' : 'Iniciar sesión'}

@@ -119,6 +119,7 @@ const AsesoriaIA = () => {
                         />
                     )}
                     <aside
+                        inert={!menuAbierto}
                         className={`tw-fixed tw-top-[calc(4rem+49px)] tw-bottom-0 tw-left-0 tw-w-72 tw-max-w-[80vw] tw-bg-paper-raised tw-border-r tw-border-rule tw-z-50 tw-flex tw-flex-col tw-transition-transform tw-duration-200 ${menuAbierto ? "tw-translate-x-0" : "-tw-translate-x-full"}`}
                     >
                         <div className="tw-flex tw-items-center tw-justify-between tw-px-4 tw-py-3 tw-border-b tw-border-rule">

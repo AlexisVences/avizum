@@ -13,7 +13,6 @@ const SignUp = () => {
         email: '',
         password: '',
         confirmPassword: '',
-        rol: 'usuario'
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -64,7 +63,7 @@ const SignUp = () => {
                         </div>
 
                         {error && (
-                            <div className="tw-bg-red-50 tw-border tw-border-red-200 tw-text-red-700 tw-text-sm tw-rounded tw-px-3.5 tw-py-2.5 tw-mb-4">
+                            <div className="tw-bg-danger/5 tw-border tw-border-danger/20 tw-text-danger tw-text-sm tw-rounded tw-px-3.5 tw-py-2.5 tw-mb-4">
                                 {error}
                             </div>
                         )}

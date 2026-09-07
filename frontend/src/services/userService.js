@@ -49,5 +49,8 @@ export const updateUserRole = async (userId, updates) => {
 export const getAllUsers = async () => {
   const response = await fetch(`${API_URL}/admin/users`, { headers: authHeaders() });
   const users = await response.json();
+  if (!response.ok) {
+    throw new Error(extractErrorMessage(users, 'Error al obtener los usuarios'));
+  }
   return { clientes: users.map((user) => ({ ...user, nombre: user.first_name, apellido: user.last_name, rol: user.role })) };
 };
