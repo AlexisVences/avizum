@@ -8,7 +8,6 @@ from app.models.domain import UserRole
 class UserPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    username: str
     first_name: str
     last_name: str
     email: EmailStr
@@ -18,15 +17,14 @@ class UserPublic(BaseModel):
 
 
 class RegisterRequest(BaseModel):
-    username: str = Field(min_length=3, max_length=100, pattern=r"^[A-Za-z0-9_.-]+$")
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
     email: EmailStr
-    password: str = Field(min_length=12, max_length=128)
+    password: str = Field(min_length=8, max_length=128)
 
 
 class LoginRequest(BaseModel):
-    username: str
+    email: EmailStr
     password: str
 
 
@@ -40,7 +38,7 @@ class ProfileUpdate(BaseModel):
     first_name: str | None = Field(default=None, min_length=1, max_length=100)
     last_name: str | None = Field(default=None, min_length=1, max_length=100)
     email: EmailStr | None = None
-    password: str | None = Field(default=None, min_length=12, max_length=128)
+    password: str | None = Field(default=None, min_length=8, max_length=128)
 
 
 class AdminUserUpdate(BaseModel):

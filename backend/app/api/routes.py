@@ -20,10 +20,10 @@ def health() -> dict[str, str]:
 
 @router.post("/auth/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, db: DbSession) -> User:
-    exists = db.scalar(select(User.id).where((User.username == payload.username) | (User.email == str(payload.email))))
+    exists = db.scalar(select(User.id).where(User.email == str(payload.email)))
     if exists:
-        raise HTTPException(status_code=409, detail="Username or email is already registered")
-    user = User(username=payload.username, first_name=payload.first_name, last_name=payload.last_name, email=str(payload.email), password_hash=hash_password(payload.password))
+        raise HTTPException(status_code=409, detail="Email is already registered")
+    user = User(first_name=payload.first_name, last_name=payload.last_name, email=str(payload.email), password_hash=hash_password(payload.password))
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -32,7 +32,7 @@ def register(payload: RegisterRequest, db: DbSession) -> User:
 
 @router.post("/auth/login", response_model=TokenResponse)
 def login(payload: LoginRequest, db: DbSession) -> TokenResponse:
-    user = db.scalar(select(User).where(User.username == payload.username))
+    user = db.scalar(select(User).where(User.email == str(payload.email)))
     if user is None or not user.is_active or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return TokenResponse(access_token=create_access_token(str(user.id)), user=user)
