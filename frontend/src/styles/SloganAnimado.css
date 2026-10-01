@@ -1,0 +1,89 @@
+/* Colors/font mirror the project's Tailwind tokens (tailwind.config.js):
+   azul #1C3F94, magenta #C4005F, mono "IBM Plex Mono". Margins are tuned to
+   combine with the hero title's existing bottom margin (14px) and the
+   paragraph's lack of a top margin, landing on ~26px/~20px total spacing
+   without editing those elements. */
+
+.slogan-animado {
+    margin: 6px 0 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #1C3F94;
+}
+
+@media (min-width: 640px) {
+    .slogan-animado {
+        margin: 12px 0 20px;
+        gap: 14px;
+        font-size: 11px;
+    }
+}
+
+.slogan-animado__word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(14px);
+    animation:
+        slogan-animado-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards,
+        slogan-animado-highlight 6s ease-in-out infinite;
+}
+.slogan-animado__word--1 { animation-delay: 0.1s, 1.2s; }
+.slogan-animado__word--2 { animation-delay: 0.45s, 3.2s; }
+.slogan-animado__word--3 { animation-delay: 0.8s, 5.2s; }
+
+.slogan-animado__word::after {
+    content: "";
+    display: block;
+    height: 3px;
+    margin-top: 6px;
+    background: #C4005F;
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: slogan-animado-underline 6s ease-in-out infinite;
+}
+.slogan-animado__word--1::after { animation-delay: 1.2s; }
+.slogan-animado__word--2::after { animation-delay: 3.2s; }
+.slogan-animado__word--3::after { animation-delay: 5.2s; }
+
+.slogan-animado__dot {
+    color: #52544D;
+    opacity: 0;
+    animation: slogan-animado-in 0.6s ease forwards;
+    animation-delay: 0.3s;
+}
+.slogan-animado__dot--2 { animation-delay: 0.65s; }
+
+@keyframes slogan-animado-in {
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes slogan-animado-highlight {
+    0%, 30%   { color: #C4005F; }
+    36%, 100% { color: #1C3F94; }
+}
+
+@keyframes slogan-animado-underline {
+    0%       { transform: scaleX(0); transform-origin: left; }
+    6%, 28%  { transform: scaleX(1); transform-origin: left; }
+    34%      { transform: scaleX(0); transform-origin: right; }
+    100%     { transform: scaleX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .slogan-animado__word,
+    .slogan-animado__dot {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+    .slogan-animado__word::after {
+        animation: none;
+    }
+}

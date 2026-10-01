@@ -1,28 +1,33 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import SloganAnimado from '../components/SloganAnimado';
 import infraccionimage from '../assets/infraccion.png';
+import { consultarAgente } from '../services/agentesService';
+
+const AGENTES_OFICIAL_URL = 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuedo-40-2024.pdf';
 
 const OFRECEMOS = [
     {
-        folio: '01 · ASESORÍA',
+        folio: '01 · ASESORÍA ↗',
         title: 'Pregúntale a la IA legal',
-        description: 'Respuestas basadas solo en el Reglamento de Tránsito y la Ley de Movilidad de la CDMX — nunca inventadas.',
+        description: 'Respuestas inmediatas basadas en el Reglamento de Tránsito y la Ley de Movilidad de la CDMX.',
     },
     {
-        folio: '02 · MULTAS',
+        folio: '02 · MULTAS ↗',
         title: 'Entiende tu infracción',
-        description: 'Qué artículo aplica, cuántos puntos suma y cómo impugnarla si corresponde.',
+        description: 'Qué artículo aplica, verificar el monto, cuántos puntos suma y cómo impugnarla si corresponde.',
     },
     {
-        folio: '03 · AGENTES',
+        folio: '03 · AGENTES ↗',
         title: 'Verifica al oficial',
         description: 'Confirma con su número de placa si está autorizado para infraccionar en vía pública.',
     },
     {
-        folio: '04 · GUÍAS',
+        folio: '04 · GUÍAS ↗',
         title: 'Aprende el reglamento',
         description: 'Tipos de infracción, seguros obligatorios y procedimientos explicados sin jerga legal.',
     },
@@ -33,30 +38,49 @@ const DOCUMENTOS = [
     { label: 'Ley de Movilidad de la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf' },
     { label: 'Ley de cultura cívica en la CDMX', href: 'https://www.congresocdmx.gob.mx/media/documentos/49a0a80ee030f12d0f797c671da2918e508f30cb.pdf' },
     { label: 'Ley de procedimiento administrativo en la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf' },
-    { label: 'Lista de agentes facultados para infraccionar sobre vía pública en la CDMX', href: 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuedo-40-2024.pdf' },
+    { label: 'Lista de agentes facultados para infraccionar sobre vía pública en la CDMX', href: AGENTES_OFICIAL_URL },
 ];
 
 const Home = () => {
     const [placa, setPlaca] = useState('');
-    const navigate = useNavigate();
+    const [cargando, setCargando] = useState(false);
+    const [agenteEncontrado, setAgenteEncontrado] = useState(null);
+    const [errorBusqueda, setErrorBusqueda] = useState(null);
 
-    const irAVerificar = () => {
-        navigate(`/ConsultarAgenteTransito${placa.trim() ? `?placa=${encodeURIComponent(placa.trim())}` : ''}`);
+    const verificarAgente = async () => {
+        if (!placa.trim()) {
+            setAgenteEncontrado(null);
+            setErrorBusqueda('Por favor ingresa un número de placa');
+            return;
+        }
+
+        setCargando(true);
+        setErrorBusqueda(null);
+        setAgenteEncontrado(null);
+
+        try {
+            const resultado = await consultarAgente(placa);
+            setAgenteEncontrado(resultado);
+        } catch (error) {
+            setErrorBusqueda(error.message || 'Error al buscar el agente');
+        } finally {
+            setCargando(false);
+        }
     };
 
     return (
         <>
             <Navbar />
             <main className="tw-pt-16">
-                {/* Hero: la consulta de placa es la acción más urgente, sube al primer scroll */}
                 <section className="tw-bg-gris tw-px-6 tw-pt-10 tw-pb-12">
                     <div className="tw-mx-auto tw-max-w-[640px]">
-                        <span className="tw-block tw-font-mono tw-text-[11.5px] tw-uppercase tw-tracking-widest tw-text-azul tw-font-bold tw-mb-3.5">
+                        {/* <span className="tw-block tw-font-mono tw-text-[11.5px] tw-uppercase tw-tracking-widest tw-text-azul tw-font-bold tw-mb-3.5">
                             Asesoría de tránsito · CDMX
-                        </span>
+                        </span> */}
                         <h1 className="tw-font-display tw-font-semibold tw-text-[clamp(1.8rem,4vw,2.5rem)] tw-leading-[1.1] tw-text-ink tw-mb-3.5 [text-wrap:balance]">
-                            Antes de firmar nada, <span className="tw-text-magenta">revisa tus derechos.</span>
+                            Conduce seguro, <span className="tw-text-magenta">conoce tus derechos</span>
                         </h1>
+                        <SloganAnimado />
                         <p className="tw-text-[1.02rem] tw-text-ink-soft tw-max-w-[46ch] tw-mb-6">
                             Verifica si el agente que te detuvo está facultado para infraccionar, consulta tu multa
                             y entiende el reglamento — en lenguaje llano, con IA basada solo en documentos oficiales.
@@ -74,13 +98,51 @@ const Home = () => {
                                     aria-label="Número de placa del agente"
                                     value={placa}
                                     onChange={(e) => setPlaca(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && irAVerificar()}
+                                    onKeyDown={(e) => e.key === 'Enter' && verificarAgente()}
                                     className="tw-flex-1 tw-min-w-0 tw-font-mono tw-font-semibold tw-tracking-wider tw-text-[1.05rem] tw-border-[1.5px] tw-border-azul tw-rounded tw-bg-[#F4F6FC] tw-text-azul tw-text-center tw-px-3 tw-py-2.5 placeholder:tw-text-azul/50 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-azul/30"
                                 />
-                                <Button onClick={irAVerificar} variant="dark" size="md">
-                                    Verificar
+                                <Button onClick={verificarAgente} disabled={cargando} variant="dark" size="md">
+                                    {cargando ? 'Verificando…' : 'Verificar'}
                                 </Button>
                             </div>
+
+                            {cargando && (
+                                <div key="cargando" className="tw-flex tw-justify-center tw-py-4 tw-animate-fade-in-up">
+                                    <div className="tw-w-5 tw-h-5 tw-border-2 tw-border-azul tw-border-t-transparent tw-rounded-full tw-animate-spin"></div>
+                                </div>
+                            )}
+
+                            {!cargando && errorBusqueda && (
+                                <div key="error" className="tw-mt-3 tw-bg-azul/5 tw-border tw-border-azul/20 tw-rounded tw-px-4 tw-py-3.5 tw-animate-fade-in-up">
+                                    <p className="tw-text-ink-soft tw-text-sm tw-leading-relaxed tw-m-0">
+                                        {errorBusqueda}
+                                    </p>
+                                    <a
+                                        href={AGENTES_OFICIAL_URL}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="tw-inline-block tw-mt-2.5 tw-text-azul hover:tw-text-magenta tw-text-sm tw-font-semibold"
+                                    >
+                                        Verificar manualmente en el listado oficial →
+                                    </a>
+                                </div>
+                            )}
+
+                            {!cargando && agenteEncontrado && (
+                                <div key="ok" className="tw-mt-3 tw-border tw-border-rule tw-rounded tw-p-4 tw-animate-fade-in-up">
+                                    <div className="tw-flex tw-items-center tw-justify-between tw-mb-3">
+                                        <span className="tw-font-mono tw-text-lg tw-font-bold tw-text-ink tw-tracking-wider">
+                                            {agenteEncontrado.agente.plate}
+                                        </span>
+                                        <Badge variant="verified">Verificado</Badge>
+                                    </div>
+                                    <p className="tw-text-ink-soft tw-text-sm tw-m-0">
+                                        <strong className="tw-text-ink">{agenteEncontrado.agente.name}</strong> está
+                                        facultado para infraccionar en la vía pública de la CDMX.
+                                    </p>
+                                </div>
+                            )}
+
                             <p className="tw-text-[0.78rem] tw-text-ink-soft tw-mt-2 tw-mb-0">
                                 Cruzamos el número contra el registro oficial de agentes facultados de la CDMX.
                             </p>
@@ -96,7 +158,11 @@ const Home = () => {
                         </div>
                         <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-px tw-bg-rule tw-border tw-border-rule tw-rounded tw-overflow-hidden">
                             {OFRECEMOS.map((item) => (
-                                <div key={item.folio} className="tw-bg-paper-raised tw-px-[22px] tw-pt-[22px] tw-pb-5">
+                                <Link
+                                    key={item.folio}
+                                    to="/Login"
+                                    className="tw-block tw-bg-paper-raised tw-px-[22px] tw-pt-[22px] tw-pb-5 tw-no-underline tw-text-inherit hover:tw-bg-gris/40 tw-transition-colors"
+                                >
                                     <div className="tw-font-mono tw-text-[11px] tw-font-bold tw-tracking-wide tw-text-magenta tw-mb-2.5">
                                         {item.folio}
                                     </div>
@@ -106,7 +172,7 @@ const Home = () => {
                                     <p className="tw-text-[0.87rem] tw-text-ink-soft tw-m-0">
                                         {item.description}
                                     </p>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>
@@ -121,7 +187,7 @@ const Home = () => {
                             </h2>
                             <p className="tw-text-ink-soft tw-leading-relaxed tw-mb-4">
                                 Desarrollado por estudiantes de la Escuela Superior de Cómputo del Instituto Politécnico
-                                Nacional, Abogadazo es una herramienta creada para brindar asesoría legal en materia de
+                                Nacional, Amicuz es una herramienta creada para brindar asesoría legal en materia de
                                 tránsito en la Ciudad de México. Somos un equipo comprometido con facilitar el acceso a
                                 la información pública para todos y la justicia por igual; esta página utiliza
                                 inteligencia artificial para facilitar la comprensión de los reglamentos, artículos,
@@ -136,7 +202,7 @@ const Home = () => {
                         <div className="tw-text-center">
                             <img
                                 src={infraccionimage}
-                                alt="Ilustración sobre Abogadazo"
+                                alt="Ilustración sobre Amicuz"
                                 className="tw-max-w-[90%] tw-h-auto tw-rounded-lg tw-border tw-border-rule tw-shadow-sm tw-inline-block"
                             />
                         </div>
@@ -156,7 +222,7 @@ const Home = () => {
                         </p>
                         <hr className="tw-border-rule tw-my-4" />
                         <p className="tw-font-semibold tw-text-ink tw-text-sm tw-mb-3">
-                            Documentos legales referentes al tránsito vehicular en la Ciudad de México:
+                            Documentos legales asociados al tránsito vehicular en la Ciudad de México:
                         </p>
                         <ul className="tw-list-none tw-p-0 tw-m-0 tw-flex tw-flex-col tw-gap-2">
                             {DOCUMENTOS.map((doc) => (

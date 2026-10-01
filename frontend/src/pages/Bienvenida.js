@@ -50,7 +50,7 @@ const Bienvenida = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1 }}
                 >
-                <h1 className="display-4">Bienvenido a Abogadazo</h1>
+                <h1 className="display-4">Bienvenido a Amicuz</h1>
                 <p className="lead mt-3">
                     Tu plataforma de confianza para resolver cualquier situación legal de tránsito.
                 </p>

@@ -9,7 +9,7 @@ export async function consultarAgente(placa) {
       }
     });
     if (!response.ok) {
-      throw new Error('El agente no está registrado en la Gaceta Oficial, puedes impugnar la multa ante el Tribunal de Justicia Administrativa de la CDMX.');
+      throw new Error('El agente no está registrado en la Gaceta Oficial, por lo tanto no esta facultado para imponer multas sobre vía pública. De ser necesario, puedes impugnar la multa ante el Tribunal de Justicia Administrativa de la CDMX.');
     }
     const agente = await response.json();
     return { success: true, agente };

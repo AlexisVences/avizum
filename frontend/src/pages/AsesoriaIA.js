@@ -197,7 +197,7 @@ const AsesoriaIA = () => {
 
                                                 <div>
                                                     <div className="tw-font-mono tw-text-[10px] tw-font-bold tw-tracking-wide tw-text-ink-soft tw-uppercase tw-mb-1.5">
-                                                        Abogadazo IA
+                                                        Amicuz IA
                                                     </div>
 
                                                     {item.respuesta === "Cargando..." ? (

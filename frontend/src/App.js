@@ -35,7 +35,7 @@ function App() {
             <Route path="/BienvenidaAdmin" element={<RutaProtegida> <BienvenidaAdmin /> </RutaProtegida>} />
             <Route path="/AdministrarUsuario" element={<RutaProtegida> <AdministrarUsuario /> </RutaProtegida>} />
             <Route path="/Estadisticas" element={ <Estadisticas /> } />
-            <Route path="/ConsultarAgenteTransito" element={<RutaProtegida> <ConsultarAgenteTransito /> </RutaProtegida>} />
+            <Route path="/ConsultarAgenteTransito" element={<ConsultarAgenteTransito />} />
           </Routes>
         </main>
       </div>

@@ -3,7 +3,7 @@ from datetime import datetime, time, timezone
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import func, select
 
-from app.api.deps import AdminUser, CurrentUser, DbSession
+from app.api.deps import AdminUser, CurrentUser, DbSession, OptionalUser
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.domain import AgentLookup, AuthorizedAgent, Consultation, Feedback, LegalResponse, User
 from app.schemas.api import (AdminUserUpdate, AgentPublic, FeedbackRequest, LegalConsultationRequest, LegalConsultationResponse, LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserPublic)
@@ -80,12 +80,12 @@ def manage_user(user_id: int, payload: AdminUserUpdate, _: AdminUser, db: DbSess
 
 
 @router.get("/agents/{plate}", response_model=AgentPublic)
-def lookup_agent(plate: str, user: CurrentUser, db: DbSession) -> AuthorizedAgent:
+def lookup_agent(plate: str, user: OptionalUser, db: DbSession) -> AuthorizedAgent:
     normalized = plate.strip().upper()
     agent = db.scalar(select(AuthorizedAgent).where(AuthorizedAgent.plate == normalized))
     if agent is None:
         raise HTTPException(status_code=404, detail="Authorized agent not found")
-    db.add(AgentLookup(user_id=user.id, agent_id=agent.id))
+    db.add(AgentLookup(user_id=user.id if user else None, agent_id=agent.id))
     db.commit()
     return agent
 
