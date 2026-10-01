@@ -33,7 +33,7 @@ Prerequisites: [uv](https://docs.astral.sh/uv/), Node.js 18+/npm, and Docker (fo
 | Service    | Command                                    | Port | URL                              |
 |------------|---------------------------------------------|------|-----------------------------------|
 | PostgreSQL | `docker compose up -d db`                   | 5432 | `localhost:5432`                  |
-| Backend    | `uv run uvicorn app.main:app --reload`      | 8000 | `http://localhost:8000/api/v1`    |
+| Backend    | `uv run uvicorn app.main:app --reload --host 0.0.0.0` | 8000 | `http://localhost:8000/api/v1`    |
 | Frontend   | `npm start`                                 | 3000 | `http://localhost:3000`           |
 
 1. **Database** — from the repo root, start Postgres in Docker:
@@ -51,10 +51,10 @@ Prerequisites: [uv](https://docs.astral.sh/uv/), Node.js 18+/npm, and Docker (fo
    # edit DATABASE_URL and JWT_SECRET_KEY if you changed the defaults above
    uv sync --group dev
    uv run alembic upgrade head
-   uv run uvicorn app.main:app --reload   # add --port to change from 8000
+   uv run uvicorn app.main:app --reload --host 0.0.0.0   # add --port to change from 8000
    ```
 
-   `--reload` gives you hot-reload on code changes, which is what you want for debugging. Interactive API docs are at `http://localhost:8000/docs`.
+   `--reload` gives you hot-reload on code changes, which is what you want for debugging. `--host 0.0.0.0` binds every interface, not just loopback — on WSL2 the default `127.0.0.1` is unreachable from a Windows browser, since WSL2's `localhost` forwarding proxies into the VM's real network interface rather than its loopback. Interactive API docs are at `http://localhost:8000/docs`.
 
    Run the test suite (also needs the `db` container up, or set `TEST_DATABASE_URL`):
 

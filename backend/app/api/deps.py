@@ -36,5 +36,23 @@ def admin_user(user: Annotated[User, Depends(current_user)]) -> User:
     return user
 
 
+def optional_user(
+    db: DbSession, credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)]
+) -> User | None:
+    if credentials is None:
+        return None
+    settings = get_settings()
+    try:
+        payload = jwt.decode(credentials.credentials, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+        user_id = int(payload["sub"])
+    except (jwt.PyJWTError, KeyError, TypeError, ValueError):
+        return None
+    user = db.get(User, user_id)
+    if user is None or not user.is_active:
+        return None
+    return user
+
+
 CurrentUser = Annotated[User, Depends(current_user)]
 AdminUser = Annotated[User, Depends(admin_user)]
+OptionalUser = Annotated[User | None, Depends(optional_user)]

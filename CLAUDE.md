@@ -35,7 +35,7 @@ Backend (run from `backend/`):
 cp .env.example .env                          # then edit DATABASE_URL and JWT_SECRET_KEY
 uv sync --group dev                           # install backend + test dependencies
 uv run alembic upgrade head                   # apply database migrations
-uv run uvicorn app.main:app --reload          # run API on http://localhost:8000
+uv run uvicorn app.main:app --reload --host 0.0.0.0  # run API on http://localhost:8000 (0.0.0.0 so WSL2 can reach it from Windows)
 uv run pytest                                 # run all tests
 uv run pytest tests/test_api.py::test_name    # run a single test
 uv run python -m scripts.promote_admin <email>  # bootstrap the first admin (after they register)
