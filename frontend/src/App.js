@@ -14,6 +14,7 @@ import BienvenidaAdmin from "./pages/BienvenidaAdmin"
 import AdministrarUsuario from "./pages/AdministrarUsuarios"
 import Estadisticas from "./pages/Estadisticas"
 import ConsultarAgenteTransito from "./pages/ConsultarAgenteTransito"
+import GuiaArticulo from "./pages/GuiaArticulo"
 import RutaProtegida from "./services/rutaProtegida";
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
             <Route path="/AdministrarUsuario" element={<RutaProtegida> <AdministrarUsuario /> </RutaProtegida>} />
             <Route path="/Estadisticas" element={ <Estadisticas /> } />
             <Route path="/ConsultarAgenteTransito" element={<ConsultarAgenteTransito />} />
+            <Route path="/guia/:categoriaSlug/:articuloSlug" element={<RutaProtegida> <GuiaArticulo /> </RutaProtegida>} />
           </Routes>
         </main>
       </div>
