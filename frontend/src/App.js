@@ -16,6 +16,7 @@ import Estadisticas from "./pages/Estadisticas"
 import ConsultarAgenteTransito from "./pages/ConsultarAgenteTransito"
 import GuiaArticulo from "./pages/GuiaArticulo"
 import GuiaCategoria from "./pages/GuiaCategoria"
+import GuiaCalculadora from "./pages/GuiaCalculadora"
 import RutaProtegida from "./services/rutaProtegida";
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
             <Route path="/AdministrarUsuario" element={<RutaProtegida> <AdministrarUsuario /> </RutaProtegida>} />
             <Route path="/Estadisticas" element={ <Estadisticas /> } />
             <Route path="/ConsultarAgenteTransito" element={<ConsultarAgenteTransito />} />
+            <Route path="/guia/calculadoras/:herramientaSlug" element={<RutaProtegida> <GuiaCalculadora /> </RutaProtegida>} />
             <Route path="/guia/:categoriaSlug/:articuloSlug" element={<RutaProtegida> <GuiaArticulo /> </RutaProtegida>} />
             <Route path="/guia/:categoriaSlug" element={<RutaProtegida> <GuiaCategoria /> </RutaProtegida>} />
           </Routes>
