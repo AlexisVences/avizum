@@ -25,3 +25,6 @@ venv/
 
 # Subagent-driven-development scratch workspace (ledgers, briefs, reports)
 .superpowers/
+
+# Claude Code isolated worktrees (EnterWorktree tool) — each is its own git checkout
+.claude/worktrees/
