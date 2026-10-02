@@ -56,16 +56,16 @@ Prerequisites: [uv](https://docs.astral.sh/uv/), Node.js 18+/npm, and Docker (fo
 
    `--reload` gives you hot-reload on code changes, which is what you want for debugging. `--host 0.0.0.0` binds every interface, not just loopback — on WSL2 the default `127.0.0.1` is unreachable from a Windows browser, since WSL2's `localhost` forwarding proxies into the VM's real network interface rather than its loopback. Interactive API docs are at `http://localhost:8000/docs`.
 
+   **Making an account admin.** Registration (`/Sing-in` in the frontend) always creates a `user`-role account — there is no self-service admin signup. To grant admin access to an already-registered account (unlocks `/AdministrarUsuario`, `/Estadisticas`, and the `/admin/*` endpoints), run:
+
+   ```bash
+   uv run python -m scripts.promote_admin <tu-correo@ejemplo.com>
+   ```
+
    Run the test suite (also needs the `db` container up, or set `TEST_DATABASE_URL`):
 
    ```bash
    uv run pytest
-   ```
-
-   After registering the first trusted user, a database operator can bootstrap administration explicitly:
-
-   ```bash
-   uv run python -m scripts.promote_admin <email>
    ```
 
    Load the authorized-agents CSV registry into the database (safe to re-run):
