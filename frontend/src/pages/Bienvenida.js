@@ -93,7 +93,7 @@ const Bienvenida = () => {
                     transition={{ duration: 0.6, delay: 0.2 }}
                     viewport={{ once: true }}
                 >
-                    <div className="tw-w-100 tw-h-100 tw-bg-paper-raised tw-border tw-border-rule tw-rounded-4 tw-shadow-lg tw-p-4 tw-flex tw-flex-col">
+                    <div className="tw-w-full tw-h-full tw-max-w-[330px] tw-mx-auto tw-bg-paper-raised tw-border tw-border-rule tw-rounded-2xl tw-shadow-lg tw-p-4 tw-flex tw-flex-col">
                         <span className="tw-font-mono tw-text-[11px] tw-font-bold tw-tracking-wide tw-text-magenta tw-mb-2">
                             02 · RECURSOS
                         </span>

@@ -16,4 +16,12 @@ describe('convertirUmaAPesos', () => {
     it('returns 0 for a zero quantity', () => {
         expect(convertirUmaAPesos(0, 108.57)).toBe(0);
     });
+
+    it('returns null for an empty quantity (nothing typed yet)', () => {
+        expect(convertirUmaAPesos('', 108.57)).toBeNull();
+    });
+
+    it('returns null for a negative quantity', () => {
+        expect(convertirUmaAPesos(-5, 108.57)).toBeNull();
+    });
 });
