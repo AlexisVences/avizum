@@ -1,39 +1,34 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import "../styles/Bienvenida.css";
 import fondoHome from "../assets/home.png";
 import ConsultaLegal from "../assets/ConsultaLegal.png";
 // import multa from "../assets/multa.jpg";
-import documentos from "../assets/documentos.png";
 import agentes from "../assets/agentes.jpg";
 import NavBar2 from "../components/NavBar2";
 import Footer from "../components/Footer";
+import { buscarEnGuia } from "../services/guiaService";
+import BuscadorGuia from "../components/guia/BuscadorGuia";
+import FiltroChips from "../components/guia/FiltroChips";
+import CategoriaCard from "../components/guia/CategoriaCard";
 
 // import { consultarAgente } from '../services/agentesService';
 
+const BLOQUES = ["Todo", "Leyes y derechos", "Multas y sanciones", "Tu auto", "En el camino", "Herramientas"];
+
 const Bienvenida = () => {
-    const agentesRef = useRef(null);
-    const documentosRef = useRef(null);
+    const guiaRef = useRef(null);
+    const [busqueda, setBusqueda] = useState('');
+    const [bloqueActivo, setBloqueActivo] = useState('Todo');
     // const [placaBusqueda, setPlacaBusqueda] = useState('');
     // const [agenteEncontrado, setAgenteEncontrado] = useState(null);
     // const [errorBusqueda, setErrorBusqueda] = useState(null);
     // const [cargando, setCargando] = useState(false);
 
-    const servicios = [
-        { img: ConsultaLegal, title: "Asesoría legal gratuita" },
-        // { img: multa, title: "Consulta de multas" },
-        { img: documentos, title: "Guías y recursos legales" },
-        { img: agentes, title: "Consultar agentes facultados" },
-    ];
-
-    const handleCardClick = (title) => {
-        if (title.includes("agentes") && agentesRef.current) {
-        agentesRef.current.scrollIntoView({ behavior: "smooth" });
-        } else if (title.includes("Guías") && documentosRef.current) {
-        documentosRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-    };
+    const categoriasVisibles = buscarEnGuia(busqueda).filter(
+        (categoria) => bloqueActivo === 'Todo' || categoria.bloque === bloqueActivo
+    );
 
     return (
         <>
@@ -72,54 +67,68 @@ const Bienvenida = () => {
             {/* Índice de servicios */}
             <div className="container servicios-grid py-4">
             <div className="row g-4">
-            {servicios.map((item, index) => {
-                const isAsesoria = item.title === "Asesoría legal gratuita";
-                const isAgentes = item.title === "Consultar agentes facultados";
-
-                const cardContent = (
-                    <div className="card servicio-card text-white text-center border-0 rounded-4 overflow-hidden shadow-lg h-100">
-                    <div className="card-img-wrapper">
-                        <img
-                        src={item.img}
-                        className="card-img-top img-fluid"
-                        alt={item.title}
-                        />
-                    </div>
-                    <div className="card-body bg-dark bg-opacity-75">
-                        <h5 className="card-title fw-bold mb-0">{item.title}</h5>
-                    </div>
-                    </div>
-                );
-
-                return (
-                    <motion.div
-                    key={index}
+                <motion.div
                     className="col-12 col-md-4 d-flex justify-content-center align-items-center"
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.2 }}
+                    transition={{ duration: 0.6, delay: 0 }}
                     viewport={{ once: true }}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => {
-                        if (!isAsesoria && !isAgentes) handleCardClick(item.title);
-                    }}
-                    >
-                    {isAsesoria ? (
-                        <Link to="/asesoria-ia" className="text-decoration-none text-white w-100">
-                        {cardContent}
-                        </Link>
-                    ) : isAgentes ? (
-                        <Link to="/ConsultarAgenteTransito" className="text-decoration-none text-white w-100">
-                        {cardContent}
-                        </Link>
-                    ) : (
-                        cardContent
-                    )}
-                    </motion.div>
-                );
-                })}
+                >
+                    <Link to="/asesoria-ia" className="text-decoration-none text-white w-100">
+                        <div className="card servicio-card text-white text-center border-0 rounded-4 overflow-hidden shadow-lg h-100">
+                            <div className="card-img-wrapper">
+                                <img src={ConsultaLegal} className="card-img-top img-fluid" alt="Asesoría legal gratuita" />
+                            </div>
+                            <div className="card-body bg-dark bg-opacity-75">
+                                <h5 className="card-title fw-bold mb-0">Asesoría legal gratuita</h5>
+                            </div>
+                        </div>
+                    </Link>
+                </motion.div>
 
+                <motion.div
+                    className="col-12 col-md-4 d-flex justify-content-center align-items-center"
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    viewport={{ once: true }}
+                >
+                    <div className="tw-w-100 tw-h-100 tw-bg-paper-raised tw-border tw-border-rule tw-rounded-4 tw-shadow-lg tw-p-4 tw-flex tw-flex-col">
+                        <span className="tw-font-mono tw-text-[11px] tw-font-bold tw-tracking-wide tw-text-magenta tw-mb-2">
+                            02 · RECURSOS
+                        </span>
+                        <h5 className="tw-font-sans tw-font-bold tw-text-ink tw-mb-2">Guía del conductor</h5>
+                        <p className="tw-text-ink-soft tw-text-sm tw-flex-1">
+                            Leyes, trámites, multas y consejos para manejar, comprar y cuidar tu auto en la CDMX.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => guiaRef.current && guiaRef.current.scrollIntoView({ behavior: 'smooth' })}
+                            className="tw-self-start tw-bg-ink tw-text-white tw-font-semibold tw-text-sm tw-rounded tw-px-4 tw-py-2 tw-border-0 hover:tw-bg-ink/90"
+                        >
+                            Explorar →
+                        </button>
+                    </div>
+                </motion.div>
 
+                <motion.div
+                    className="col-12 col-md-4 d-flex justify-content-center align-items-center"
+                    initial={{ opacity: 0, y: 50 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    viewport={{ once: true }}
+                >
+                    <Link to="/ConsultarAgenteTransito" className="text-decoration-none text-white w-100">
+                        <div className="card servicio-card text-white text-center border-0 rounded-4 overflow-hidden shadow-lg h-100">
+                            <div className="card-img-wrapper">
+                                <img src={agentes} className="card-img-top img-fluid" alt="Consultar agentes facultados" />
+                            </div>
+                            <div className="card-body bg-dark bg-opacity-75">
+                                <h5 className="card-title fw-bold mb-0">Consultar agentes facultados</h5>
+                            </div>
+                        </div>
+                    </Link>
+                </motion.div>
             </div>
             </div>
 
@@ -178,42 +187,42 @@ const Bienvenida = () => {
             </div>
             </div>*/}
 
-            {/* Sección de Documentos legales */}
-            <div ref={documentosRef} className="container py-5">
-            <hr className="my-5 border border-dark border-2 opacity-75" />
-            <h3 className="fw-bold text-center mb-3">
-                Documentos legales que rigen el tránsito en la Ciudad de México
-            </h3>
-            <p className="text-center text-muted fw-light mb-4">
-                Estos documentos constituyen el marco jurídico bajo el cual operan tanto ciudadanos como autoridades en materia de tránsito en la capital. Consultarlos garantiza el conocimiento de tus derechos y obligaciones viales.
-            </p>
-            <ul className="list-group list-group-flush text-center">
-                <li className="list-group-item">
-                <a href="https://data.consejeria.cdmx.gob.mx/images/leyes/reglamentos/REGLAMENTO_DE_TRANSITO_DE_LA_CIUDAD_DE_MEXICO_6.1.pdf" target="_blank" rel="noopener noreferrer">
-                    Reglamento de Tránsito de la CDMX
-                </a>
-                </li>
-                <li className="list-group-item">
-                <a href="https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf" target="_blank" rel="noopener noreferrer">
-                    Ley de Movilidad de la CDMX
-                </a>
-                </li>
-                <li className="list-group-item">
-                <a href="https://www.congresocdmx.gob.mx/media/documentos/49a0a80ee030f12d0f797c671da2918e508f30cb.pdf" target="_blank" rel="noopener noreferrer">
-                    Ley de Cultura Cívica en la CDMX
-                </a>
-                </li>
-                <li className="list-group-item">
-                <a href="https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf" target="_blank" rel="noopener noreferrer">
-                    Ley de Procedimiento Administrativo en la CDMX
-                </a>
-                </li>
-                <li className="list-group-item">
-                <a href="https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuedo-40-2024.pdf" target="_blank" rel="noopener noreferrer">
-                    Lista de agentes facultados para infraccionar sobre vía pública en la CDMX
-                </a>
-                </li>
-            </ul>
+            {/* Guía del conductor */}
+            <div id="guia" ref={guiaRef} className="container py-5">
+                <hr className="my-5 border border-dark border-2 opacity-75" />
+                <div className="tw-max-w-3xl tw-mx-auto tw-text-center tw-mb-8">
+                    <span className="tw-block tw-font-mono tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-widest tw-text-magenta tw-mb-3">
+                        02 · RECURSOS
+                    </span>
+                    <h2 className="tw-font-display tw-text-3xl tw-font-semibold tw-text-ink tw-mb-3">
+                        Guía del conductor <span className="tw-text-magenta">en la CDMX</span>
+                    </h2>
+                    <p className="tw-text-ink-soft">
+                        Leyes, trámites, multas y consejos para manejar, comprar y cuidar tu auto — organizado por tema, para que encuentres justo lo que necesitas.
+                    </p>
+                </div>
+
+                <div className="tw-max-w-3xl tw-mx-auto tw-mb-6">
+                    <BuscadorGuia value={busqueda} onChange={setBusqueda} />
+                </div>
+
+                <div className="tw-max-w-3xl tw-mx-auto tw-mb-8">
+                    <FiltroChips bloques={BLOQUES} activo={bloqueActivo} onSelect={setBloqueActivo} />
+                </div>
+
+                <div className="tw-max-w-5xl tw-mx-auto">
+                    {categoriasVisibles.length === 0 ? (
+                        <p className="tw-text-center tw-text-ink-soft">
+                            No encontramos categorías que coincidan con tu búsqueda.
+                        </p>
+                    ) : (
+                        <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 md:tw-grid-cols-3 tw-gap-4">
+                            {categoriasVisibles.map((categoria) => (
+                                <CategoriaCard key={categoria.slug} categoria={categoria} />
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
         <Footer />
