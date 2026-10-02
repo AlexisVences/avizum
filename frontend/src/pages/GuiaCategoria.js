@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import NavBar2 from '../components/NavBar2';
 import Footer from '../components/Footer';
 import { getCategoriaPorSlug, getArticulosPorCategoria, getHerramientas } from '../services/guiaService';
+import ArticuloContenido from '../components/guia/ArticuloContenido';
 
 const GuiaCategoria = () => {
     const { categoriaSlug } = useParams();
@@ -30,6 +31,22 @@ const GuiaCategoria = () => {
 
     const esCalculadoras = categoria.slug === 'calculadoras';
     const items = esCalculadoras ? getHerramientas() : getArticulosPorCategoria(categoriaSlug);
+
+    // Con un solo artículo, listar-para-hacer-clic-en-lo-único-que-hay es un
+    // salto innecesario: se muestra el contenido aquí mismo. Con 2+ artículos
+    // (o en la categoría de calculadoras, que no son artículos) sí hace falta
+    // la lista de abajo.
+    if (!esCalculadoras && items.length === 1) {
+        return (
+            <>
+                <NavBar2 />
+                <main className="tw-pt-16">
+                    <ArticuloContenido categoria={categoria} articulo={items[0]} />
+                </main>
+                <Footer />
+            </>
+        );
+    }
 
     return (
         <>
