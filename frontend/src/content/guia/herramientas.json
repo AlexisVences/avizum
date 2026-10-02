@@ -1,0 +1,4 @@
+[
+  { "id": "uma-a-pesos", "slug": "uma-a-pesos", "titulo": "UMA → pesos", "descripcion": "Convierte un monto en UMA a pesos mexicanos.", "published": false },
+  { "id": "cuando-verifico", "slug": "cuando-verifico", "titulo": "¿Cuándo verifico?", "descripcion": "Encuentra tu periodo de verificación según el último dígito de tu placa.", "published": false }
+]
