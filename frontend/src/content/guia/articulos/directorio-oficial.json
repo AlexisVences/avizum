@@ -1,0 +1,83 @@
+{
+  "titulo": "Directorio oficial",
+  "categoria": "directorio-oficial",
+  "slug": "directorio-oficial",
+  "resumen": "Teléfonos, direcciones y sitios oficiales de las dependencias que más vas a necesitar.",
+  "tipo": "directorio",
+  "directorio": [
+    {
+      "nombre": "SEMOVI — Secretaría de Movilidad",
+      "direccion": "Av. Álvaro Obregón 269, Col. Roma Norte, Alcaldía Cuauhtémoc, C.P. 06700, CDMX",
+      "telefono": "LOCATEL 55 5658 1111 (trámites, servicios y orientación; lunes a viernes, 24 h)",
+      "sitio": "https://www.semovi.cdmx.gob.mx"
+    },
+    {
+      "nombre": "SEMOVI — Citas en línea",
+      "direccion": "Requiere cuenta LlaveCDMX",
+      "sitio": "https://app.semovi.cdmx.gob.mx/citas/"
+    },
+    {
+      "nombre": "SEDEMA — Verificación vehicular",
+      "telefono": "LOCATEL 55 5658 1111 (línea de captura de la multa por verificación extemporánea)",
+      "sitio": "https://sedema.cdmx.gob.mx/programas/programa/verificacion-vehicular"
+    },
+    {
+      "nombre": "SSC — Dirección General de Asuntos Internos (denuncias contra policías)",
+      "direccion": "Calle Liverpool 136, Col. Juárez, Alcaldía Cuauhtémoc, C.P. 06600, CDMX",
+      "telefono": "55 5208 9898 (24 horas, los 365 días)",
+      "sitio": "https://www.ssc.cdmx.gob.mx/organizacion-policial/direcciones-generales/direccion-general-de-asuntos-internos"
+    },
+    {
+      "nombre": "Portal de infracciones de la CDMX (consulta de boletas y cumplimiento de sanciones)",
+      "sitio": "https://www.tramites.cdmx.gob.mx/infracciones/"
+    },
+    {
+      "nombre": "Tribunal de Justicia Administrativa de la CDMX — Atención ciudadana / Auxilio jurídico",
+      "direccion": "Av. Coyoacán 1153, piso 2, Col. Del Valle Centro, Alcaldía Benito Juárez, C.P. 03100, CDMX. Horario: 9:00 a 15:00",
+      "telefono": "(55) 5002 0100 ext. 1172 o 3272",
+      "sitio": "https://www.tjacdmx.gob.mx/"
+    },
+    {
+      "nombre": "Tribunal de Justicia Administrativa de la CDMX — Oficialía de Partes",
+      "direccion": "Av. Insurgentes Sur 825, planta baja, Col. Nápoles, Alcaldía Benito Juárez, C.P. 03810, CDMX. Horario: 9:00 a 20:00",
+      "telefono": "(55) 5002 0103 ext. 1101 o 1103",
+      "sitio": "https://www.tjacdmx.gob.mx/index.php/contactanos"
+    },
+    {
+      "nombre": "Profeco — Teléfono del Consumidor",
+      "telefono": "CDMX: 55 5568 8722 · Resto del país: 800 468 8722 (lunes a viernes 9:00 a 19:00; fines de semana y festivos 10:00 a 18:00)",
+      "sitio": "https://www.gob.mx/profeco"
+    }
+  ],
+  "fuentes": [
+    {
+      "nombre": "SEMOVI CDMX — Contacto",
+      "url": "https://www.semovi.cdmx.gob.mx/contacto"
+    },
+    {
+      "nombre": "Tribunal de Justicia Administrativa de la CDMX — Contáctanos",
+      "url": "https://www.tjacdmx.gob.mx/index.php/contactanos"
+    },
+    {
+      "nombre": "SSC CDMX — Dirección General de Asuntos Internos",
+      "url": "https://www.ssc.cdmx.gob.mx/organizacion-policial/direcciones-generales/direccion-general-de-asuntos-internos"
+    },
+    {
+      "nombre": "Profeco — Medios de contacto",
+      "url": "https://www.gob.mx/profeco/prensa/profeco-recuerda-a-las-y-los-asistentes-al-mundial-sus-medios-de-contacto"
+    }
+  ],
+  "actualizado": "2026-10",
+  "keywords": [
+    "directorio",
+    "teléfonos",
+    "contacto",
+    "semovi",
+    "sedema",
+    "profeco",
+    "tribunal",
+    "asuntos internos",
+    "locatel"
+  ],
+  "published": true
+}
