@@ -1,0 +1,15 @@
+{
+  "titulo": "Comprar un auto usado",
+  "categoria": "comprar-auto-usado",
+  "slug": "comprar-auto-usado",
+  "resumen": "Qué revisar antes de pagar y cómo hacer el cambio de propietario en la CDMX.",
+  "tipo": "prosa",
+  "cuerpo": "ANTES DE PAGAR\n\n1. Consulta adeudos. La herramienta oficial de SEMOVI para compradores de vehículos usados con placas de la CDMX revisa infracciones económicas, sanciones cívicas o ambientales, adeudos de tenencia, vigencia de la tarjeta de circulación y seguro vigente. Solo aplica a vehículos de uso particular.\n\n2. Revisa que no tenga reporte de robo. La herramienta de SEMOVI no lo verifica; el propio sitio recomienda consultar por separado REPUVE, OCRA México o Compra Segura de la FGJCDMX.\n\n3. Exige el comprobante de propiedad: la factura original o, si el vendedor no fue el primer dueño, factura digital con contrato de compraventa o factura no digital endosada.\n\n4. Confirma que no haya adeudos de tenencia, incluido el ejercicio fiscal actual: con adeudos, el trámite no procede.\n\nCAMBIO DE PROPIETARIO EN CDMX (PERSONAS FÍSICAS)\n\nPlazo: el nuevo propietario tiene 15 días hábiles para hacer el trámite; si no lo hace, pueden generarse responsabilidades jurídicas y fiscales para el vendedor.\n\nCita: se solicita en el Sistema de Citas en Línea de SEMOVI y requiere cuenta LlaveCDMX. La cita la debe generar la persona que acudirá al módulo.\n\nDocumentos (originales, vigentes y legibles):\n• Identificación oficial con fotografía.\n• Comprobante de domicilio de la CDMX, o credencial para votar con domicilio actual completo.\n• Comprobante de propiedad (ver punto 3).\n• No tener adeudos de tenencia (incluye el ejercicio fiscal actual).\n• Tarjeta de circulación vigente, o acta circunstanciada ante Juzgado Cívico si se perdió o fue robada.\n• Línea de captura pagada (original y copia).\n\nCosto: $433.00 MXN (clave 36-7), según SEMOVI al 2026-10. Confirma el monto vigente antes de pagar.\n\nEste artículo es informativo y no sustituye asesoría legal.",
+  "fuentes": [
+    { "nombre": "SEMOVI CDMX — Cambio de propietario o domicilio", "url": "https://www.semovi.cdmx.gob.mx/tramites-y-servicios/vehiculos-particulares/automovil-hibrido/cambio-de-propietario" },
+    { "nombre": "SEMOVI CDMX — Consulta de obligaciones y adeudos para compra de vehículos usados", "url": "https://www.adeudos.semovi.cdmx.gob.mx/" }
+  ],
+  "actualizado": "2026-10",
+  "keywords": ["auto usado", "comprar coche", "cambio de propietario", "REPUVE", "adeudos", "tenencia", "factura", "robo"],
+  "published": true
+}
