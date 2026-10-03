@@ -1,0 +1,28 @@
+{
+  "titulo": "Alcoholímetro",
+  "categoria": "alcoholimetro",
+  "slug": "alcoholimetro",
+  "resumen": "Límites legales, cómo es el operativo y qué sanciones prevé el Reglamento.",
+  "tipo": "prosa",
+  "cuerpo": "LÍMITES LEGALES (ART. 50)\n\nEstá prohibido conducir con más de 0.8 gramos de alcohol por litro de sangre o más de 0.4 miligramos por litro de aire espirado, o bajo el influjo de narcóticos, estupefacientes o psicotrópicos.\n\nPara conductores de transporte público de pasajeros, transporte escolar o de personal, vehículos de emergencia, transporte de carga o de sustancias tóxicas o peligrosas el límite es cero: no deben presentar ninguna cantidad de alcohol, ni síntomas simples de aliento alcohólico.\n\nSi el agente te lo solicita por cometer una infracción o por mostrar síntomas, estás obligado a someterte a las pruebas de detección.\n\nCÓMO ES EL OPERATIVO EN PUNTOS DE REVISIÓN (ART. 51)\n\n1. Te encauzan al carril confinado y te hacen una entrevista breve para saber si has ingerido alcohol.\n2. Te pueden pedir licencia (física o digital), tarjeta de circulación y póliza de seguro vigente. Si falta alguno, el agente autorizado levanta la infracción correspondiente.\n3. Si no muestras signos de haber bebido, sigues tu camino.\n4. Si muestras signos, personal técnico de Seguridad Ciudadana te practica la prueba con aparatos autorizados.\n5. Si no rebasas los límites del art. 50 y tu vehículo tiene matrícula de la CDMX, sigues tu camino.\n6. Si los rebasas, el personal técnico llena y firma contigo el «Formato de control y cadena de custodia para prueba de detección de alcohol en aire espirado» (foliado), y te entrega copia de la tirilla de resultados. Si te niegas a firmar o no sabes hacerlo, hacen prueba plena dos testigos de asistencia.\n7. Te presentan ante el Juez Cívico.\n\nTambién pueden detenerte en cualquier vía si manejas de forma errática (arts. 51 fr. II y 52): el agente se identifica con nombre y número de placa, te entrevista y, si muestras signos, te remite al Juzgado Cívico, donde el médico certifica tu estado.\n\nSANCIONES (ART. 50)\n\nSi se certifica que rebasas el límite o estás en estado de ebriedad o intoxicado:\n• Arresto administrativo inconmutable de 20 a 36 horas.\n• 6 puntos de penalización a la licencia.\n• El vehículo se remite al depósito (salvo los casos del art. 68).\n• Se aplica sin perjuicio de lo que establezcan otras leyes.\n\nPara recuperar el vehículo debes acreditar el cumplimiento total de la sanción, pagar los derechos de arrastre y almacenaje y cumplir los requisitos del art. 67 (ver «Tu auto en el corralón»).\n\nSi el conductor no es el propietario y no cumple su sanción en los 30 días posteriores, el propietario debe pagar una multa de 60 UMA ($7,038.60 con la UMA 2026) para que le entreguen el vehículo.\n\nSi el conductor se resiste al arrastre o se niega a salir del vehículo, se le presenta ante el Juez Cívico (art. 67).\n\nEste artículo es informativo y no sustituye asesoría legal. Basado en el Reglamento de Tránsito de la CDMX (última reforma indicada en el texto consultado: 26 de noviembre de 2024).",
+  "fuentes": [
+    {
+      "nombre": "Reglamento de Tránsito de la CDMX, arts. 50–52 y 67 (Consejería Jurídica CDMX)",
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/reglamentos/REGLAMENTO_DE_TRANSITO_DE_LA_CIUDAD_DE_MEXICO_6.1.pdf"
+    }
+  ],
+  "actualizado": "2026-10",
+  "keywords": [
+    "alcoholímetro",
+    "alcohol",
+    "ebriedad",
+    "aire espirado",
+    "arresto",
+    "juez cívico",
+    "operativo",
+    "límite",
+    "0.4",
+    "0.8"
+  ],
+  "published": true
+}
