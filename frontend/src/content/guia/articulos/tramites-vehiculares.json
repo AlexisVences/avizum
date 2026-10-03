@@ -4,13 +4,31 @@
   "slug": "tramites-vehiculares",
   "resumen": "Refrendo, reposición de tarjeta de circulación y cambio de propietario en la CDMX: requisitos y costos oficiales.",
   "tipo": "prosa",
-  "cuerpo": "SEMOVI agrupa los trámites de control vehicular de autos particulares en: cambio de propietario o domicilio, refrendo de tarjeta de circulación, reposición de tarjeta de circulación, tarjeta de circulación digital y cambio de motor. Aquí los más comunes.\n\nREFRENDO DE TARJETA DE CIRCULACIÓN\n\n• Es la renovación de la vigencia de la tarjeta de circulación. Se hace en el portal oficial de trámites de la CDMX, con tu cuenta LlaveCDMX.\n• Cuándo: cuando la tarjeta está vencida o falta un mes para su vencimiento.\n• Requisitos: CURP o RFC del registro de la tarjeta y no tener adeudos de tenencia.\n• Resultado: actualización digital y comprobante de la extensión a tres años de la tarjeta.\n• Costo: $375 para automóviles (según el portal oficial, 2026-10).\n\nREPOSICIÓN O RENOVACIÓN DE TARJETA DE CIRCULACIÓN (EXTRAVÍO, ROBO O DETERIORO)\n\nSegún la ficha de SEMOVI:\n• Identificación oficial con fotografía (original y copia).\n• Comprobante de domicilio de la CDMX de máximo tres meses (original y copia).\n• Comprobante de pago de tenencias o refrendos del ejercicio actual y 5 anteriores, de acuerdo con el año de facturación del vehículo (6 en total).\n• Comprobante de propiedad, la tarjeta de circulación (si la conservas) y el comprobante de pago de derechos.\n• Costo: $358.00 (clave 36-15).\n• El pago se hace con el Formato Múltiple de Pago; deja pasar 72 horas para que se refleje en el sistema.\n\nCAMBIO DE PROPIETARIO\n\nLos requisitos, el plazo de 15 días hábiles y el costo ($433.00) están en el artículo «Comprar un auto usado».\n\nALTA DE PLACAS\n\nVer «Comprar un auto nuevo».\n\nIMPORTANTE SOBRE LOS COSTOS\n\nLos montos pueden cambiar y las páginas oficiales de SEMOVI y Finanzas no siempre coinciden entre sí (por ejemplo, según el tipo de vehículo o modalidad). Confirma el costo vigente en la ficha oficial de tu trámite antes de pagar.\n\nEste artículo es informativo y no sustituye asesoría legal.",
+  "cuerpo": "SEMOVI agrupa los trámites de control vehicular de autos particulares en: cambio de propietario o domicilio, refrendo de tarjeta de circulación, reposición de tarjeta de circulación, tarjeta de circulación digital y cambio de motor. Aquí los más comunes.\n\nREFRENDO DE TARJETA DE CIRCULACIÓN\n\n• Es la renovación de la vigencia de la tarjeta de circulación. Se hace en el portal oficial de trámites de la CDMX, con tu cuenta LlaveCDMX.\n• Cuándo: cuando la tarjeta está vencida o falta un mes para su vencimiento.\n• Requisitos: CURP o RFC del registro de la tarjeta y no tener adeudos de tenencia.\n• Resultado: actualización digital y comprobante de la extensión a tres años de la tarjeta.\n• Costo: $375 para automóviles (según el portal oficial, 2026-10).\n\nREPOSICIÓN O RENOVACIÓN DE TARJETA DE CIRCULACIÓN (EXTRAVÍO, ROBO O DETERIORO)\n\nSegún la ficha de SEMOVI:\n• Identificación oficial con fotografía (original y copia).\n• Comprobante de domicilio de la CDMX de máximo tres meses (original y copia).\n• Comprobante de pago de tenencias o refrendos del ejercicio actual y 5 anteriores, de acuerdo con el año de facturación del vehículo (6 en total).\n• Comprobante de propiedad, la tarjeta de circulación (si la conservas) y el comprobante de pago de derechos.\n• Costo: $358.00 (clave 36-15).\n• El pago se hace con el Formato Múltiple de Pago; deja pasar 72 horas para que se refleje en el sistema.\n\nCAMBIO DE PROPIETARIO\n\nLos requisitos, el plazo de 15 días hábiles y el costo ($433.00) están en [Comprar y vender tu auto](/guia/comprar-y-vender-auto).\n\nALTA DE PLACAS\n\nVer [Comprar y vender tu auto](/guia/comprar-y-vender-auto).\n\nIMPORTANTE SOBRE LOS COSTOS\n\nLos montos pueden cambiar y las páginas oficiales de SEMOVI y Finanzas no siempre coinciden entre sí (por ejemplo, según el tipo de vehículo o modalidad). Confirma el costo vigente en la ficha oficial de tu trámite antes de pagar.\n\nEste artículo es informativo y no sustituye asesoría legal.",
   "fuentes": [
-    { "nombre": "SEMOVI CDMX — Control vehicular y tarjeta de circulación", "url": "https://www.semovi.cdmx.gob.mx/tramites-y-servicios/vehiculos-particulares/automovil/control-vehicular-y-tarjeta-de-circulacion" },
-    { "nombre": "CDMX — Refrendo de tarjeta de circulación (portal oficial)", "url": "https://tramites.cdmx.gob.mx/tarjeta-circulacion/public/" },
-    { "nombre": "SEMOVI CDMX — Renovación o reposición de tarjeta de circulación", "url": "https://www.semovi.cdmx.gob.mx/tramites-y-servicios/vehiculos-particulares/vehiculo-antiguo/renovacion-o-reposicion-de-tarjeta-de-circulacion" }
+    {
+      "nombre": "SEMOVI CDMX — Control vehicular y tarjeta de circulación",
+      "url": "https://www.semovi.cdmx.gob.mx/tramites-y-servicios/vehiculos-particulares/automovil/control-vehicular-y-tarjeta-de-circulacion"
+    },
+    {
+      "nombre": "CDMX — Refrendo de tarjeta de circulación (portal oficial)",
+      "url": "https://tramites.cdmx.gob.mx/tarjeta-circulacion/public/"
+    },
+    {
+      "nombre": "SEMOVI CDMX — Renovación o reposición de tarjeta de circulación",
+      "url": "https://www.semovi.cdmx.gob.mx/tramites-y-servicios/vehiculos-particulares/vehiculo-antiguo/renovacion-o-reposicion-de-tarjeta-de-circulacion"
+    }
   ],
   "actualizado": "2026-10",
-  "keywords": ["trámites vehiculares", "refrendo", "tarjeta de circulación", "reposición", "duplicado", "emplacamiento", "cambio de propietario", "costos"],
+  "keywords": [
+    "trámites vehiculares",
+    "refrendo",
+    "tarjeta de circulación",
+    "reposición",
+    "duplicado",
+    "emplacamiento",
+    "cambio de propietario",
+    "costos"
+  ],
   "published": true
 }

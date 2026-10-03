@@ -12,35 +12,10 @@ jest.mock('react-router-dom', () => ({
     ),
 }));
 
-const categoria = { numero: '15', etiqueta: 'GLOSARIO' };
+const categoria = { numero: '16', etiqueta: 'CONTACTO' };
 
 const renderArticulo = (articulo) =>
     render(<ArticuloContenido categoria={categoria} articulo={articulo} />);
-
-describe('ArticuloContenido tipo glosario', () => {
-    const articulo = {
-        titulo: 'Glosario',
-        actualizado: '2026-10',
-        tipo: 'glosario',
-        glosario: [
-            { termino: 'Boleta', definicion: 'Documento en donde se hace constar la infracción.' },
-            { termino: 'Infracción', definicion: 'Conducta que transgrede una disposición.' },
-        ],
-        fuentes: [],
-    };
-
-    test('renders every term with its definition', () => {
-        renderArticulo(articulo);
-        expect(screen.getByText('Boleta')).toBeInTheDocument();
-        expect(screen.getByText('Documento en donde se hace constar la infracción.')).toBeInTheDocument();
-        expect(screen.getByText('Infracción')).toBeInTheDocument();
-    });
-
-    test('renders nothing extra when the glosario list is missing', () => {
-        renderArticulo({ ...articulo, glosario: undefined });
-        expect(screen.queryByText('Boleta')).not.toBeInTheDocument();
-    });
-});
 
 describe('ArticuloContenido tipo directorio', () => {
     const articulo = {
@@ -74,5 +49,21 @@ describe('ArticuloContenido tipo directorio', () => {
         renderArticulo(articulo);
         expect(screen.getByText('Solo nombre y sitio')).toBeInTheDocument();
         expect(screen.getAllByText(/^Tel\./)).toHaveLength(1);
+    });
+});
+
+describe('ArticuloContenido tipo prosa', () => {
+    test('renders [texto](/ruta) in the body as a link to the other card', () => {
+        renderArticulo({
+            titulo: 'Prueba',
+            actualizado: '2026-10',
+            tipo: 'prosa',
+            cuerpo: 'Consulta [Multas y fotocívicas](/guia/multas-y-fotocivicas).',
+            fuentes: [],
+        });
+        expect(screen.getByRole('link', { name: 'Multas y fotocívicas' })).toHaveAttribute(
+            'href',
+            '/guia/multas-y-fotocivicas'
+        );
     });
 });

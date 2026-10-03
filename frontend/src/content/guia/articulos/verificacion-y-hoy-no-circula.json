@@ -4,12 +4,27 @@
   "slug": "verificacion-y-hoy-no-circula",
   "resumen": "Quién debe verificar, qué vehículos están exentos y cuánto cuesta verificar tarde.",
   "tipo": "prosa",
-  "cuerpo": "QUÉ ES\n\nEl Programa de Verificación Vehicular es de observancia obligatoria para los propietarios o legales poseedores de vehículos de combustión interna matriculados en la Ciudad de México. Se verifica cada semestre según el último dígito de la placa y el color del engomado. Para saber tu periodo usa la calculadora «¿Cuándo verifico?» de esta guía.\n\nQUIÉN ESTÁ EXENTO DE VERIFICAR\n\nSEDEMA lista como excluidos: tractores agrícolas, maquinaria de construcción y minería, motocicletas, vehículos de 400 kg de peso bruto o menos, vehículos eléctricos, híbridos (incluidos enchufables), vehículos antiguos o clásicos, placas de demostración o traslado, y vehículos cuya tecnología impide aplicar la norma oficial.\n\nCUÁNTO CUESTA\n\n• Verificación: 5.625 veces la UMA vigente más IVA. Con la UMA 2026 ($117.31) son aproximadamente $765 MXN.\n• Verificación extemporánea (fuera de tu periodo): multa de 20 veces la UMA vigente. Con la UMA 2026 son $2,346.20 MXN. Puedes calcularlo con la calculadora «UMA → pesos».\n\nHOLOGRAMA Y HOY NO CIRCULA\n\nEl holograma que obtienes al verificar determina si tu auto está sujeto a las restricciones del Programa Hoy No Circula. Con holograma «00» (desempeño ambiental superior) quedas exento de las restricciones de Hoy No Circula por 2 años. Para los hologramas «0», «1» y «2», las restricciones y su duración dependen del programa vigente: consulta la página oficial de SEDEMA.\n\nEste artículo es informativo y no sustituye asesoría legal. Los montos se calculan con la UMA vigente al 2026-10.",
+  "cuerpo": "QUÉ ES\n\nEl Programa de Verificación Vehicular es de observancia obligatoria para los propietarios o legales poseedores de vehículos de combustión interna matriculados en la Ciudad de México. Se verifica cada semestre según el último dígito de la placa y el color del engomado. Para saber tu periodo usa la calculadora [¿Cuándo verifico?](/guia/calculadoras/cuando-verifico) de esta guía.\n\nQUIÉN ESTÁ EXENTO DE VERIFICAR\n\nSEDEMA lista como excluidos: tractores agrícolas, maquinaria de construcción y minería, motocicletas, vehículos de 400 kg de peso bruto o menos, vehículos eléctricos, híbridos (incluidos enchufables), vehículos antiguos o clásicos, placas de demostración o traslado, y vehículos cuya tecnología impide aplicar la norma oficial.\n\nCUÁNTO CUESTA\n\n• Verificación: 5.625 veces la UMA vigente más IVA. Con la UMA 2026 ($117.31) son aproximadamente $765 MXN.\n• Verificación extemporánea (fuera de tu periodo): multa de 20 veces la UMA vigente. Con la UMA 2026 son $2,346.20 MXN. Puedes calcularlo con la calculadora [UMA → pesos](/guia/calculadoras/uma-a-pesos).\n\nHOLOGRAMA Y HOY NO CIRCULA\n\nEl holograma que obtienes al verificar determina si tu auto está sujeto a las restricciones del Programa Hoy No Circula. Con holograma «00» (desempeño ambiental superior) quedas exento de las restricciones de Hoy No Circula por 2 años. Para los hologramas «0», «1» y «2», las restricciones y su duración dependen del programa vigente: consulta la página oficial de SEDEMA.\n\nEste artículo es informativo y no sustituye asesoría legal. Los montos se calculan con la UMA vigente al 2026-10.",
   "fuentes": [
-    { "nombre": "SEDEMA CDMX — Verificación vehicular", "url": "https://sedema.cdmx.gob.mx/programas/programa/verificacion-vehicular" },
-    { "nombre": "INEGI — Comunicado 1/26, valor de la UMA 2026", "url": "https://www.inegi.org.mx/contenidos/saladeprensa/boletines/2026/uma/uma2026.pdf" }
+    {
+      "nombre": "SEDEMA CDMX — Verificación vehicular",
+      "url": "https://sedema.cdmx.gob.mx/programas/programa/verificacion-vehicular"
+    },
+    {
+      "nombre": "INEGI — Comunicado 1/26, valor de la UMA 2026",
+      "url": "https://www.inegi.org.mx/contenidos/saladeprensa/boletines/2026/uma/uma2026.pdf"
+    }
   ],
   "actualizado": "2026-10",
-  "keywords": ["verificación", "hoy no circula", "holograma", "00", "multa extemporánea", "exentos", "sedema", "engomado"],
+  "keywords": [
+    "verificación",
+    "hoy no circula",
+    "holograma",
+    "00",
+    "multa extemporánea",
+    "exentos",
+    "sedema",
+    "engomado"
+  ],
   "published": true
 }
