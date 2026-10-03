@@ -36,8 +36,8 @@ const ConsultarAgenteTransito = () => {
     return (
         <>
             <NavBar2 />
-            <main className="tw-pt-16">
-                <div className="tw-min-h-[calc(100vh-4rem)] tw-bg-gris tw-px-4 tw-py-12">
+            <main className="tw-flex-1 tw-pt-16 tw-bg-gris">
+                <div className="tw-px-4 tw-py-12">
                     <div className="tw-mx-auto tw-max-w-lg">
                         <span className="tw-block tw-text-center tw-font-mono tw-text-[11.5px] tw-uppercase tw-tracking-widest tw-text-azul tw-font-bold tw-mb-3.5">
                             03 · Agentes
@@ -105,7 +105,7 @@ const ConsultarAgenteTransito = () => {
                     </div>
                 </div>
             </main>
-            <Footer />
+            <Footer className="tw-pt-0" />
         </>
     );
 };

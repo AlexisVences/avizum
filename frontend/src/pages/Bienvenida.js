@@ -33,11 +33,11 @@ const Bienvenida = () => {
     return (
         <>
             <NavBar2 />
-            <main className="tw-bg-paper">
+            <main className="tw-flex-1 tw-bg-gris">
                 <HeroBienvenida nombre={nombreDeSesion()} />
 
                 {/* Índice de servicios */}
-                <section className="tw-px-6 tw-pb-16">
+                <section className="tw-bg-paper tw-px-6 tw-pb-16">
                     <div className="tw-mx-auto tw-max-w-5xl tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-5">
                         <AccionCard
                             folio="01 · ASESORÍA"
@@ -105,7 +105,7 @@ const Bienvenida = () => {
                     </div>
                 </section>
             </main>
-            <Footer className="tw-mt-0" />
+            <Footer className="tw-pt-0" />
         </>
     );
 };

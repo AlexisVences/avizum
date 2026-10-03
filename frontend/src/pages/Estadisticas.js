@@ -190,7 +190,7 @@ const Estadisticas = () => {
           </ResponsiveContainer>
         </div>
       </div>
-      <Footer />
+      <Footer className="tw-pt-4" />
     </>
   );
 };
