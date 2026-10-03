@@ -1,0 +1,57 @@
+{
+  "titulo": "Comprar y vender tu auto",
+  "categoria": "comprar-y-vender-auto",
+  "slug": "comprar-y-vender-auto",
+  "resumen": "Qué revisar al comprar (usado o nuevo) y cómo avisar la venta ante SEMOVI en la CDMX.",
+  "tipo": "prosa",
+  "cuerpo": "COMPRAR UN AUTO USADO\n\nANTES DE PAGAR\n\n1. Consulta adeudos. La herramienta oficial de SEMOVI para compradores de vehículos usados con placas de la CDMX revisa infracciones económicas, sanciones cívicas o ambientales, adeudos de tenencia, vigencia de la tarjeta de circulación y seguro vigente. Solo aplica a vehículos de uso particular.\n\n2. Revisa que no tenga reporte de robo. La herramienta de SEMOVI no lo verifica; el propio sitio recomienda consultar por separado REPUVE, OCRA México o Compra Segura de la FGJCDMX.\n\n3. Exige el comprobante de propiedad: la factura original o, si el vendedor no fue el primer dueño, factura digital con contrato de compraventa o factura no digital endosada.\n\n4. Confirma que no haya adeudos de tenencia, incluido el ejercicio fiscal actual: con adeudos, el trámite no procede.\n\nCAMBIO DE PROPIETARIO EN CDMX (PERSONAS FÍSICAS)\n\nPlazo: el nuevo propietario tiene 15 días hábiles para hacer el trámite; si no lo hace, pueden generarse responsabilidades jurídicas y fiscales para el vendedor.\n\nCita: se solicita en el Sistema de Citas en Línea de SEMOVI y requiere cuenta LlaveCDMX. La cita la debe generar la persona que acudirá al módulo.\n\nDocumentos (originales, vigentes y legibles):\n• Identificación oficial con fotografía.\n• Comprobante de domicilio de la CDMX, o credencial para votar con domicilio actual completo.\n• Comprobante de propiedad (ver punto 3).\n• No tener adeudos de tenencia (incluye el ejercicio fiscal actual).\n• Tarjeta de circulación vigente, o acta circunstanciada ante Juzgado Cívico si se perdió o fue robada.\n• Línea de captura pagada (original y copia).\n\nCosto: $433.00 MXN (clave 36-7), según SEMOVI al 2026-10. Confirma el monto vigente antes de pagar.\n\n──────────\n\nCOMPRAR UN AUTO NUEVO\n\nAL COMPRAR (DERECHOS COMO CONSUMIDOR, SEGÚN PROFECO)\n\n• Factura: pide la factura que ampare el costo de la compraventa; si compras a crédito, la carta factura.\n\n• Garantía: el proveedor debe decirte por escrito y en español si ofrece o no garantía. Si la ofrece, debe indicar su alcance, vigencia, duración, cobertura y cómo hacerla efectiva.\n\n• Contrato: el contrato que firmes con el proveedor debe estar registrado ante Profeco. Revisa que incluya el número de registro antes de firmar.\n\nALTA DE PLACAS DE UN AUTO NUEVO (PERSONAS FÍSICAS, CDMX)\n\nDocumentos que pide SEMOVI:\n• Identificación oficial con fotografía y CURP, con datos legibles y sin tachaduras ni enmendaduras.\n• Comprobante de domicilio de la CDMX con datos completos (original y copia, de máximo 3 meses de antigüedad: servicios, predial o estado de cuenta bancario).\n• Comprobante de propiedad: factura original (carta factura si el auto es financiado, o factura digital).\n• Comprobante de pago de los derechos.\n\nAl terminar recibes: constancia de alta vehicular, juego de placas, engomado y tarjeta de circulación.\n\nCostos: los montos varían según la modalidad (presencial, en línea, a través de agencia) y el tipo de vehículo, y las páginas oficiales consultadas no coinciden entre sí. Por eso no los publicamos aquí: confirma el monto vigente en la página de SEMOVI de tu modalidad antes de pagar.\n\nSi tienes una inconformidad con el vehículo nuevo o necesitas hacer válida la garantía, puedes acudir a Profeco.\n\n──────────\n\nVENDER TU AUTO\n\nQUÉ ES EL AVISO DE VENTA\n\nEs el trámite que debe hacer el propietario que transmite la propiedad de un vehículo particular a otra persona, para avisar a SEMOVI de la CDMX. Es gratuito.\n\nPLAZO\n\n15 días hábiles contados desde la fecha de la compraventa. Si no avisas en ese plazo, pueden generarse responsabilidades administrativas y fiscales para ti como vendedor. Con la anotación del aviso de venta ya no se cobran tenencias a tu nombre.\n\nCÓMO SE HACE\n\nEn línea, en el portal de aviso de venta de SEMOVI, con cuenta LlaveCDMX. SEMOVI indica un tiempo de respuesta de 40 días hábiles.\n\nDOCUMENTOS\n\n• Carta responsiva o contrato de compraventa (original y copia).\n• Factura o carta factura del vehículo (copia).\n• Tarjeta de circulación (copia).\n• Identificación oficial del comprador y del vendedor.\n• Si el propietario es persona moral: acreditación de personalidad jurídica (acta constitutiva, poder notarial e identificación del representante).\n\nOJO\n\nEl portal incluye una declaración de que dar información falsa puede traer sanciones administrativas y penales (artículo 32 de la Ley de Procedimiento Administrativo de la CDMX y artículo 311 del Código Penal).\n\nRECOMENDACIÓN\n\nConserva tu copia del contrato o carta responsiva firmada por ambas partes: es el documento con el que puedes demostrar la venta si hay una controversia. El nuevo propietario, por su parte, tiene 15 días hábiles para hacer el cambio de propietario (ver la sección «Comprar un auto usado», más arriba).\n\nEste artículo es informativo y no sustituye asesoría legal.",
+  "fuentes": [
+    {
+      "nombre": "SEMOVI CDMX — Cambio de propietario o domicilio",
+      "url": "https://www.semovi.cdmx.gob.mx/tramites-y-servicios/vehiculos-particulares/automovil-hibrido/cambio-de-propietario"
+    },
+    {
+      "nombre": "SEMOVI CDMX — Consulta de obligaciones y adeudos para compra de vehículos usados",
+      "url": "https://www.adeudos.semovi.cdmx.gob.mx/"
+    },
+    {
+      "nombre": "Profeco — ¿Quieres comprar un automóvil nuevo?",
+      "url": "https://www.gob.mx/profeco/documentos/quieres-comprar-un-automovil-nuevo"
+    },
+    {
+      "nombre": "SEMOVI CDMX — Alta de placas de vehículos nuevos",
+      "url": "https://www.semovi.cdmx.gob.mx/tramites-y-servicios/vehiculos-particulares/alta-de-placas-vehiculos-nuevos"
+    },
+    {
+      "nombre": "CDMX — Aviso de venta de vehículo particular (ficha del trámite)",
+      "url": "https://www.cdmx.gob.mx/public/InformacionTramite.xhtml?idTramite=330"
+    },
+    {
+      "nombre": "SEMOVI CDMX — Portal de aviso de venta",
+      "url": "https://avisodeventa.semovi.cdmx.gob.mx/"
+    }
+  ],
+  "actualizado": "2026-10",
+  "keywords": [
+    "REPUVE",
+    "adeudos",
+    "alta de placas",
+    "auto nuevo",
+    "auto usado",
+    "aviso de venta",
+    "cambio de propietario",
+    "carta responsiva",
+    "comprar coche",
+    "contrato",
+    "contrato de compraventa",
+    "emplacamiento",
+    "factura",
+    "garantía",
+    "profeco",
+    "responsabilidad del vendedor",
+    "robo",
+    "tenencia",
+    "vender auto"
+  ],
+  "published": true
+}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import ProsaConEnlaces from './ProsaConEnlaces';
 
 const ArticuloContenido = ({ categoria, articulo }) => (
     <div className="tw-max-w-[680px] tw-mx-auto tw-px-6 tw-py-12">
@@ -44,19 +45,8 @@ const ArticuloContenido = ({ categoria, articulo }) => (
 
         {articulo.tipo === 'prosa' && (
             <div className="tw-text-ink tw-leading-relaxed tw-mb-10 tw-whitespace-pre-line">
-                {articulo.cuerpo}
+                <ProsaConEnlaces texto={articulo.cuerpo} />
             </div>
-        )}
-
-        {articulo.tipo === 'glosario' && articulo.glosario && (
-            <dl className="tw-m-0 tw-mb-10 tw-flex tw-flex-col tw-gap-4">
-                {articulo.glosario.map((entrada) => (
-                    <div key={entrada.termino} className="tw-border tw-border-rule tw-rounded tw-px-4 tw-py-3.5">
-                        <dt className="tw-font-semibold tw-text-ink tw-text-sm">{entrada.termino}</dt>
-                        <dd className="tw-m-0 tw-mt-1 tw-text-ink tw-text-sm tw-leading-relaxed">{entrada.definicion}</dd>
-                    </div>
-                ))}
-            </dl>
         )}
 
         {articulo.tipo === 'directorio' && articulo.directorio && (
