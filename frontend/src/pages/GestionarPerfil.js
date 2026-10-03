@@ -113,9 +113,6 @@ const Perfil = () => {
                         <h1 className="tw-font-display tw-text-center tw-text-3xl tw-font-semibold tw-text-ink tw-mb-3">
                             Gestión de perfil
                         </h1>
-                        <p className="tw-text-center tw-text-ink-soft tw-mb-8">
-                            Aquí puedes revisar y actualizar tu información personal
-                        </p>
 
                         {successMessage && (
                             <div
