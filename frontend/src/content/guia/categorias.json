@@ -7,7 +7,7 @@
   { "id": "06", "numero": "06", "etiqueta": "COMPRA", "titulo": "Comprar un auto nuevo", "bloque": "Tu auto", "slug": "comprar-auto-nuevo", "orden": 6, "published": true },
   { "id": "07", "numero": "07", "etiqueta": "VENTA", "titulo": "Vender tu auto", "bloque": "Tu auto", "slug": "vender-tu-auto", "orden": 7, "published": true },
   { "id": "08", "numero": "08", "etiqueta": "TRÁMITES", "titulo": "Trámites vehiculares", "bloque": "Tu auto", "slug": "tramites-vehiculares", "orden": 8, "published": true },
-  { "id": "09", "numero": "09", "etiqueta": "AMBIENTE", "titulo": "Verificación y Hoy No Circula", "bloque": "Tu auto", "slug": "verificacion-y-hoy-no-circula", "orden": 9, "published": false },
+  { "id": "09", "numero": "09", "etiqueta": "AMBIENTE", "titulo": "Verificación y Hoy No Circula", "bloque": "Tu auto", "slug": "verificacion-y-hoy-no-circula", "orden": 9, "published": true },
   { "id": "10", "numero": "10", "etiqueta": "SEGUROS", "titulo": "Seguros", "bloque": "Tu auto", "slug": "seguros", "orden": 10, "published": false },
   { "id": "11", "numero": "11", "etiqueta": "ACCIDENTES", "titulo": "Si chocas", "bloque": "En el camino", "slug": "si-chocas", "orden": 11, "published": false },
   { "id": "12", "numero": "12", "etiqueta": "ALCOHOL", "titulo": "Alcoholímetro", "bloque": "Leyes y derechos", "slug": "alcoholimetro", "orden": 12, "published": false },
