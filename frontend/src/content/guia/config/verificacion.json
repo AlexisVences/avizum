@@ -1,1 +1,10 @@
-{ "calendario": [], "fuente": null }
+{
+  "calendario": [
+    { "digitos": [5, 6], "periodo": "Julio-Agosto", "color": "Amarillo" },
+    { "digitos": [7, 8], "periodo": "Agosto-Septiembre", "color": "Rosa" },
+    { "digitos": [3, 4], "periodo": "Septiembre-Octubre", "color": "Rojo" },
+    { "digitos": [1, 2], "periodo": "Octubre-Noviembre", "color": "Verde" },
+    { "digitos": [9, 0], "periodo": "Noviembre-Diciembre", "color": "Azul" }
+  ],
+  "fuente": "https://sedema.cdmx.gob.mx/programas/programa/verificacion-vehicular"
+}
