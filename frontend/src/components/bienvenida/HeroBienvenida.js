@@ -36,34 +36,21 @@ const HeroBienvenida = ({ nombre }) => {
             </div>
 
             <div className="tw-relative tw-mx-auto tw-max-w-5xl">
-                {saludo && (
-                    <motion.p
-                        {...entrada(0)}
-                        className="tw-font-mono tw-text-[12px] tw-font-bold tw-uppercase tw-tracking-widest tw-text-magenta tw-mb-4"
-                    >
-                        {`Hola, ${saludo}.`}
-                    </motion.p>
-                )}
                 <motion.h1
-                    {...entrada(0.1)}
-                    className="tw-font-display tw-font-semibold tw-text-[clamp(2.2rem,5vw,3.6rem)] tw-leading-[1.05] tw-text-ink tw-mb-4 [text-wrap:balance]"
+                    {...entrada(0)}
+                    className="tw-font-display tw-text-[clamp(2.2rem,5vw,3.6rem)] tw-leading-[1.05] tw-mb-5 [text-wrap:balance]"
                 >
-                    Bienvenido a <span className="tw-text-magenta">Amicuz</span>
+                    <span className="tw-block tw-font-bold tw-text-ink">
+                        {saludo ? `Hola, ${saludo}.` : 'Bienvenido a Amicuz'}
+                    </span>
+                    <span className="tw-block tw-font-semibold tw-text-magenta">¿Cómo podemos ayudarte?</span>
                 </motion.h1>
-                <motion.p
-                    {...entrada(0.2)}
-                    className="tw-text-[1.1rem] tw-text-ink-soft tw-max-w-[52ch] tw-mb-10"
-                >
+                <motion.p {...entrada(0.12)} className="tw-text-[1.1rem] tw-text-ink-soft tw-max-w-[52ch] tw-mb-2">
                     Tu plataforma de confianza para resolver cualquier situación legal de tránsito.
                 </motion.p>
-                <motion.div {...entrada(0.3)}>
-                    <h2 className="tw-font-display tw-font-semibold tw-text-2xl tw-text-ink tw-mb-1.5">
-                        ¿Cómo podemos ayudarte?
-                    </h2>
-                    <p className="tw-text-ink-soft tw-m-0">
-                        Elige la opción que mejor se acomode a tus necesidades
-                    </p>
-                </motion.div>
+                <motion.p {...entrada(0.24)} className="tw-text-ink-soft tw-m-0">
+                    Elige la opción que mejor se acomode a tus necesidades
+                </motion.p>
             </div>
         </section>
     );
