@@ -1,96 +1,71 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { FaUserEdit } from "react-icons/fa";
-import { FiSave } from "react-icons/fi";
-import "../styles/Perfil.css";
+import { Link } from "react-router-dom";
+import { FiEdit2 } from "react-icons/fi";
 import NavBar2 from "../components/NavBar2";
 import Footer from "../components/Footer";
-import avatar from "../assets/avatar.png";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
 import { updateUser } from "../services/userService";
 import authService from "../services/authService";
 
 const Perfil = () => {
-    // Obtener usuario del authService de forma segura
     const storedUser = authService.getCurrentUser();
     const userId = storedUser?.id;
 
-    // Estado inicial con datos del usuario
-    const [userData, setUserData] = useState({
-        nombre: "",
-        apellido: "",
-        correo: "",
-    });
-
+    const [userData, setUserData] = useState({ nombre: "", apellido: "", correo: "" });
     const [editando, setEditando] = useState({ nombre: false, apellido: false });
-    const [inputs, setInputs] = useState({
-        nombre: "",
-        apellido: "",
-    });
-    const [loading, setLoading] = useState(false); // Cambiado a false porque usamos datos locales
+    const [inputs, setInputs] = useState({ nombre: "", apellido: "" });
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
-    // Cargar datos del usuario al montar el componente
     useEffect(() => {
-    const user = authService.getCurrentUser();
-    if (user) {
-        setUserData({
-            nombre: user.nombre || "",
-            apellido: user.apellido || "",
-            correo: user.correo || "",
-        });
-        setInputs({
-            nombre: user.nombre || "",
-            apellido: user.apellido || "",
-        });
-    } else {
-        setError("No se encontró información del usuario. Por favor, inicie sesión nuevamente.");
-    }
-}, []);
+        const user = authService.getCurrentUser();
+        if (user) {
+            setUserData({
+                nombre: user.nombre || "",
+                apellido: user.apellido || "",
+                correo: user.correo || "",
+            });
+            setInputs({ nombre: user.nombre || "", apellido: user.apellido || "" });
+        }
+    }, []);
 
     const handleChange = (e) => {
         setInputs({ ...inputs, [e.target.name]: e.target.value });
     };
 
+    const alternarEdicion = (campo) => {
+        setEditando({ ...editando, [campo]: !editando[campo] });
+    };
+
     const guardarCambios = async () => {
+        setError(null);
         if (!userId) {
             setError("No se puede actualizar el usuario sin ID");
             return;
         }
 
         try {
-            // Preparar datos para actualizar
             const updatedData = {
                 nombre: inputs.nombre,
                 apellido: inputs.apellido,
                 rol: storedUser.rol,
-                email: storedUser.correo
+                email: storedUser.correo,
             };
-            // Llamar al servicio de actualización
-            const response = await updateUser(storedUser.correo,updatedData);
+            const response = await updateUser(storedUser.correo, updatedData);
 
             if (!response) {
                 throw new Error("No se recibió respuesta del servidor");
             }
 
-            // Actualizar el estado local con los nuevos datos
-            setUserData(updatedData);
-
-            // Actualizar el usuario en el localStorage
-            const updatedUser = {
-                ...storedUser,
-                nombre: inputs.nombre,
-                apellido: inputs.apellido
-            };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-
-            // Desactivar modo edición
+            setUserData({ ...userData, nombre: inputs.nombre, apellido: inputs.apellido });
+            localStorage.setItem(
+                "user",
+                JSON.stringify({ ...storedUser, nombre: inputs.nombre, apellido: inputs.apellido })
+            );
             setEditando({ nombre: false, apellido: false });
-
-            // Mostrar mensaje de éxito
             setSuccessMessage("Cambios guardados correctamente");
             setTimeout(() => setSuccessMessage(null), 3000);
-
         } catch (err) {
             setError(err.message || "Error al guardar los cambios");
             console.error("Update error:", err);
@@ -100,131 +75,100 @@ const Perfil = () => {
     const cambiosPendientes =
         inputs.nombre !== userData.nombre || inputs.apellido !== userData.apellido;
 
-    if (!storedUser) {
-        return (
-            <div className="alert alert-danger text-center my-5">
-                {error || "No hay usuario autenticado"}
-            </div>
-        );
-    }
+    const campoEditable = (campo, etiqueta) => (
+        <div className="tw-flex tw-items-end tw-gap-2.5">
+            <Input
+                label={etiqueta}
+                name={campo}
+                value={inputs[campo]}
+                onChange={handleChange}
+                disabled={!editando[campo]}
+                className="tw-flex-1 tw-min-w-0"
+            />
+            <button
+                type="button"
+                aria-label={`Editar ${campo}`}
+                aria-pressed={editando[campo]}
+                onClick={() => alternarEdicion(campo)}
+                className={`tw-shrink-0 tw-inline-flex tw-h-[42px] tw-w-[42px] tw-items-center tw-justify-center tw-rounded tw-border tw-transition-colors ${
+                    editando[campo]
+                        ? "tw-border-azul tw-bg-azul/5 tw-text-azul"
+                        : "tw-border-rule tw-bg-paper-raised tw-text-ink-soft hover:tw-border-ink/40 hover:tw-text-ink"
+                }`}
+            >
+                <FiEdit2 aria-hidden="true" />
+            </button>
+        </div>
+    );
 
     return (
         <>
             <NavBar2 />
-            <div className="container perfil-container my-5 mt-5">
-                <motion.div
-                    className="text-center mb-5"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                >
-                    <h2 className="display-4 fw-bold">Gestión de Perfil</h2>
-                    <p className="fw-light text-muted">
-                        Aquí puedes revisar y actualizar tu información personal
-                    </p>
-                </motion.div>
+            <main className="tw-flex-1 tw-pt-16">
+                <div className="tw-px-4 tw-py-12">
+                    <div className="tw-mx-auto tw-max-w-lg">
+                        <span className="tw-block tw-text-center tw-font-mono tw-text-[11.5px] tw-uppercase tw-tracking-widest tw-text-azul tw-font-bold tw-mb-3.5">
+                            Tu cuenta
+                        </span>
+                        <h1 className="tw-font-display tw-text-center tw-text-3xl tw-font-semibold tw-text-ink tw-mb-3">
+                            Gestión de perfil
+                        </h1>
+                        <p className="tw-text-center tw-text-ink-soft tw-mb-8">
+                            Aquí puedes revisar y actualizar tu información personal
+                        </p>
 
-                {successMessage && (
-                    <div className="alert alert-success text-center">
-                        {successMessage}
-                    </div>
-                )}
-
-                {error && (
-                    <div className="alert alert-danger text-center">
-                        {error}
-                    </div>
-                )}
-
-                <motion.div
-                    className="perfil-card shadow-lg p-4 rounded-4 mx-auto"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.8 }}
-                    style={{ maxWidth: "600px", backgroundColor: "#f8f9fa" }}
-                >
-                    <div className="text-center mb-4">
-                        <img
-                            src={avatar}
-                            alt="Avatar"
-                            className="rounded-circle mb-2"
-                            width="100"
-                            height="100"
-                        />
-                        <h5 className="fw-bold mb-0">{userData.nombre} {userData.apellido}</h5>
-                        <p className="fw-light text-muted">Usuario registrado</p>
-                    </div>
-
-                    {/* Nombre */}
-                    <div className="mb-3">
-                        <label className="form-label fw-bold">Nombre</label>
-                        <div className="input-group">
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="nombre"
-                                value={inputs.nombre}
-                                onChange={handleChange}
-                                disabled={!editando.nombre}
-                            />
-                            <button
-                                className="btn btn-outline-secondary"
-                                onClick={() => setEditando({ ...editando, nombre: !editando.nombre })}
+                        {successMessage && (
+                            <div
+                                role="status"
+                                className="tw-mb-4 tw-bg-verde/10 tw-border tw-border-verde/30 tw-text-verde tw-text-sm tw-font-semibold tw-text-center tw-rounded tw-px-4 tw-py-3 tw-animate-fade-in-up"
                             >
-                                <FaUserEdit />
-                            </button>
-                        </div>
-                    </div>
+                                {successMessage}
+                            </div>
+                        )}
 
-                    {/* Apellido */}
-                    <div className="mb-3">
-                        <label className="form-label fw-bold">Apellido</label>
-                        <div className="input-group">
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="apellido"
-                                value={inputs.apellido}
-                                onChange={handleChange}
-                                disabled={!editando.apellido}
-                            />
-                            <button
-                                className="btn btn-outline-secondary"
-                                onClick={() => setEditando({ ...editando, apellido: !editando.apellido })}
+                        {(error || !storedUser) && (
+                            <div
+                                role="alert"
+                                className="tw-mb-4 tw-bg-danger/5 tw-border tw-border-danger/30 tw-text-danger tw-text-sm tw-text-center tw-rounded tw-px-4 tw-py-3 tw-animate-fade-in-up"
                             >
-                                <FaUserEdit />
-                            </button>
-                        </div>
-                    </div>
+                                {error || "No hay usuario autenticado"}
+                            </div>
+                        )}
 
-                    {/* Correo */}
-                    <div className="mb-3">
-                        <label className="form-label fw-bold">Correo electrónico</label>
-                        <input
-                            type="email"
-                            className="form-control"
-                            value={userData.correo}
-                            disabled
-                        />
-                    </div>
+                        {storedUser ? (
+                            <div className="tw-bg-paper-raised tw-border tw-border-rule tw-rounded-lg tw-shadow-sm tw-p-6">
+                                <div className="tw-pb-5 tw-mb-5 tw-border-b tw-border-rule">
+                                    <p className="tw-font-display tw-text-xl tw-font-semibold tw-text-ink tw-m-0">
+                                        {userData.nombre} {userData.apellido}
+                                    </p>
+                                    <p className="tw-text-sm tw-text-ink-soft tw-m-0 tw-mt-0.5">Usuario registrado</p>
+                                </div>
 
-                    {/* Botón guardar */}
-                    {cambiosPendientes && (
-                        <div className="text-center mt-4">
-                            <motion.button
-                                className="btn btn-success px-4"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={guardarCambios}
-                            >
-                                <FiSave className="me-2" />
-                                Guardar Cambios
-                            </motion.button>
-                        </div>
-                    )}
-                </motion.div>
-            </div>
-            <Footer className="tw-pt-4" />
+                                <div className="tw-flex tw-flex-col tw-gap-4">
+                                    {campoEditable("nombre", "Nombre")}
+                                    {campoEditable("apellido", "Apellido")}
+                                    <Input label="Correo electrónico" type="email" value={userData.correo} disabled readOnly />
+                                </div>
+
+                                {cambiosPendientes && (
+                                    <div className="tw-mt-6 tw-flex tw-justify-end">
+                                        <Button variant="dark" onClick={guardarCambios}>
+                                            Guardar cambios
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <p className="tw-text-center">
+                                <Link to="/Login" className="tw-text-azul hover:tw-text-magenta tw-font-semibold">
+                                    Iniciar sesión →
+                                </Link>
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </main>
+            <Footer className="tw-pt-0" />
         </>
     );
 };
