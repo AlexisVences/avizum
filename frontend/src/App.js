@@ -23,7 +23,7 @@ function App() {
   return (
     <Router>
       <div className="d-flex flex-column min-vh-100">
-        <main className="flex-grow-1">
+        <main className="flex-grow-1 d-flex flex-column">
         <ScrollTop />
           <Routes>
             <Route path="/" element={<Home />} />

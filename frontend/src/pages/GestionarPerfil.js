@@ -224,7 +224,7 @@ const Perfil = () => {
                     )}
                 </motion.div>
             </div>
-            <Footer />
+            <Footer className="tw-pt-4" />
         </>
     );
 };
