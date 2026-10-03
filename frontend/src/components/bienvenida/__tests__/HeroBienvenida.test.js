@@ -25,7 +25,7 @@ describe('HeroBienvenida', () => {
     test('keeps the lead text and the subtitle, with the question only once', () => {
         render(<HeroBienvenida nombre="Alex" />);
         expect(
-            screen.getByText('Tu plataforma de confianza para resolver cualquier situación legal de tránsito.')
+            screen.getByText('Bienvenido a Amicuz, tu plataforma de confianza para consultas legales de tránsito y tu vehículo en la Ciudad de México.')
         ).toBeInTheDocument();
         expect(screen.getByText('Elige la opción que mejor se acomode a tus necesidades')).toBeInTheDocument();
         expect(screen.getAllByText('¿Cómo podemos ayudarte?')).toHaveLength(1);

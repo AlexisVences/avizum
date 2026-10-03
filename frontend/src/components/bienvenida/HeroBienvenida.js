@@ -21,7 +21,7 @@ const HeroBienvenida = ({ nombre }) => {
               };
 
     return (
-        <section className="tw-relative tw-overflow-hidden tw-bg-paper tw-px-6 tw-pt-24 tw-pb-14">
+        <section className="tw-relative tw-overflow-hidden tw-bg-paper tw-px-6 tw-pt-24 tw-pb-5">
             <div
                 aria-hidden="true"
                 className="tw-pointer-events-none tw-absolute tw-inset-0 tw-overflow-hidden"
@@ -45,8 +45,8 @@ const HeroBienvenida = ({ nombre }) => {
                     </span>
                     <span className="tw-block tw-font-semibold tw-text-magenta">¿Cómo podemos ayudarte?</span>
                 </motion.h1>
-                <motion.p {...entrada(0.12)} className="tw-text-[1.1rem] tw-text-ink-soft tw-max-w-[52ch] tw-mb-2">
-                    Tu plataforma de confianza para resolver cualquier situación legal de tránsito.
+                <motion.p {...entrada(0.12)} className="tw-text-[1.1rem] tw-text-ink-soft tw-max-w-[52ch] tw-mb-14">
+                    Bienvenido a Amicuz, tu plataforma de confianza para consultas legales de tránsito y tu vehículo en la Ciudad de México.
                 </motion.p>
                 <motion.p {...entrada(0.24)} className="tw-text-ink-soft tw-m-0">
                     Elige la opción que mejor se acomode a tus necesidades
