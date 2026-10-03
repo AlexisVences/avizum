@@ -48,6 +48,45 @@ const ArticuloContenido = ({ categoria, articulo }) => (
             </div>
         )}
 
+        {articulo.tipo === 'glosario' && articulo.glosario && (
+            <dl className="tw-m-0 tw-mb-10 tw-flex tw-flex-col tw-gap-4">
+                {articulo.glosario.map((entrada) => (
+                    <div key={entrada.termino} className="tw-border tw-border-rule tw-rounded tw-px-4 tw-py-3.5">
+                        <dt className="tw-font-semibold tw-text-ink tw-text-sm">{entrada.termino}</dt>
+                        <dd className="tw-m-0 tw-mt-1 tw-text-ink tw-text-sm tw-leading-relaxed">{entrada.definicion}</dd>
+                    </div>
+                ))}
+            </dl>
+        )}
+
+        {articulo.tipo === 'directorio' && articulo.directorio && (
+            <ul className="tw-list-none tw-p-0 tw-m-0 tw-flex tw-flex-col tw-gap-3 tw-mb-10">
+                {articulo.directorio.map((entrada) => (
+                    <li key={entrada.nombre} className="tw-border tw-border-rule tw-rounded tw-px-4 tw-py-3.5">
+                        <p className="tw-font-semibold tw-text-ink tw-text-sm tw-m-0">{entrada.nombre}</p>
+                        {entrada.telefono && (
+                            <p className="tw-text-ink tw-text-sm tw-m-0 tw-mt-1">
+                                Tel. <span>{entrada.telefono}</span>
+                            </p>
+                        )}
+                        {entrada.direccion && (
+                            <p className="tw-text-ink-soft tw-text-sm tw-m-0 tw-mt-1">{entrada.direccion}</p>
+                        )}
+                        {entrada.sitio && (
+                            <a
+                                href={entrada.sitio}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="tw-inline-block tw-mt-2 tw-text-azul hover:tw-text-magenta tw-text-sm tw-font-bold tw-no-underline"
+                            >
+                                Sitio oficial ↗
+                            </a>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        )}
+
         {articulo.mito_realidad && articulo.mito_realidad.length > 0 && (
             <div className="tw-flex tw-flex-col tw-gap-4 tw-mb-10">
                 {articulo.mito_realidad.map((par, index) => (
