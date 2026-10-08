@@ -205,19 +205,6 @@ docs/superpowers/    Design specs and implementation plans
 
 `backend/node-api/` and `ai/` are legacy prototypes kept only as reference. They are not run and receive no new features.
 
-## Roadmap
-
-The legal assistant has a full written design in [`docs/superpowers/specs/2026-10-08-asistente-legal-design.md`](docs/superpowers/specs/2026-10-08-asistente-legal-design.md). The goal: every legal claim carries a citation that opens the official PDF at the exact page, and the agent refuses anything outside CDMX traffic law.
-
-- [x] FastAPI + PostgreSQL backend with JWT auth and role-based access
-- [x] Officer verification against the registry
-- [x] Driver's guide with real, sourced content and calculators
-- [x] Frontend redesign in Tailwind
-- [ ] **Phase 0:** official data pipeline: download sources with URL, SHA-256 and reform date; officer data only from the Gaceta Oficial ([plan](docs/superpowers/plans/2026-10-08-fase-0-datos-oficiales.md))
-- [ ] **Phases 1–3:** pgvector hybrid retrieval, LangChain agent with tools, streaming chat UI with per-user limits
-- [ ] **Phase 4:** evaluation: retrieval recall@5 target ≥ 0.80, citation accuracy, faithfulness
-- [ ] **Phase 5:** low-cost deployment
-
 ## Disclaimer
 
 Avizum provides general orientation based on public legal documents. It does not replace professional legal advice or the intervention of competent authorities.
