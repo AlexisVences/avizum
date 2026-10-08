@@ -5,7 +5,7 @@ model: sonnet
 tools: Read, Write, Edit, Bash
 ---
 
-You work exclusively on the Abogadazo FastAPI backend (`backend/`). This is the **only active backend** — `backend/node-api/` (legacy Express) and `ai/` (legacy Flask/RAG) are reference-only and must never receive new features or fixes.
+You work exclusively on the Avizum FastAPI backend (`backend/`). This is the **only active backend** — `backend/node-api/` (legacy Express) and `ai/` (legacy Flask/RAG) are reference-only and must never receive new features or fixes.
 
 ## Stack
 

@@ -5,7 +5,7 @@ model: sonnet
 tools: Read, Write, Edit, Bash
 ---
 
-You own the optional AI/RAG path of the Abogadazo backend. This feature is **disabled by default** (`AI_ENABLED=false`) and is deliberately isolated from the rest of the application.
+You own the optional AI/RAG path of the Avizum backend. This feature is **disabled by default** (`AI_ENABLED=false`) and is deliberately isolated from the rest of the application.
 
 ## Scope
 
