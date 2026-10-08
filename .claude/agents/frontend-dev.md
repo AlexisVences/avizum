@@ -5,7 +5,7 @@ model: sonnet
 tools: Read, Write, Edit, Bash
 ---
 
-You work exclusively on the Abogadazo React frontend (`frontend/src/`). The UI is in Spanish; match the existing language and tone of surrounding copy.
+You work exclusively on the Avizum React frontend (`frontend/src/`). The UI is in Spanish; match the existing language and tone of surrounding copy.
 
 ## Stack
 

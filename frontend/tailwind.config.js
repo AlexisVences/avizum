@@ -25,12 +25,17 @@ module.exports = {
         mono: ["IBM Plex Mono", "ui-monospace", "Menlo", "monospace"],
       },
       keyframes: {
+        deriva: {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "50%": { transform: "translate(-28px, 20px) scale(1.04)" },
+        },
         "fade-in-up": {
           "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },
       animation: {
+        deriva: "deriva 40s ease-in-out infinite",
         "fade-in-up": "fade-in-up 0.35s ease-out",
       },
     },

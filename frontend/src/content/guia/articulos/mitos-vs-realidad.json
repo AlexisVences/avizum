@@ -1,0 +1,59 @@
+{
+  "titulo": "Mitos vs realidad",
+  "categoria": "mitos-vs-realidad",
+  "slug": "mitos-vs-realidad",
+  "resumen": "Ideas comunes sobre multas, agentes y accidentes, contrastadas con el Reglamento de Tránsito.",
+  "tipo": "mito_realidad",
+  "fuentes": [
+    {
+      "nombre": "Reglamento de Tránsito de la CDMX (Consejería Jurídica CDMX)",
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/reglamentos/REGLAMENTO_DE_TRANSITO_DE_LA_CIUDAD_DE_MEXICO_6.1.pdf"
+    }
+  ],
+  "actualizado": "2026-10",
+  "keywords": [
+    "mitos",
+    "realidad",
+    "multas",
+    "agentes",
+    "corralón",
+    "alcohol",
+    "seguro",
+    "puntos"
+  ],
+  "published": true,
+  "mito_realidad": [
+    {
+      "mito": "El agente decide cuánto me cobra de multa.",
+      "realidad": "Cada infracción tiene sanción mínima, media y máxima, y la aplicación del criterio de reincidencia no puede hacerla directamente el agente: la determina el Sistema Integral de Administración de Infracciones (Reglamento de Tránsito, art. 64). El agente debe informarte la sanción mínima, media y máxima (art. 59)."
+    },
+    {
+      "mito": "Una fotocívica siempre es una multa en pesos.",
+      "realidad": "Las infracciones captadas por sistemas tecnológicos consisten, por regla, en amonestación, cursos en línea, taller de sensibilización o trabajo en favor de la comunidad según los puntos de la matrícula. Son siempre monetarias solo en los casos que lista el art. 64 (carriles confinados, personas morales, transporte público, de carga, taxis y placas de otra entidad o país)."
+    },
+    {
+      "mito": "Si pago la multa tarde, es lo mismo que pagarla a tiempo.",
+      "realidad": "Dentro de los 30 días naturales siguientes a la notificación de la boleta tienes derecho a un 50% de descuento (con excepciones). Vencido el plazo debes cubrir además los créditos fiscales del Código Fiscal de la CDMX (art. 62)."
+    },
+    {
+      "mito": "Los agentes pueden llevarse mi auto al corralón por cualquier infracción.",
+      "realidad": "La remisión al depósito solo procede en los casos que enumera el art. 67 del Reglamento, por ejemplo: sanciones económicas sin pagar con más de 30 días, ciertos supuestos de estacionamiento cuando el conductor no está a bordo, o vehículos abandonados."
+    },
+    {
+      "mito": "El límite de alcohol para manejar es cero.",
+      "realidad": "Para vehículos particulares el límite es de 0.8 g/L de alcohol en sangre o 0.4 mg/L en aire espirado (art. 50). El límite es cero solo para conductores de transporte público de pasajeros, escolar o de personal, emergencia, carga y sustancias peligrosas."
+    },
+    {
+      "mito": "El seguro obligatorio cubre los daños a mi propio auto.",
+      "realidad": "El art. 46 exige una póliza de responsabilidad civil que ampare al menos los daños a terceros en su persona y su patrimonio. La cobertura de tu propio vehículo es adicional."
+    },
+    {
+      "mito": "Después de un choque nunca debo mover el auto.",
+      "realidad": "Si solo hay daños materiales a propiedad privada, todos los vehículos pueden circular y nadie muestra síntomas de alcohol o drogas, las partes deben mover sus vehículos para liberar la vía; no hacerlo se sanciona (art. 54, fr. IV). Con lesionados o muerte, en cambio, los vehículos se retiran cuando la autoridad lo determine (art. 55)."
+    },
+    {
+      "mito": "Los puntos de la licencia no caducan.",
+      "realidad": "Los puntos de penalización tienen una vigencia de un año a partir de la fecha de la boleta, y la licencia se cancela al acumular doce puntos (art. 66)."
+    }
+  ]
+}

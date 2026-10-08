@@ -56,7 +56,7 @@ const SignUp = () => {
                 <div className="tw-min-h-[calc(100vh-4rem)] tw-bg-gris tw-flex tw-items-center tw-justify-center tw-px-4 tw-py-10">
                     <div className="tw-w-full tw-max-w-md tw-bg-paper-raised tw-border tw-border-rule tw-rounded-lg tw-shadow-sm tw-p-8">
                         <div className="tw-flex tw-items-center tw-gap-2.5 tw-mb-6">
-                            <img src={logo} alt="Amicuz" className="tw-h-8 tw-w-auto tw-shrink-0" />
+                            <img src={logo} alt="Avizum" className="tw-h-8 tw-w-auto tw-shrink-0" />
                             <h1 className="tw-font-display tw-text-2xl tw-font-semibold tw-text-ink tw-m-0">
                                 Crear cuenta
                             </h1>

@@ -17,9 +17,9 @@ const NavBar2 = () => {
         <nav className="tw-fixed tw-top-0 tw-inset-x-0 tw-z-50 tw-bg-paper-raised/75 tw-backdrop-blur-md tw-backdrop-saturate-150 tw-border-b tw-border-rule/60">
             <div className="tw-w-full tw-px-4 sm:tw-px-6 lg:tw-px-8 tw-py-3 tw-flex tw-items-center tw-justify-between">
                 <Link to="/Bienvenida" className="tw-flex tw-items-center tw-gap-2.5 tw-shrink-0 tw-no-underline" onClick={() => setOpen(false)}>
-                    <img src={logo} alt="Amicuz" className="tw-h-8 tw-w-auto tw-shrink-0" />
+                    <img src={logo} alt="Avizum" className="tw-h-8 tw-w-auto tw-shrink-0" />
                     <span className="tw-font-display tw-font-semibold tw-text-lg tw-tracking-tight tw-text-ink">
-                        Amicuz
+                        Avizum
                     </span>
                 </Link>
 

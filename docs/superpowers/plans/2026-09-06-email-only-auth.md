@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove the `username` column/concept from Abogadazo entirely — login and registration become email + password (+ name), fixing a registration bug where an email address can never pass the username validation pattern.
+**Goal:** Remove the `username` column/concept from Avizum entirely — login and registration become email + password (+ name), fixing a registration bug where an email address can never pass the username validation pattern.
 
 **Architecture:** Drop `User.username` from the SQLAlchemy model and add an Alembic migration to drop the column; change `LoginRequest`/`RegisterRequest`/`UserPublic` Pydantic schemas and the `/auth/login` and `/auth/register` routes to key on `email` instead; update every frontend file that sends or displays `username`/`usuario` to use `email` directly, with no new field added to any form.
 
@@ -169,7 +169,7 @@ Note: `users_username_key` is Postgres's default auto-generated name for the
 unnamed `UniqueConstraint("username")` in the initial migration
 (`<table>_<column>_key`). If `upgrade()` fails on the `drop_constraint` line,
 find the real name with:
-`docker exec abogadazo-postgres psql -U abogadazo -d abogadazo -c "\d users"`
+`docker exec avizum-postgres psql -U avizum -d avizum -c "\d users"`
 and use that name instead.
 
 - [ ] **Step 5: Update the Pydantic schemas**
