@@ -5,7 +5,7 @@
  */
 
 var app = require('../app');
-var debug = require('debug')('api-abogadazo:server');
+var debug = require('debug')('api-avizum:server');
 var http = require('http');
 
 /**

@@ -8,11 +8,11 @@ const AcercaDe = () => {
         <Navbar />
         <main style = {{marginTop : "120px"}}  className="container">
             <div className="bg-light p-4 rounded shadow-sm">
-            <h1 className="mb-4 text-center">Acerca de Amicuz</h1>
+            <h1 className="mb-4 text-center">Acerca de Avizum</h1>
 
             <section className="mb-4">
                 <p>
-                <strong>Amicuz</strong> es una plataforma digital diseñada para ofrecer orientación legal en materia de tránsito vehicular
+                <strong>Avizum</strong> es una plataforma digital diseñada para ofrecer orientación legal en materia de tránsito vehicular
                 en la Ciudad de México. Nació como una iniciativa para acercar el conocimiento legal a la ciudadanía mediante el uso de inteligencia artificial
                 y tecnologías accesibles, al alcance de todos.
                 </p>
@@ -47,7 +47,7 @@ const AcercaDe = () => {
             <section className="mb-4">
                 <h4 className="fw-semibold">Compromiso ciudadano y tecnológico</h4>
                 <p>
-                En Amicuz creemos que la tecnología puede ser una aliada para la justicia. Por eso trabajamos con responsabilidad en la integración
+                En Avizum creemos que la tecnología puede ser una aliada para la justicia. Por eso trabajamos con responsabilidad en la integración
                 de inteligencia artificial que respeta los principios legales, éticos y sociales.
                 Aspiramos a que cada usuario tenga en sus manos una herramienta que le permita actuar con conocimiento, seguridad y confianza.
                 </p>

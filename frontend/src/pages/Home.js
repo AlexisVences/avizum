@@ -83,7 +83,7 @@ const Home = () => {
                         <SloganAnimado />
                         <p className="tw-text-[1.02rem] tw-text-ink-soft tw-max-w-[46ch] tw-mb-6">
                             Verifica si el agente que te detuvo está facultado para infraccionar, consulta tu multa
-                            y entiende el reglamento — en lenguaje llano, con IA basada solo en documentos oficiales.
+                            y entiende el reglamento, y usa nuestro chat de IA basado solo en documentos oficiales.
                         </p>
 
                         <div className="tw-bg-paper-raised tw-border tw-border-rule tw-rounded-md tw-px-5 tw-py-[18px] tw-max-w-[420px] tw-shadow-[0_4px_14px_rgba(22,24,29,0.06)]">
@@ -187,7 +187,7 @@ const Home = () => {
                             </h2>
                             <p className="tw-text-ink-soft tw-leading-relaxed tw-mb-4">
                                 Desarrollado por estudiantes de la Escuela Superior de Cómputo del Instituto Politécnico
-                                Nacional, Amicuz es una herramienta creada para brindar asesoría legal en materia de
+                                Nacional, Avizum es una herramienta creada para brindar asesoría legal en materia de
                                 tránsito en la Ciudad de México. Somos un equipo comprometido con facilitar el acceso a
                                 la información pública para todos y la justicia por igual; esta página utiliza
                                 inteligencia artificial para facilitar la comprensión de los reglamentos, artículos,
@@ -202,7 +202,7 @@ const Home = () => {
                         <div className="tw-text-center">
                             <img
                                 src={infraccionimage}
-                                alt="Ilustración sobre Amicuz"
+                                alt="Ilustración sobre Avizum"
                                 className="tw-max-w-[90%] tw-h-auto tw-rounded-lg tw-border tw-border-rule tw-shadow-sm tw-inline-block"
                             />
                         </div>

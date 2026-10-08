@@ -10,7 +10,7 @@ const Footer = ({ className = "tw-pt-16" }) => {
         <div className={`tw-mt-auto ${className}`}>
             <footer className="tw-border-t tw-border-rule tw-bg-gris">
                 <div className="tw-mx-auto tw-max-w-5xl tw-px-4 tw-py-6 tw-flex tw-flex-wrap tw-gap-x-6 tw-gap-y-2 tw-items-center tw-justify-center tw-text-center">
-                    <p className="tw-m-0 tw-text-sm tw-text-ink-soft">© 2025 Amicuz. Todos los derechos reservados.</p>
+                    <p className="tw-m-0 tw-text-sm tw-text-ink-soft">© 2025 Avizum. Todos los derechos reservados.</p>
                     <Link to="/Acerca-de" className="tw-text-sm tw-font-medium tw-text-ink hover:tw-text-magenta tw-no-underline">Acerca de</Link>
                     <Link to="/Contacto" className="tw-text-sm tw-font-medium tw-text-ink hover:tw-text-magenta tw-no-underline">Contacto</Link>
                     <Link to="/Aviso-legal" className="tw-text-sm tw-font-medium tw-text-ink hover:tw-text-magenta tw-no-underline">Aviso Legal</Link>
