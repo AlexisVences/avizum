@@ -1,7 +1,7 @@
 [project]
-name = "abogadazo-api"
+name = "avizum-api"
 version = "0.1.0"
-description = "Abogadazo modular FastAPI backend"
+description = "Avizum modular FastAPI backend"
 requires-python = ">=3.11"
 dependencies = [
   "alembic>=1.14",

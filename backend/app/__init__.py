@@ -1,1 +1,1 @@
-"""Abogadazo API package."""
+"""Avizum API package."""

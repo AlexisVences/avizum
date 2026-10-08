@@ -36,7 +36,7 @@ const Contacto = () => {
                 <div className="col-md-6">
                 <div className="p-3">
                     <h5 className="fw-semibold">Información de contacto</h5>
-                    <p><strong>Correo:</strong> contacto@amicuz.mx</p>
+                    <p><strong>Correo:</strong> contacto@avizum.mx</p>
                     <p><strong>Horario de atención:</strong> Lunes a Viernes, 9:00 AM - 6:00 PM</p>
                     <p><strong>Redes sociales:</strong></p>
                     <ul>

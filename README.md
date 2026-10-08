@@ -1,6 +1,6 @@
-# Abogadazo
+# Avizum
 
-Abogadazo is a Mexican traffic-law consultation project. Its active backend is a single FastAPI modular monolith using PostgreSQL; the previous Express and Flask implementations remain temporarily as reference while the new API is adopted.
+Avizum is a Mexican traffic-law consultation project. Its active backend is a single FastAPI modular monolith using PostgreSQL; the previous Express and Flask implementations remain temporarily as reference while the new API is adopted.
 
 ## Repository layout
 
@@ -42,7 +42,7 @@ Prerequisites: [uv](https://docs.astral.sh/uv/), Node.js 18+/npm, and Docker (fo
    docker compose up -d db
    ```
 
-   This uses the same `abogadazo` / `change-me` credentials as `backend/.env.example`, on a persistent named volume, so data survives container restarts. Stop it with `docker compose down` (add `-v` to also wipe the volume).
+   This uses the same `avizum` / `change-me` credentials as `backend/.env.example`, on a persistent named volume, so data survives container restarts. Stop it with `docker compose down` (add `-v` to also wipe the volume).
 
 2. **Backend** — from `backend/`:
 

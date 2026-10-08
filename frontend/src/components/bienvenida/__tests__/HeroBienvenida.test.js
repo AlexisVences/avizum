@@ -25,7 +25,7 @@ describe('HeroBienvenida', () => {
     test('keeps the lead text and the subtitle, with the question only once', () => {
         render(<HeroBienvenida nombre="Alex" />);
         expect(
-            screen.getByText('Bienvenido a Amicuz, tu plataforma de confianza para consultas legales de tránsito y tu vehículo en la Ciudad de México.')
+            screen.getByText('Bienvenido a Avizum, tu plataforma de confianza para consultas legales de tránsito y tu vehículo en la Ciudad de México.')
         ).toBeInTheDocument();
         expect(screen.getByText('Elige la opción que mejor se acomode a tus necesidades')).toBeInTheDocument();
         expect(screen.getAllByText('¿Cómo podemos ayudarte?')).toHaveLength(1);
@@ -34,7 +34,7 @@ describe('HeroBienvenida', () => {
     test.each([undefined, null, '', '   '])('falls back to the original welcome when the name is %p', (nombre) => {
         render(<HeroBienvenida nombre={nombre} />);
         expect(screen.queryByText(/^Hola,/)).not.toBeInTheDocument();
-        expect(screen.getByText('Bienvenido a Amicuz')).toBeInTheDocument();
+        expect(screen.getByText('Bienvenido a Avizum')).toBeInTheDocument();
         expect(screen.getByText('¿Cómo podemos ayudarte?')).toBeInTheDocument();
     });
 

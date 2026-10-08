@@ -41,12 +41,12 @@ const HeroBienvenida = ({ nombre }) => {
                     className="tw-font-display tw-text-[clamp(2.2rem,5vw,3.6rem)] tw-leading-[1.05] tw-mb-5 [text-wrap:balance]"
                 >
                     <span className="tw-block tw-font-bold tw-text-ink">
-                        {saludo ? `Hola, ${saludo}.` : 'Bienvenido a Amicuz'}
+                        {saludo ? `Hola, ${saludo}.` : 'Bienvenido a Avizum'}
                     </span>
                     <span className="tw-block tw-font-semibold tw-text-magenta">¿Cómo podemos ayudarte?</span>
                 </motion.h1>
                 <motion.p {...entrada(0.12)} className="tw-text-[1.1rem] tw-text-ink-soft tw-max-w-[52ch] tw-mb-14">
-                    Bienvenido a Amicuz, tu plataforma de confianza para consultas legales de tránsito y tu vehículo en la Ciudad de México.
+                    Bienvenido a Avizum, tu plataforma para consultas legales de tránsito y tu vehículo en la Ciudad de México.
                 </motion.p>
                 <motion.p {...entrada(0.24)} className="tw-text-ink-soft tw-m-0">
                     Elige la opción que mejor se acomode a tus necesidades

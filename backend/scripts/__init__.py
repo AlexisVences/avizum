@@ -1,1 +1,1 @@
-"""Operational commands for the Abogadazo backend."""
+"""Operational commands for the Avizum backend."""

@@ -162,8 +162,8 @@ const AsesoriaIA = () => {
                                     ¿En qué te puedo ayudar?
                                 </h1>
                                 <p className="tw-text-ink-soft tw-text-sm tw-mb-6 tw-text-center tw-max-w-md">
-                                    Respuestas basadas solo en el Reglamento de Tránsito y la Ley de
-                                    Movilidad de la CDMX — nunca inventadas.
+                                    Respuestas basadas en el Reglamento de Tránsito y la Ley de
+                                    Movilidad de la CDMX.
                                 </p>
                                 <div className="tw-w-full tw-max-w-xl tw-flex tw-gap-2 tw-bg-paper-raised tw-border tw-border-rule tw-rounded-full tw-shadow-sm tw-px-2 tw-py-2">
                                     <input
@@ -197,7 +197,7 @@ const AsesoriaIA = () => {
 
                                                 <div>
                                                     <div className="tw-font-mono tw-text-[10px] tw-font-bold tw-tracking-wide tw-text-ink-soft tw-uppercase tw-mb-1.5">
-                                                        Amicuz IA
+                                                        Avizum IA
                                                     </div>
 
                                                     {item.respuesta === "Cargando..." ? (

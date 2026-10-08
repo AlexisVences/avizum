@@ -2,7 +2,7 @@ import os
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    "postgresql+psycopg://abogadazo:change-me@localhost:5432/abogadazo_test",
+    "postgresql+psycopg://avizum:change-me@localhost:5432/avizum_test",
 )
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["JWT_SECRET_KEY"] = "test-secret"

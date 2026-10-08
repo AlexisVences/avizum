@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-Abogadazo is a Mexican traffic-law consultation project. The **active backend is a single FastAPI modular monolith using PostgreSQL** (`backend/`). Two other backends exist only as reference and must not receive new features:
+Avizum is a Mexican traffic-law consultation project. The **active backend is a single FastAPI modular monolith using PostgreSQL** (`backend/`). Two other backends exist only as reference and must not receive new features:
 
 - `backend/node-api/` — legacy Express API (not run)
 - `ai/` — legacy Flask/RAG reference and index build utility (not run)
