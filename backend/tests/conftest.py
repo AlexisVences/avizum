@@ -35,6 +35,8 @@ def _ensure_database_exists(url: str) -> None:
 def client():
     _ensure_database_exists(TEST_DATABASE_URL)
     engine = create_engine(TEST_DATABASE_URL)
+    with engine.begin() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
     Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine, expire_on_commit=False)
     app = create_app()
