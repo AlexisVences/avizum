@@ -1,8 +1,9 @@
 import enum
 from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, Date, DateTime, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func, text
-from sqlalchemy.dialects.postgresql import ARRAY
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import CheckConstraint, Computed, Date, DateTime, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func, text
+from sqlalchemy.dialects.postgresql import ARRAY, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
@@ -51,6 +52,40 @@ class OfficialSource(Base):
     last_reform_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     is_current: Mapped[bool] = mapped_column(default=True, server_default=text("true"), nullable=False)
+
+
+EMBEDDING_DIMENSIONS = 1536  # text-embedding-3-small
+
+
+class LegalChunk(Base):
+    """A retrievable piece of an official source: one article, or one fraction of a long article."""
+
+    __tablename__ = "legal_chunks"
+    __table_args__ = (
+        Index("ix_legal_chunks_source_article", "source_id", "article"),
+        Index("ix_legal_chunks_tsv", "tsv", postgresql_using="gin"),
+        Index(
+            "ix_legal_chunks_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("official_sources.id", ondelete="CASCADE"), nullable=False)
+    article: Mapped[str] = mapped_column(String(50))  # "30", "30 Bis"
+    fraction: Mapped[str | None] = mapped_column(String(50), nullable=True)  # "II"
+    heading_path: Mapped[str] = mapped_column(Text)
+    text: Mapped[str] = mapped_column(Text)
+    page_start: Mapped[int] = mapped_column(Integer)
+    page_end: Mapped[int] = mapped_column(Integer)
+    token_count: Mapped[int] = mapped_column(Integer)
+    embedding: Mapped[list[float]] = mapped_column(Vector(EMBEDDING_DIMENSIONS))
+    tsv: Mapped[str] = mapped_column(
+        TSVECTOR,
+        Computed("to_tsvector('spanish', immutable_unaccent(heading_path || ' ' || text))", persisted=True),
+    )
 
 
 class AuthorizedAgent(Timestamped, Base):
