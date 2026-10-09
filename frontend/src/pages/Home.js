@@ -8,7 +8,7 @@ import infraccionimage from '../assets/infraccion.png';
 import { buscarAgentes } from '../services/agentesService';
 import ResultadoBusquedaAgentes from '../components/agentes/ResultadoBusquedaAgentes';
 
-const AGENTES_OFICIAL_URL = 'https://data.consejeria.cdmx.gob.mx/index.php/gaceta';
+const AGENTES_OFICIAL_URL = 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuerdo%2030-26.pdf';
 
 const OFRECEMOS = [
     {

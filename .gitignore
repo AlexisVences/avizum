@@ -29,7 +29,6 @@ venv/
 # Claude Code isolated worktrees (EnterWorktree tool) — each is its own git checkout
 .claude/worktrees/
 
-# Official PDFs are reproducible with scripts.fetch_sources; manual ones are whitelisted
+# Official PDFs are reproducible with scripts.fetch_sources (manual ones must be whitelisted)
 data/legal-sources/*.pdf
-!data/legal-sources/acuerdo-agentes-transito.pdf
 data/legal-sources/*.part
