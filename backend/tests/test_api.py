@@ -1,5 +1,5 @@
 from app.core.security import create_access_token, hash_password
-from app.models.domain import AgentLookup, AuthorizedAgent, Consultation, LegalResponse, User, UserRole
+from app.models.domain import Consultation, LegalResponse, User, UserRole
 
 
 def register(client, email="ana@example.com"):
@@ -48,39 +48,6 @@ def test_profile_requires_authentication_and_can_be_updated(client):
     assert response.status_code == 200
     assert response.json()["first_name"] == "Ana María"
 
-
-def test_agent_lookup_is_public_and_records_anonymous_and_authenticated_lookups(client):
-    http, factory = client
-    register(http)
-    with factory() as db:
-        db.add(AuthorizedAgent(plate="ABC123", name="Oficial Ejemplo"))
-        db.commit()
-
-    anonymous_response = http.get("/api/v1/agents/ABC123")
-    assert anonymous_response.status_code == 200
-    assert anonymous_response.json()["plate"] == "ABC123"
-
-    authenticated_response = http.get("/api/v1/agents/abc123", headers=auth_headers(http))
-    assert authenticated_response.status_code == 200
-    assert authenticated_response.json()["plate"] == "ABC123"
-
-    with factory() as db:
-        user = db.query(User).filter_by(email="ana@example.com").one()
-        lookups = db.query(AgentLookup).order_by(AgentLookup.id).all()
-        assert len(lookups) == 2
-        assert lookups[0].user_id is None
-        assert lookups[1].user_id == user.id
-
-
-def test_agent_lookup_ignores_invalid_token_instead_of_rejecting(client):
-    http, factory = client
-    with factory() as db:
-        db.add(AuthorizedAgent(plate="XYZ999", name="Oficial Inválido"))
-        db.commit()
-
-    response = http.get("/api/v1/agents/XYZ999", headers={"Authorization": "Bearer not-a-real-token"})
-    assert response.status_code == 200
-    assert response.json()["plate"] == "XYZ999"
 
 
 def test_feedback_only_for_response_owner_and_valid_rating(client):

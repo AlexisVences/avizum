@@ -46,13 +46,6 @@ class AdminUserUpdate(BaseModel):
     is_active: bool | None = None
 
 
-class AgentPublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    plate: str
-    name: str
-
-
 class FeedbackRequest(BaseModel):
     response_id: int
     rating: int = Field(ge=1, le=5)
