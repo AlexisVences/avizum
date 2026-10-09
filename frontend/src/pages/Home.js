@@ -8,7 +8,7 @@ import infraccionimage from '../assets/infraccion.png';
 import { buscarAgentes } from '../services/agentesService';
 import ResultadoBusquedaAgentes from '../components/agentes/ResultadoBusquedaAgentes';
 
-const AGENTES_OFICIAL_URL = 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuedo-40-2024.pdf';
+const AGENTES_OFICIAL_URL = 'https://data.consejeria.cdmx.gob.mx/index.php/gaceta';
 
 const OFRECEMOS = [
     {
@@ -34,11 +34,11 @@ const OFRECEMOS = [
 ];
 
 const DOCUMENTOS = [
-    { label: 'Reglamento de Tránsito de la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/reglamentos/REGLAMENTO_DE_TRANSITO_DE_LA_CIUDAD_DE_MEXICO_6.1.pdf' },
+    { label: 'Reglamento de Tránsito de la CDMX', href: 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/reglamento-de-transito-cdmx.pdf' },
     { label: 'Ley de Movilidad de la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf' },
     { label: 'Ley de cultura cívica en la CDMX', href: 'https://www.congresocdmx.gob.mx/media/documentos/49a0a80ee030f12d0f797c671da2918e508f30cb.pdf' },
     { label: 'Ley de procedimiento administrativo en la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf' },
-    { label: 'Lista de agentes facultados para infraccionar sobre vía pública en la CDMX', href: AGENTES_OFICIAL_URL },
+    { label: 'Acuerdo 30/2026: personal autorizado para infraccionar en la CDMX (Gaceta Oficial, 10-jun-2026)', href: AGENTES_OFICIAL_URL },
 ];
 
 const Home = () => {

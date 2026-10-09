@@ -31,4 +31,5 @@ venv/
 
 # Official PDFs are reproducible with scripts.fetch_sources; manual ones are whitelisted
 data/legal-sources/*.pdf
+!data/legal-sources/acuerdo-agentes-transito.pdf
 data/legal-sources/*.part
