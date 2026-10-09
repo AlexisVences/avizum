@@ -4,13 +4,13 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Literal
 
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session
 
 from app.models.domain import AuthorizedAgent, OfficialSource
 
 AGENTS_SOURCE_SLUG = "acuerdo-agentes-transito"
-PLATE_PATTERN = re.compile(r"[A-Z0-9]*\d[A-Z0-9]*")
+PLATE_PATTERN = re.compile(r"\d+")
 # greatest(similarity, word_similarity) >= 0.45 keeps typos ("zabala tobar karla" = 0.50) and
 # partial names ("karla zavala" = 0.67) while dropping unrelated names ("juan perez" ≈ 0.09).
 NAME_MATCH_THRESHOLD = 0.45
@@ -21,6 +21,10 @@ MAX_RESULTS = 10
 class AgentMatch:
     agent: AuthorizedAgent
     score: float
+
+
+class EmptyAgentQuery(ValueError):
+    pass
 
 
 @dataclass(frozen=True)
@@ -48,27 +52,39 @@ def current_agents_source(db: Session) -> OfficialSource | None:
     )
 
 
-def search_agents(db: Session, query: str) -> AgentSearch:
+def imported_agents_source(db: Session) -> OfficialSource | None:
+    """The current source, only if its agents were actually imported (else the registry is unavailable)."""
     source = current_agents_source(db)
+    if source is None:
+        return None
+    imported = db.scalar(select(exists().where(AuthorizedAgent.source_id == source.id)))
+    return source if imported else None
+
+
+def search_agents(db: Session, query: str) -> AgentSearch:
     plate = normalize_plate(query)
-    if PLATE_PATTERN.fullmatch(plate):
+    is_plate = bool(PLATE_PATTERN.fullmatch(plate))
+    name = normalize_name(query)
+    if not is_plate and not name:
+        raise EmptyAgentQuery("La consulta no contiene una placa ni un nombre")
+    source = imported_agents_source(db)
+    if source is None:
+        return AgentSearch([], None, "plate" if is_plate else "name")
+    if is_plate:
         agents = db.scalars(
             select(AuthorizedAgent)
-            .where(AuthorizedAgent.plate == plate)
+            .where(AuthorizedAgent.plate == plate, AuthorizedAgent.source_id == source.id)
             .order_by(AuthorizedAgent.authorization_type)
         ).all()
         return AgentSearch([AgentMatch(agent, 1.0) for agent in agents], source, "plate")
 
-    name = normalize_name(query)
-    if not name:
-        return AgentSearch([], source, "name")
     score = func.greatest(
         func.similarity(AuthorizedAgent.name_search, name),
         func.word_similarity(name, AuthorizedAgent.name_search),
     )
     rows = db.execute(
         select(AuthorizedAgent, score)
-        .where(score >= NAME_MATCH_THRESHOLD)
+        .where(score >= NAME_MATCH_THRESHOLD, AuthorizedAgent.source_id == source.id)
         .order_by(score.desc(), AuthorizedAgent.full_name)
         .limit(MAX_RESULTS)
     ).all()
