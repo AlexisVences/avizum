@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.models.domain import UserRole
+from app.models.domain import AuthorizationType, UserRole
 
 
 class UserPublic(BaseModel):
@@ -46,11 +47,27 @@ class AdminUserUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class OfficialSourcePublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    title: str
+    url: str
+    last_reform_date: date | None
+
+
 class AgentPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    id: int
     plate: str
-    name: str
+    full_name: str
+    authorization_type: AuthorizationType
+    corporation: str | None
+    alcaldias: list[str] | None
+
+
+class AgentSearchResponse(BaseModel):
+    query: str
+    matched_by: Literal["plate", "name"]
+    results: list[AgentPublic]
+    source: OfficialSourcePublic | None
 
 
 class FeedbackRequest(BaseModel):

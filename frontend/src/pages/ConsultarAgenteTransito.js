@@ -1,33 +1,31 @@
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { consultarAgente } from "../services/agentesService";
+import { buscarAgentes } from "../services/agentesService";
+import ResultadoBusquedaAgentes from "../components/agentes/ResultadoBusquedaAgentes";
 import NavBar2 from "../components/NavBar2";
 import Footer from "../components/Footer";
 import Button from "../components/ui/Button";
-import Badge from "../components/ui/Badge";
 
 const ConsultarAgenteTransito = () => {
     const [searchParams] = useSearchParams();
-    const [placaBusqueda, setPlacaBusqueda] = useState(searchParams.get('placa') || '');
-    const [agenteEncontrado, setAgenteEncontrado] = useState(null);
+    const [consulta, setConsulta] = useState(searchParams.get('placa') || searchParams.get('q') || '');
+    const [resultado, setResultado] = useState(null);
     const [errorBusqueda, setErrorBusqueda] = useState(null);
     const [cargando, setCargando] = useState(false);
 
     const handleBuscarAgente = async () => {
-        if (!placaBusqueda.trim()) {
-            setErrorBusqueda('Por favor ingresa un número de placa');
+        if (consulta.trim().length < 2) {
+            setResultado(null);
+            setErrorBusqueda('Escribe una placa o al menos dos letras del nombre del agente.');
             return;
         }
-
         setCargando(true);
         setErrorBusqueda(null);
-        setAgenteEncontrado(null);
-
+        setResultado(null);
         try {
-            const resultado = await consultarAgente(placaBusqueda);
-            setAgenteEncontrado(resultado);
+            setResultado(await buscarAgentes(consulta));
         } catch (error) {
-            setErrorBusqueda(error.message || 'Error al buscar el agente');
+            setErrorBusqueda(error.message);
         } finally {
             setCargando(false);
         }
@@ -46,19 +44,18 @@ const ConsultarAgenteTransito = () => {
                             Verifica al oficial
                         </h1>
                         <p className="tw-text-center tw-text-ink-soft tw-mb-8">
-                            Ingresa el número de placa de un agente para confirmar si está autorizado
-                            para levantar infracciones sobre vía pública en la CDMX.
+                            Ingresa el número de placa o el nombre del agente para confirmar si aparece en la lista
+                            oficial de personal autorizado para infraccionar en la CDMX.
                         </p>
 
                         <div className="tw-bg-paper-raised tw-border tw-border-rule tw-rounded-lg tw-shadow-sm tw-p-6">
                             <div className="tw-flex tw-gap-2.5">
                                 <input
                                     type="text"
-                                    inputMode="numeric"
-                                    placeholder="Número de placa"
-                                    aria-label="Número de placa del agente"
-                                    value={placaBusqueda}
-                                    onChange={(e) => setPlacaBusqueda(e.target.value)}
+                                    placeholder="Placa o nombre"
+                                    aria-label="Placa o nombre del agente"
+                                    value={consulta}
+                                    onChange={(e) => setConsulta(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleBuscarAgente()}
                                     className="tw-flex-1 tw-min-w-0 tw-font-mono tw-font-semibold tw-tracking-wider tw-text-[1.05rem] tw-border-[1.5px] tw-border-azul tw-rounded tw-bg-[#F4F6FC] tw-text-azul tw-text-center tw-px-3 tw-py-2.5 placeholder:tw-text-azul/50 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-azul/30"
                                 />
@@ -80,24 +77,11 @@ const ConsultarAgenteTransito = () => {
                                     </div>
                                 )}
 
-                                {!cargando && agenteEncontrado && (
-                                    <div className="tw-border tw-border-rule tw-rounded tw-p-4">
-                                        <div className="tw-flex tw-items-center tw-justify-between tw-mb-3">
-                                            <span className="tw-font-mono tw-text-lg tw-font-bold tw-text-ink tw-tracking-wider">
-                                                {agenteEncontrado.agente.plate}
-                                            </span>
-                                            <Badge variant="verified">Verificado</Badge>
-                                        </div>
-                                        <p className="tw-text-ink-soft tw-text-sm tw-m-0">
-                                            <strong className="tw-text-ink">{agenteEncontrado.agente.name}</strong> está
-                                            facultado para infraccionar en la vía pública de la CDMX.
-                                        </p>
-                                    </div>
-                                )}
+                                {!cargando && resultado && <ResultadoBusquedaAgentes resultado={resultado} />}
 
-                                {!cargando && !errorBusqueda && !agenteEncontrado && (
+                                {!cargando && !errorBusqueda && !resultado && (
                                     <p className="tw-text-center tw-text-sm tw-text-ink-soft tw-m-0">
-                                        Ingresa una placa para verificar si el agente está autorizado.
+                                        Ingresa una placa o un nombre para verificar al agente.
                                     </p>
                                 )}
                             </div>
