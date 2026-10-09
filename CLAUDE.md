@@ -17,9 +17,8 @@ backend/                Active FastAPI application, Alembic migrations and tests
 backend/node-api/       Legacy Express API (not run)
 ai/                     Legacy Flask/RAG reference and index build utility (not run)
 data/
-  agents/               Registry of authorized traffic agents (CSV)
-  legal-sources/        PDF legal/reference sources
-  legal-embeddings/     Existing FAISS index built from legal sources
+  sources.json          Manifest of official sources (URL, reform date, expected counts)
+  legal-sources/        Official PDFs (downloaded by scripts.fetch_sources, not committed)
 database/schema.sql     PostgreSQL schema
 ```
 
@@ -39,6 +38,9 @@ uv run uvicorn app.main:app --reload --host 0.0.0.0  # run API on http://localho
 uv run pytest                                 # run all tests
 uv run pytest tests/test_api.py::test_name    # run a single test
 uv run python -m scripts.promote_admin <email>  # bootstrap the first admin (after they register)
+uv sync --group dev --group ingest            # adds PyMuPDF for source ingestion
+uv run python -m scripts.fetch_sources        # download and register official sources (data/sources.json)
+uv run python -m scripts.import_agents        # import the current authorized-agents acuerdo
 ```
 
 The API is served under `/api/v1` (e.g. `GET /api/v1/health`).
@@ -60,7 +62,7 @@ AI / RAG (optional, lazy-loaded):
 cd backend && uv sync --group ai
 ```
 
-Requires Ollama running with the configured chat/embedding models, `AI_ENABLED=true`, and `AI_INDEX_PATH` set. The checked-in LangChain FAISS index has pickle metadata and is rejected by default; set `AI_ALLOW_LEGACY_FAISS_DESERIALIZATION=true` only after rebuilding/validating the index from trusted PDFs in `data/legal-sources/` on the deployment machine. When AI is unavailable, legal consultation returns HTTP 503 rather than a fabricated answer.
+Requires Ollama running with the configured chat/embedding models, `AI_ENABLED=true`, and `AI_INDEX_PATH` set. No index is checked in (the legacy pickle-based FAISS index was removed); build one from the trusted PDFs in `data/legal-sources/`, and set `AI_ALLOW_LEGACY_FAISS_DESERIALIZATION=true` only for an index you built and validated on the deployment machine. When AI is unavailable, legal consultation returns HTTP 503 rather than a fabricated answer.
 
 ## Backend architecture
 
@@ -68,7 +70,7 @@ Requires Ollama running with the configured chat/embedding models, `AI_ENABLED=t
 - `app/core/config.py` exposes a cached `Settings` (pydantic-settings, reads `.env`); `app/core/security.py` handles Argon2 password hashing (`pwdlib`) and JWT creation.
 - `app/api/deps.py` defines the auth dependency chain: `current_user` decodes the Bearer JWT and loads the user; `admin_user` additionally requires `UserRole.ADMIN`. Route handlers take `CurrentUser` / `AdminUser` / `DbSession` as typed `Annotated` dependencies rather than reading `Depends(...)` inline.
 - **Authentication is Bearer JWT.** Registration always creates the `user` role — there is no self-service admin signup. Only an existing administrator can promote/demote roles, via `PATCH /api/v1/admin/users/{id}`. Identity and ownership are always derived from the token's subject, never from a client-supplied user ID (see `submit_feedback` in `routes.py` checking `consultation.user_id != user.id`).
-- `app/models/domain.py` holds all SQLAlchemy models: `User`, `AuthorizedAgent`, `AgentLookup`, `Consultation`, `LegalResponse`, `Feedback`. `Consultation` and `LegalResponse` are separate tables (one-to-one) so a consultation's question is recorded even if answer generation fails partway.
+- `app/models/domain.py` holds all SQLAlchemy models: `User`, `OfficialSource` (versioned official documents, one current per slug), `AuthorizedAgent`, `AgentLookup`, `Consultation`, `LegalResponse`, `Feedback`. `Consultation` and `LegalResponse` are separate tables (one-to-one) so a consultation's question is recorded even if answer generation fails partway.
 - `app/services/legal_ai.py` is a lazy, optional Ollama/LangChain RAG adapter used by the `/legal-consultations` endpoint; it raises `LegalAIUnavailable` when AI is disabled/misconfigured, which the route converts to a 503.
 - Alembic migrations (`backend/migrations/`) are the source of truth for schema, mirrored conceptually in `database/schema.sql`. The new schema deliberately replaces legacy `usuario`/`consulta`-style tables from the old Flask/Express backends and does **not** auto-migrate an existing production database — a data migration must be planned and tested explicitly before deploying against one.
 - Tests run against PostgreSQL (see `backend/tests/conftest.py`; requires the `db` service from `docker-compose.yml` running, or a `TEST_DATABASE_URL` override), overriding the `get_db` dependency and creating/dropping all tables per test via a `client` fixture that yields `(test_client, session_factory)`. This matches production so Postgres-only behavior (e.g. native enum columns) is actually exercised.

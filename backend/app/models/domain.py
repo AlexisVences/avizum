@@ -1,7 +1,8 @@
 import enum
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, Date, DateTime, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func, text
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
@@ -28,11 +29,52 @@ class User(Timestamped, Base):
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 
 
+class AuthorizationType(str, enum.Enum):
+    VIA_PUBLICA = "via_publica"
+    SISTEMAS_TECNOLOGICOS = "sistemas_tecnologicos"
+
+
+class OfficialSource(Base):
+    """One downloaded version of an official document; exactly one version per slug is current."""
+
+    __tablename__ = "official_sources"
+    __table_args__ = (
+        UniqueConstraint("slug", "sha256", name="uq_official_sources_slug_sha256"),
+        Index("uq_official_sources_current_slug", "slug", unique=True, postgresql_where=text("is_current")),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(100), index=True)
+    title: Mapped[str] = mapped_column(String(300))
+    kind: Mapped[str] = mapped_column(String(20))
+    url: Mapped[str] = mapped_column(String(1000))
+    sha256: Mapped[str] = mapped_column(String(64))
+    last_reform_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    is_current: Mapped[bool] = mapped_column(default=True, server_default=text("true"), nullable=False)
+
+
 class AuthorizedAgent(Timestamped, Base):
     __tablename__ = "authorized_agents"
+    __table_args__ = (
+        UniqueConstraint("plate", "authorization_type", name="uq_authorized_agents_plate_type"),
+        Index(
+            "ix_authorized_agents_name_search_trgm",
+            "name_search",
+            postgresql_using="gin",
+            postgresql_ops={"name_search": "gin_trgm_ops"},
+        ),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
-    plate: Mapped[str] = mapped_column(String(50), unique=True, index=True)
-    name: Mapped[str] = mapped_column(String(255))
+    plate: Mapped[str] = mapped_column(String(50), index=True)
+    full_name: Mapped[str] = mapped_column(String(255))
+    name_search: Mapped[str] = mapped_column(String(255))
+    authorization_type: Mapped[AuthorizationType] = mapped_column(
+        Enum(AuthorizationType, name="agent_authorization_type", values_callable=lambda e: [m.value for m in e]),
+        nullable=False,
+    )
+    corporation: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    alcaldias: Mapped[list[str] | None] = mapped_column(ARRAY(String(100)), nullable=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("official_sources.id"), nullable=False, index=True)
 
 
 class AgentLookup(Base):

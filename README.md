@@ -84,7 +84,7 @@ flowchart LR
 - **Alembic is the schema source of truth.** The test suite runs against real PostgreSQL, not SQLite, so Postgres-only behavior such as native enum columns is actually exercised.
 - **Consultations and responses are separate tables**, so a user's question is recorded even if answer generation fails halfway.
 - **AI is optional and fails closed.** When it is disabled or misconfigured, the API returns 503. It never produces an unsourced answer.
-- **Security-minded about data.** The legacy FAISS index uses pickle metadata, so it is rejected by default and must be rebuilt from trusted PDFs before it can be loaded.
+- **Security-minded about data.** Official sources are downloaded over verified TLS and versioned by SHA-256; the legacy pickle-based FAISS index was removed rather than trusted.
 
 ## The legal assistant: design
 
@@ -146,7 +146,9 @@ cd backend
 cp .env.example .env            # set JWT_SECRET_KEY
 uv sync --group dev
 uv run alembic upgrade head
-uv run python -m scripts.seed_agents          # load the officer registry
+uv sync --group dev --group ingest
+uv run python -m scripts.fetch_sources       # download and register official sources (data/sources.json)
+uv run python -m scripts.import_agents       # import the current authorized-agents acuerdo
 uv run uvicorn app.main:app --reload --host 0.0.0.0
 
 # 3. Frontend (http://localhost:3000), in another terminal
@@ -197,8 +199,8 @@ backend/             FastAPI app, Alembic migrations, tests
   app/schemas/       Pydantic request/response models
   app/services/      Business logic and integrations
 data/
-  agents/            Registry of authorized officers (CSV)
-  legal-sources/     Official legal PDFs
+  sources.json       Manifest of official sources (URL, reform date, expected counts)
+  legal-sources/     Official legal PDFs (downloaded by scripts.fetch_sources, not committed)
 database/schema.sql  Reference schema (Alembic is authoritative)
 docs/superpowers/    Design specs and implementation plans
 ```

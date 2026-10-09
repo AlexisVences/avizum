@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
 import SloganAnimado from '../components/SloganAnimado';
 import infraccionimage from '../assets/infraccion.png';
-import { consultarAgente } from '../services/agentesService';
+import { buscarAgentes } from '../services/agentesService';
+import ResultadoBusquedaAgentes from '../components/agentes/ResultadoBusquedaAgentes';
 
-const AGENTES_OFICIAL_URL = 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuedo-40-2024.pdf';
+const AGENTES_OFICIAL_URL = 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuerdo%2030-26.pdf';
 
 const OFRECEMOS = [
     {
@@ -34,33 +34,32 @@ const OFRECEMOS = [
 ];
 
 const DOCUMENTOS = [
-    { label: 'Reglamento de Tránsito de la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/reglamentos/REGLAMENTO_DE_TRANSITO_DE_LA_CIUDAD_DE_MEXICO_6.1.pdf' },
+    { label: 'Reglamento de Tránsito de la CDMX', href: 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/reglamento-de-transito-cdmx.pdf' },
     { label: 'Ley de Movilidad de la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf' },
     { label: 'Ley de cultura cívica en la CDMX', href: 'https://www.congresocdmx.gob.mx/media/documentos/49a0a80ee030f12d0f797c671da2918e508f30cb.pdf' },
     { label: 'Ley de procedimiento administrativo en la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf' },
-    { label: 'Lista de agentes facultados para infraccionar sobre vía pública en la CDMX', href: AGENTES_OFICIAL_URL },
+    { label: 'Acuerdo 30/2026: personal autorizado para infraccionar en la CDMX (Gaceta Oficial, 10-jun-2026)', href: AGENTES_OFICIAL_URL },
 ];
 
 const Home = () => {
     const [placa, setPlaca] = useState('');
     const [cargando, setCargando] = useState(false);
-    const [agenteEncontrado, setAgenteEncontrado] = useState(null);
+    const [resultado, setResultado] = useState(null);
     const [errorBusqueda, setErrorBusqueda] = useState(null);
 
     const verificarAgente = async () => {
-        if (!placa.trim()) {
-            setAgenteEncontrado(null);
-            setErrorBusqueda('Por favor ingresa un número de placa');
+        if (placa.trim().length < 2) {
+            setResultado(null);
+            setErrorBusqueda('Escribe una placa o al menos dos letras del nombre del agente.');
             return;
         }
 
         setCargando(true);
         setErrorBusqueda(null);
-        setAgenteEncontrado(null);
+        setResultado(null);
 
         try {
-            const resultado = await consultarAgente(placa);
-            setAgenteEncontrado(resultado);
+            setResultado(await buscarAgentes(placa));
         } catch (error) {
             setErrorBusqueda(error.message || 'Error al buscar el agente');
         } finally {
@@ -88,14 +87,13 @@ const Home = () => {
 
                         <div className="tw-bg-paper-raised tw-border tw-border-rule tw-rounded-md tw-px-5 tw-py-[18px] tw-max-w-[420px] tw-shadow-[0_4px_14px_rgba(22,24,29,0.06)]">
                             <span className="tw-block tw-text-[0.82rem] tw-font-bold tw-text-ink tw-mb-2.5">
-                                Verificar agente por número de placa
+                                Verificar agente por placa o nombre
                             </span>
                             <div className="tw-flex tw-gap-2.5">
                                 <input
                                     type="text"
-                                    inputMode="numeric"
-                                    placeholder="057 196"
-                                    aria-label="Número de placa del agente"
+                                    placeholder="Placa o nombre"
+                                    aria-label="Placa o nombre del agente"
                                     value={placa}
                                     onChange={(e) => setPlaca(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && verificarAgente()}
@@ -117,29 +115,12 @@ const Home = () => {
                                     <p className="tw-text-ink-soft tw-text-sm tw-leading-relaxed tw-m-0">
                                         {errorBusqueda}
                                     </p>
-                                    <a
-                                        href={AGENTES_OFICIAL_URL}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="tw-inline-block tw-mt-2.5 tw-text-azul hover:tw-text-magenta tw-text-sm tw-font-semibold"
-                                    >
-                                        Verificar manualmente en el listado oficial →
-                                    </a>
                                 </div>
                             )}
 
-                            {!cargando && agenteEncontrado && (
-                                <div key="ok" className="tw-mt-3 tw-border tw-border-rule tw-rounded tw-p-4 tw-animate-fade-in-up">
-                                    <div className="tw-flex tw-items-center tw-justify-between tw-mb-3">
-                                        <span className="tw-font-mono tw-text-lg tw-font-bold tw-text-ink tw-tracking-wider">
-                                            {agenteEncontrado.agente.plate}
-                                        </span>
-                                        <Badge variant="verified">Verificado</Badge>
-                                    </div>
-                                    <p className="tw-text-ink-soft tw-text-sm tw-m-0">
-                                        <strong className="tw-text-ink">{agenteEncontrado.agente.name}</strong> está
-                                        facultado para infraccionar en la vía pública de la CDMX.
-                                    </p>
+                            {!cargando && resultado && (
+                                <div key="ok" className="tw-mt-3 tw-animate-fade-in-up">
+                                    <ResultadoBusquedaAgentes resultado={resultado} />
                                 </div>
                             )}
 
