@@ -13,6 +13,7 @@ dependencies = [
   "pwdlib[argon2]>=0.2",
   "sqlalchemy>=2.0",
   "uvicorn[standard]>=0.32",
+  "pgvector>=0.5.1",
 ]
 
 [dependency-groups]
