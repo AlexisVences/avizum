@@ -9,7 +9,7 @@
     { "tipo": "LEY", "titulo": "Ley de Movilidad de la CDMX", "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf" },
     { "tipo": "LEY", "titulo": "Ley de Cultura Cívica en la CDMX", "url": "https://www.congresocdmx.gob.mx/media/documentos/49a0a80ee030f12d0f797c671da2918e508f30cb.pdf" },
     { "tipo": "LEY", "titulo": "Ley de Procedimiento Administrativo en la CDMX", "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf" },
-    { "tipo": "ACUERDO", "titulo": "Acuerdo 30/2026: personal autorizado para expedir y firmar boletas de tránsito en la CDMX (Gaceta Oficial, 10-jun-2026)", "url": "https://data.consejeria.cdmx.gob.mx/index.php/gaceta" }
+    { "tipo": "ACUERDO", "titulo": "Acuerdo 30/2026: personal autorizado para expedir y firmar boletas de tránsito en la CDMX (Gaceta Oficial, 10-jun-2026)", "url": "https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuerdo%2030-26.pdf" }
   ],
   "fuentes": [],
   "actualizado": "2026-10",

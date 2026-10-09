@@ -18,7 +18,7 @@ backend/node-api/       Legacy Express API (not run)
 ai/                     Legacy Flask/RAG reference and index build utility (not run)
 data/
   sources.json          Manifest of official sources (URL, reform date, expected counts)
-  legal-sources/        Official PDFs (downloaded by scripts.fetch_sources; manual ones committed)
+  legal-sources/        Official PDFs (downloaded by scripts.fetch_sources, not committed)
 database/schema.sql     PostgreSQL schema
 ```
 

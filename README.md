@@ -200,7 +200,7 @@ backend/             FastAPI app, Alembic migrations, tests
   app/services/      Business logic and integrations
 data/
   sources.json       Manifest of official sources (URL, reform date, expected counts)
-  legal-sources/     Official legal PDFs (downloaded; only manual ones are committed)
+  legal-sources/     Official legal PDFs (downloaded by scripts.fetch_sources, not committed)
 database/schema.sql  Reference schema (Alembic is authoritative)
 docs/superpowers/    Design specs and implementation plans
 ```
