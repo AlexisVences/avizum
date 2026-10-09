@@ -1,0 +1,22 @@
+{
+  "sources": [
+    {"slug": "reglamento-transito", "title": "Reglamento de Tránsito de la Ciudad de México", "kind": "reglamento",
+     "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/reglamentos/REGLAMENTO_DE_TRANSITO_DE_LA_CIUDAD_DE_MEXICO_6.1.pdf",
+     "last_reform_date": "2024-11-26"},
+    {"slug": "ley-movilidad", "title": "Ley de Movilidad de la Ciudad de México", "kind": "ley",
+     "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf",
+     "last_reform_date": "2021-12-27"},
+    {"slug": "ley-cultura-civica", "title": "Ley de Cultura Cívica de la Ciudad de México", "kind": "ley",
+     "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_CULTURA_CIVICA_DE_LA_CIUDAD_DE_MEXICO_2.7.pdf",
+     "last_reform_date": "2024-10-03"},
+    {"slug": "ley-procedimiento-administrativo", "title": "Ley de Procedimiento Administrativo de la Ciudad de México", "kind": "ley",
+     "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf",
+     "last_reform_date": "2019-06-12"},
+    {"slug": "ley-justicia-administrativa", "title": "Ley de Justicia Administrativa de la Ciudad de México", "kind": "ley",
+     "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_%20DE_JUSTICIA_ADMINISTRATIVA_DE_LA_CDMX_3.1.pdf",
+     "last_reform_date": "2019-12-23"},
+    {"slug": "codigo-fiscal", "title": "Código Fiscal de la Ciudad de México", "kind": "codigo",
+     "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/2025/2026/210126/CODIGO_FISCAL_DE_LA_CDMX_26.1.pdf",
+     "last_reform_date": "2025-12-19"}
+  ]
+}
