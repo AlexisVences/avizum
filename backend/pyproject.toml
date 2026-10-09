@@ -17,6 +17,7 @@ dependencies = [
 
 [dependency-groups]
 dev = ["httpx>=0.28", "pytest>=8.3"]
+ingest = ["pymupdf>=1.24"]
 ai = ["faiss-cpu>=1.9", "langchain>=0.3", "langchain-community>=0.3", "langchain-ollama>=0.2"]
 
 [tool.pytest.ini_options]
