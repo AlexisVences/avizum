@@ -18,6 +18,12 @@ from app.db.session import Base
 import app.db.base  # noqa: F401
 from app.main import create_app
 
+IMMUTABLE_UNACCENT_SQL = """
+CREATE OR REPLACE FUNCTION immutable_unaccent(text) RETURNS text
+LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
+AS $$ SELECT public.unaccent('public.unaccent', $1) $$
+"""
+
 
 def _ensure_database_exists(url: str) -> None:
     db_url = make_url(url)
@@ -37,6 +43,9 @@ def client():
     engine = create_engine(TEST_DATABASE_URL)
     with engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent"))
+        conn.execute(text(IMMUTABLE_UNACCENT_SQL))
     Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine, expire_on_commit=False)
     app = create_app()
