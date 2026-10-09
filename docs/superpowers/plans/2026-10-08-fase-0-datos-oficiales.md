@@ -1,5 +1,7 @@
 # Fase 0 — Datos oficiales: plan de implementación
 
+> **Estado: COMPLETADO el 2026-10-09** (commits `c71800b`..`767ee9d`). Las desviaciones respecto a este plan (Reglamento desde la SSC, acuerdo descargado de la SSC con `pages: [2, 28]`, cadena TLS completa, sin entrada del decreto 30-jun-2026, correcciones de la revisión final) están en el spec maestro §15. No volver a ejecutarlo.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** registrar las fuentes legales oficiales vigentes (con hash y versión) y reconstruir el registro de agentes facultados a partir del Acuerdo 30/2026, con búsqueda por placa o por nombre aproximado y el link a la fuente oficial siempre visible.
