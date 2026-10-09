@@ -8,7 +8,7 @@ from app.api.deps import AdminUser, CurrentUser, DbSession, OptionalUser
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.domain import AgentLookup, Consultation, Feedback, LegalResponse, User
 from app.schemas.api import (AdminUserUpdate, AgentPublic, AgentSearchResponse, OfficialSourcePublic, FeedbackRequest, LegalConsultationRequest, LegalConsultationResponse, LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserPublic)
-from app.services.agents_registry import search_agents
+from app.services.agents_registry import EmptyAgentQuery, search_agents
 from app.services.legal_ai import LegalAIService, LegalAIUnavailable
 from app.core.config import get_settings
 
@@ -85,7 +85,10 @@ def manage_user(user_id: int, payload: AdminUserUpdate, _: AdminUser, db: DbSess
 def search_authorized_agents(
     user: OptionalUser, db: DbSession, q: Annotated[str, Query(min_length=2, max_length=100)]
 ) -> AgentSearchResponse:
-    search = search_agents(db, q)
+    try:
+        search = search_agents(db, q)
+    except EmptyAgentQuery as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Escribe una placa o un nombre") from exc
     top_agent_id = search.matches[0].agent.id if search.matches else None
     db.add(AgentLookup(user_id=user.id if user else None, agent_id=top_agent_id))
     db.commit()

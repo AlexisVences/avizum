@@ -109,3 +109,36 @@ def test_legacy_plate_endpoint_is_gone(client):
     http, factory = client
     seed(factory)
     assert http.get("/api/v1/agents/1168287").status_code == 404
+
+
+def test_registered_but_not_imported_source_is_reported_as_unavailable(client):
+    http, factory = client
+    with factory() as db:
+        add_agents_source(db)
+        db.commit()
+    assert http.get(URL, params={"q": "1168287"}).json()["source"] is None
+
+
+def test_agents_from_a_previous_version_are_not_shown_under_the_new_source(client):
+    http, factory = client
+    with factory() as db:
+        old = add_agents_source(db, sha256="a" * 64, is_current=False)
+        add_agent(db, old, "1168287", "ZAVALA TOVAR KARLA PAOLA")
+        add_agents_source(db, sha256="b" * 64)
+        db.commit()
+    body = http.get(URL, params={"q": "1168287"}).json()
+    assert body["results"] == []
+    assert body["source"] is None
+
+
+def test_name_with_a_stray_digit_is_searched_by_name(client):
+    http, factory = client
+    seed(factory)
+    body = http.get(URL, params={"q": "zavala tovar 1"}).json()
+    assert body["matched_by"] == "name"
+    assert body["results"][0]["full_name"] == "ZAVALA TOVAR KARLA PAOLA"
+
+
+def test_query_without_letters_or_digits_is_rejected(client):
+    http, _ = client
+    assert http.get(URL, params={"q": "!!"}).status_code == 422
