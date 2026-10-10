@@ -11,7 +11,8 @@ from sqlalchemy.orm import Session
 
 from app.models.domain import OfficialSource
 
-KINDS = {"ley", "reglamento", "codigo", "acuerdo", "decreto", "guia"}
+KINDS = {"ley", "reglamento", "codigo", "acuerdo", "decreto", "guia", "protocolo"}
+LAYOUTS = {"articles", "sections"}
 SLUG_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 
 
@@ -25,6 +26,8 @@ class SourceSpec:
     manual: bool = False
     expected_counts: dict[str, int] | None = None
     pages: tuple[int, int] | None = None
+    articles: tuple[str, ...] | None = None  # index only these articles/sections (e.g. the fee articles of a huge code)
+    layout: str = "articles"  # "sections" for documents numbered 4.5, 4.6… instead of "Artículo N"
 
 
 def _parse_entry(raw: dict) -> SourceSpec:
@@ -35,6 +38,9 @@ def _parse_entry(raw: dict) -> SourceSpec:
         raise ValueError(f"Tipo inválido en {slug}: {raw['kind']!r}")
     if not raw["url"].startswith("https://"):
         raise ValueError(f"La URL de {slug} debe ser https")
+    layout = raw.get("layout", "articles")
+    if layout not in LAYOUTS:
+        raise ValueError(f"Layout inválido en {slug}: {layout!r}")
     reform = raw.get("last_reform_date")
     pages = raw.get("pages")
     if pages is not None and not (len(pages) == 2 and 1 <= pages[0] <= pages[1]):
@@ -48,6 +54,8 @@ def _parse_entry(raw: dict) -> SourceSpec:
         manual=bool(raw.get("manual", False)),
         expected_counts=raw.get("expected_counts"),
         pages=tuple(pages) if pages else None,
+        articles=tuple(str(a) for a in raw["articles"]) if raw.get("articles") else None,
+        layout=layout,
     )
 
 
