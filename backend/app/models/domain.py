@@ -2,8 +2,8 @@ import enum
 from datetime import date, datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import CheckConstraint, Computed, Date, DateTime, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func, text
-from sqlalchemy.dialects.postgresql import ARRAY, TSVECTOR
+from sqlalchemy import CheckConstraint, Computed, Date, DateTime, Enum, ForeignKey, Index, Integer, SmallInteger, String, Text, UniqueConstraint, func, text
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
@@ -120,27 +120,56 @@ class AgentLookup(Base):
     agent_id: Mapped[int] = mapped_column(ForeignKey("authorized_agents.id", ondelete="SET NULL"), nullable=True, index=True)
 
 
-class Consultation(Base):
-    __tablename__ = "consultations"
+class MessageRole(str, enum.Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+
+
+class MessageStatus(str, enum.Enum):
+    COMPLETE = "complete"
+    ERROR = "error"
+    CANCELLED = "cancelled"
+
+
+class Conversation(Timestamped, Base):
+    __tablename__ = "conversations"
+    __table_args__ = (Index("ix_conversations_user_updated", "user_id", "updated_at"),)
     id: Mapped[int] = mapped_column(primary_key=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    question: Mapped[str] = mapped_column(Text)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-
-
-class LegalResponse(Base):
-    __tablename__ = "legal_responses"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    text: Mapped[str] = mapped_column(Text)
-    category: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
-    consultation_id: Mapped[int] = mapped_column(ForeignKey("consultations.id", ondelete="CASCADE"), nullable=False, unique=True)
-
-
-class Feedback(Timestamped, Base):
-    __tablename__ = "feedback"
-    __table_args__ = (CheckConstraint("rating BETWEEN 1 AND 5", name="ck_feedback_rating_range"), UniqueConstraint("response_id", name="uq_feedback_response"), Index("ix_feedback_response_id", "response_id"))
-    id: Mapped[int] = mapped_column(primary_key=True)
-    rating: Mapped[int] = mapped_column(Integer)
-    response_id: Mapped[int] = mapped_column(ForeignKey("legal_responses.id", ondelete="CASCADE"), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    title: Mapped[str | None] = mapped_column(String(80), nullable=True)
+
+
+class Message(Base):
+    """One turn of a conversation. Order by (created_at, id): both timestamps of a turn can be equal."""
+
+    __tablename__ = "messages"
+    __table_args__ = (Index("ix_messages_conversation_created", "conversation_id", "created_at", "id"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
+    role: Mapped[MessageRole] = mapped_column(
+        Enum(MessageRole, name="message_role", values_callable=lambda e: [m.value for m in e]), nullable=False
+    )
+    content: Mapped[str] = mapped_column(Text)
+    status: Mapped[MessageStatus] = mapped_column(
+        Enum(MessageStatus, name="message_status", values_callable=lambda e: [m.value for m in e]),
+        default=MessageStatus.COMPLETE, server_default=MessageStatus.COMPLETE.value, nullable=False,
+    )
+    citations: Mapped[list | None] = mapped_column(JSONB, nullable=True)  # [{n, source_title, article, fraction, page, url}]
+    tool_calls: Mapped[list | None] = mapped_column(JSONB, nullable=True)  # what the agent consulted, for traces and evals
+    model: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class MessageFeedback(Base):
+    __tablename__ = "message_feedback"
+    __table_args__ = (
+        CheckConstraint("value IN (-1, 1)", name="ck_message_feedback_value"),
+        UniqueConstraint("message_id", "user_id", name="uq_message_feedback_message_user"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    message_id: Mapped[int] = mapped_column(ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    value: Mapped[int] = mapped_column(SmallInteger)  # 1 = 👍, -1 = 👎
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

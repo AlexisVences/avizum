@@ -81,8 +81,8 @@ const Home = () => {
                         </h1>
                         <SloganAnimado />
                         <p className="tw-text-[1.02rem] tw-text-ink-soft tw-max-w-[46ch] tw-mb-6">
-                            Verifica si el agente que te detuvo está facultado para infraccionar, consulta tu multa
-                            y entiende el reglamento, y usa nuestro chat de IA basado solo en documentos oficiales.
+                            Verifica si el agente que te detuvo está facultado para infraccionar, consulta tu multa,
+                            entiende el reglamento, y usa nuestro chat de IA basado en documentos oficiales.
                         </p>
 
                         <div className="tw-bg-paper-raised tw-border tw-border-rule tw-rounded-md tw-px-5 tw-py-[18px] tw-max-w-[420px] tw-shadow-[0_4px_14px_rgba(22,24,29,0.06)]">

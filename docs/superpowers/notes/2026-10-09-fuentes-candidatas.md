@@ -52,3 +52,4 @@ Complementan el hueco de "días y horarios". Son datos **operativos que cambian*
 - Revisar **cada diciembre/enero** el Código Fiscal (Art. 259: tarifa; Arts. 230-231: grúa y almacenaje), porque se actualizan por año.
 - Buscar acuerdos de la Gaceta que modifiquen **horarios y días por zona** (Art. 4 fr. XXIII del Reglamento de Estacionamiento).
 - Comparar contra la tarifa de la ley: si el portal y el Código Fiscal difieren, prevalece el Código Fiscal y se avisa.
+- **UMA:** cambia cada febrero (INEGI, publicada en el DOF en enero; vigente del 1-feb al 31-ene). Hoy en `.env`/`Settings` (`UMA_VALUE`, `UMA_VALID_FROM`, `UMA_VALID_UNTIL`): verificada el 2026-10-10 en $117.31 (2026). El script debe leerla de INEGI y avisar; `calcular_multa` ya advierte si la fecha cae fuera de la vigencia.
