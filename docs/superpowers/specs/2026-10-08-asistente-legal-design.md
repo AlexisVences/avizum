@@ -59,7 +59,7 @@ Toda fuente se descarga de su URL oficial; se guardan URL, SHA-256, fecha de úl
 
 | Slug | Documento | Uso |
 |---|---|---|
-| `reglamento-transito` | Reglamento de Tránsito CDMX, texto consolidado de la SSC (última reforma GOCDMX 6-may-2026, VEMEPE) | Infracciones, sanciones en UMA, puntos, corralón |
+| `reglamento-transito` | Reglamento de Tránsito CDMX, texto de la Consejería (última reforma GOCDMX **30-jun-2026**; sustituye al consolidado de la SSC del 6-may-2026) | Infracciones, sanciones en UMA, puntos, corralón |
 | `ley-movilidad` | Ley de Movilidad CDMX, texto vigente | Licencias, placas, control vehicular |
 | `ley-cultura-civica` | Ley de Cultura Cívica CDMX, texto vigente | Juez cívico, recurso de revisión de fotocívicas |
 | `ley-procedimiento-administrativo` | Ley de Procedimiento Administrativo CDMX, texto vigente | Recurso de inconformidad |
@@ -73,16 +73,16 @@ Fuente preferida: portal de la Consejería Jurídica (`data.consejeria.cdmx.gob.
 
 | Slug | URL | Última reforma |
 |---|---|---|
-| `reglamento-transito` | `https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/reglamento-de-transito-cdmx.pdf` | 2026-05-06 |
-| `ley-movilidad` | `https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf` | 2021-12-27 |
-| `ley-cultura-civica` | `https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_CULTURA_CIVICA_DE_LA_CIUDAD_DE_MEXICO_2.7.pdf` | 2024-10-03 |
+| `reglamento-transito` | `https://data.consejeria.cdmx.gob.mx/images/leyes/2025/181225/REGLAMENTO_DE_TRNSITO_DE_LA_CIUDAD_DE_MXICO_6.4.pdf` | 2026-06-30 |
+| `ley-movilidad` | `https://data.consejeria.cdmx.gob.mx/images/leyes/2025/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf` | 2025-08-27 |
+| `ley-cultura-civica` | `https://data.consejeria.cdmx.gob.mx/images/leyes/2025/2026/190126/LEY_DE_CULTURA_CIVICA_DE_LA_CIUDAD_DE_MEXICO_3.1.pdf` | 2026-08-21 |
 | `ley-procedimiento-administrativo` | `https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf` | 2019-06-12 |
 | `ley-justicia-administrativa` | `https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_%20DE_JUSTICIA_ADMINISTRATIVA_DE_LA_CDMX_3.1.pdf` | 2019-12-23 |
 | `codigo-fiscal` | `https://data.consejeria.cdmx.gob.mx/images/leyes/2025/2026/210126/CODIGO_FISCAL_DE_LA_CDMX_26.1.pdf` | 2025-12-19 |
 | `acuerdo-agentes-transito` | `https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuerdo%2030-26.pdf` | 2026-06-10 |
 
 **Hechos verificados sobre las fuentes (no re-investigar):**
-- Los textos "vigentes" de la Consejería van atrasados: su Reglamento llegaba a 26-nov-2024 (por eso se usa el de la SSC) y la Ley de Movilidad a 27-dic-2021. Antes de la Fase 1, revisar si existe una versión más reciente de la Ley de Movilidad.
+- Los textos "vigentes" de la Consejería van atrasados: su Reglamento llegaba a 26-nov-2024 (por eso se usa el de la SSC) y la Ley de Movilidad a 27-dic-2021. **Resuelto en la Fase 1 (2026-10-09):** el cliente encontró la versión con última reforma del 27-ago-2025 (carpeta `leyes/2025/`), ya registrada e indexada; la anterior quedó como versión inactiva. Lo mismo con la Ley de Cultura Cívica (luego actualizada a la reforma del 21-ago-2026, PDF 3.1). La Consejería deja las versiones nuevas en `images/leyes/2025/` con el mismo nombre de archivo; las leyes de Procedimiento y de Justicia Administrativa no tienen copia allí (sondeo 2026-10-09).
 - La "reforma del 30-jun-2026, Gaceta No. 1891 Bis" que aparecía en la primera versión de este spec **no se pudo confirmar**: el cliente revisó la Gaceta y el único Reglamento publicado es el consolidado de la SSC (última reforma 6-may-2026, decreto VEMEPE de vehículos motorizados eléctricos personales). Se descartó.
 - **TLS de la Consejería:** el servidor no envía su cadena Let's Encrypt (YR2 → ISRG Root YR). `backend/scripts/certs/lets-encrypt-yr2-chain.pem` trae YR2 y Root YR firmado en cruz por ISRG Root X1 (bajados de letsencrypt.org por HTTPS), y `fetch_sources.ssl_context()` **desactiva** `VERIFY_X509_PARTIAL_CHAIN` para que toda cadena termine en una raíz del sistema. Nunca usar `verify=False` ni confiar en un intermedio suelto.
 - **Estructura del Reglamento SSC (129 págs.):** 70 artículos numerados; el articulado termina antes de la pág. 65, donde empiezan los transitorios (del texto original y de cada reforma); las páginas casi sin texto (anexo gráfico de señales) son **105–119, 121, 122 y 129**. Estos números reemplazan el "~102–126" de la versión anterior de §6.
@@ -197,13 +197,13 @@ Comando: `uv run python -m scripts.ingest_sources [--only <slug>]`.
 ## 7. Recuperación
 
 `retrieval.search(query, source_slugs=None, k=6)`:
-1. top 20 por similitud coseno (pgvector) sobre chunks vigentes;
-2. top 20 por `ts_rank_cd` con `websearch_to_tsquery('spanish', unaccent(query))`;
+1. top 20 por similitud coseno (pgvector) sobre chunks de fuentes `is_current`;
+2. top 20 por `ts_rank_cd` con `to_tsquery('spanish', immutable_unaccent('palabra1 | palabra2 | …'))`: **OR entre las palabras**, no `websearch_to_tsquery`, que exige todas y devuelve 0 resultados para preguntas en lenguaje natural (verificado en la Fase 1);
 3. fusión RRF (k=60) → top `k`.
 
 `retrieval.get_article(source_slug, article)` devuelve todos los chunks del artículo en orden.
 
-Si el mejor resultado queda por debajo de un umbral de similitud (calibrado en Fase 1), la tool devuelve "sin resultados relevantes" para que el agente se niegue en lugar de improvisar.
+**Umbral de similitud (calibrado en la Fase 1, 2026-10-09).** Un umbral de similitud coseno **solo separa preguntas fuera de tema** (p. ej. una receta de mole: 0.22–0.24, contra 0.40–0.58 de cualquier pregunta de tránsito). **No** separa "es de tránsito pero el corpus no lo cubre": en las 21 preguntas del set, las 5 sin fundamento en el corpus (parquímetros, grabar al agente, bajar del auto, menor en asiento delantero) sacaron 0.45–0.58 en su mejor resultado, igual que los aciertos reales (0.40–0.55). Decisión: la tool aplica un piso de **0.30** (solo descarta lo claramente ajeno al dominio) y devuelve "sin resultados relevantes"; la negativa por falta de fundamento la decide el modelo leyendo los fragmentos, con reglas explícitas en el prompt, y se mide en la Fase 4 (tasa de negativa correcta). El puntaje RRF **nunca** se usa para umbrales: solo ordena.
 
 ## 8. Agente
 
@@ -305,13 +305,16 @@ Antes de escribir código con tecnología nueva (OpenAI SDK, LangChain v1, pgvec
 
 ## 14. Pendientes fuera de alcance (backlog)
 
-- **Hoy No Circula:** tool determinista, pero falta una fuente oficial confiable y consultable para contingencias (SEDEMA / CAMe). Investigar primero.
+- **Hoy No Circula:** pedido del cliente (2026-10-09): resolverlo con una **tool determinista** (placa/holograma/fecha → ¿circula?), no con RAG. Motivo: las preguntas reales lo piden ("me quieren multar por hoy no circula y no vi aviso", q26) y el corpus solo trae la definición (Reglamento de Tránsito Art. 4 fr. XXXI y Art. 45 fr. III), sin calendario. Falta fuente oficial consultable para el programa y las contingencias (SEDEMA / CAMe, Gaceta) y su Reglamento de la Ley Ambiental en materia de verificación vehicular (está en el catálogo de la Consejería). Se hace **después** de dejar el RAG funcionando.
+- **Listado de agentes antiguo (no usar):** `https://www.ssc.cdmx.gob.mx/storage/app/media/Reglamento%20de%20Transito/Agentes%20de%20Transito.pdf` (33 págs., 1,515 placas, sin fecha ni número de acuerdo; el servidor lo guarda desde 2019). Solo 333 placas (22%) siguen en el Acuerdo 30/2026; 1,182 ya no aparecen. No es fuente de verificación.
 - **Policía Auxiliar / PBI por alcaldía:** solo si un documento oficial lo publica por elemento.
 - **Investigación legal adicional sobre identificación de agentes:** qué puede hacer un ciudadano ante un policía fuera de la lista, el uso de brazalete y QR, y la base legal.
 - **Estado de México.**
 - **Imágenes** (por ejemplo, foto de una boleta).
 - **Desplegable de trazas** "qué consultó": los datos ya quedan en `messages.tool_calls`.
-- **Descarga automática** de nuevas reformas y de nuevos acuerdos de agentes.
+- **Descarga automática** de nuevas reformas y de nuevos acuerdos de agentes. **El cliente pidió explícitamente un script que descargue, preprocese e indexe todo solo** a partir de `data/consejeria-catalog.json` (catálogo de 350 documentos de la Consejería); ver `docs/superpowers/notes/2026-10-09-fuentes-candidatas.md`. Se hace al final.
+- **Parquímetros (fuente operativa, no normativa):** página de preguntas frecuentes de ecoParq y tres carteles aportados por el cliente; transcripción, discrepancias (cartel con tarifa vieja de $3.25 contra $3.40 vigente) y reglas de vigilancia para el script en la misma nota.
+- **Fuentes candidatas sin indexar** (Protocolo General de Actuación Policial, Reglamento de la Ley de Cultura Cívica, Código Penal, etc.): ver la misma nota.
 - **Pendientes menores de la revisión final de la Fase 0 (atender en la Fase 5 salvo que estorben antes):**
   1. Sin límite de consultas en `GET /agents/search` (público y escribe una fila en `agent_lookups` por consulta).
   2. El filtro `greatest(similarity, word_similarity) >= 0.45` no usa el índice GIN trigram; hoy (~1,287 filas) cuesta ~1 ms. Si crece, usar `%` / `<%` con `pg_trgm.similarity_threshold`.
@@ -322,6 +325,18 @@ Antes de escribir código con tecnología nueva (OpenAI SDK, LangChain v1, pgvec
   7. Los inputs de búsqueda no tienen `maxLength={100}`; con más de 100 caracteres sale el mensaje de Pydantic en inglés.
 
 ## 15. Bitácora de implementación
+
+### Fase 1 — en curso (pasos 1–7 de 7 hechos el 2026-10-09; falta ampliar el set)
+
+Hecho: `legal_chunks` + migración `20261009_04` (pgvector, HNSW, `tsv` generado con `immutable_unaccent`); parser, chunker, embedder y pipeline en `app/services/ingestion/`; `scripts/ingest_sources.py` (1,512 chunks de 6 fuentes, ~USD 0.006); `app/services/retrieval.py` (híbrido con RRF, OR entre palabras, solo `is_current`); `data/eval/retrieval.jsonl` (21 preguntas reales del cliente) y `scripts/eval_retrieval.py`.
+
+**Primera medición (21 preguntas): recall@5 = 0.88, MRR = 0.536. Tras corregir la etiqueta de q20 (Art. 39 sí responde) y actualizar el Reglamento de Tránsito (Consejería, 30-jun-2026), Cultura Cívica (21-ago-2026) y sumar el Reglamento de Estacionamiento y la Ley de Responsabilidades Administrativas (9 fuentes): 17 preguntas con respuesta, recall@5 = 0.82, recall@10 = 0.94, MRR = 0.588. Después de indexar solo lo relativo a tránsito del Código Penal, del Reglamento de la Ley de Cultura Cívica y del Protocolo General de Actuación Policial (12 fuentes) y reetiquetar q04/q16/q17/q18: 19 preguntas con respuesta, recall@5 = 0.84, recall@10 = 0.89, MRR = 0.543.** **Con 6 preguntas más (27 en total, 25 con respuesta; cubren impugnación, "la araña", licencia, Hoy No Circula y polarizados): búsqueda con la pregunta cruda recall@5 = 0.72, recall@10 = 0.76, MRR = 0.492 (por debajo de la meta). Con reescritura de la consulta por LLM y fusión RRF de la pregunta original + la reescritura (`search_many`, `app/services/query_rewrite.py`, `--rewrite`): recall@5 = 0.80, recall@10 = 0.88, MRR = 0.574.** Conclusión de diseño para la Fase 2: las tools de búsqueda deben mandar **dos formulaciones** (la del usuario y una en vocabulario jurídico) y fusionarlas; pegarlas en un solo texto diluye y produce regresiones (q07, q21). **Experimentos posteriores (2026-10-09), todos sobre las mismas 25 preguntas con respuesta, con reescrituras y reordenamientos en caché para que las corridas sean comparables:** (1) partir fracciones largas por incisos (a, b, c) **empeoró** el recall@5 (0.80 → 0.60) por exceso de hermanos casi idénticos; queda implementado pero **desactivado** (`INCISO_MIN_TOKENS = 100_000`); (2) la respuesta correcta está entre los 20 primeros candidatos en 24 de 25 (recall@20 = 0.96); (3) un **reordenamiento con LLM** de esos 20 (`app/services/rerank.py`) sube el resultado final a **recall@5 = 0.84, recall@10 = 0.92, MRR = 0.644** (cruda: 0.72 / 0.76 / 0.480; reescritura + RRF: 0.80 / 0.84 / 0.610). El ruido de una corrida a otra por el LLM es del orden de ±0.04. Se descubrió y corrigió una **filtración**: el prompt de reescritura traía "araña" como ejemplo, palabra tomada de q23; se quitó y se re-midió. **Diseño de recuperación para la Fase 2 (revisado tras el set reservado de 60 preguntas, ver abajo):** cada búsqueda del agente manda dos formulaciones (la del usuario y una en vocabulario jurídico) a `search_many`. El reordenamiento con LLM queda **como opción, no como parte del diseño base**: su beneficio no es consistente. Costo estimado por búsqueda: ~3,000 tokens de entrada para el reordenamiento (~USD 0.001 con gpt-5-mini); con varias búsquedas por turno puede rebasar el objetivo de USD 0.002/mensaje: revisarlo en la Fase 4. Falla persistente: q08 (documentos que pueden pedir) no aparece ni entre los 30 primeros. Fallos previos a esos experimentos: q07 (motivo de la detención), q08 (documentos que pueden pedir), q24, q25 (sin licencia) y q26 (Hoy No Circula, cobertura parcial). Alerta: el fragmento del Protocolo que responde q16 tiene similitud 0.301, casi en el piso de 0.30 que fijamos arriba; no subirlo sin re-medir. Meta ≥ 0.80 cumplida, pero sobre un set sesgado al Reglamento (no hay preguntas de Cultura Cívica, Procedimiento ni Justicia Administrativa; hay que ampliarlo antes de dar la fase por cerrada).
+
+Errores encontrados y corregidos al medir: el filtro de encabezados repetidos borraba los numerales `I.`/`II.` (se arregló: solo cuentan líneas de ≥ 15 caracteres), lo que impedía detectar fracciones y repetía introducciones enormes en cada chunk; `V BIS.` en mayúsculas; `ARTÍCULO` en mayúsculas, `Articulo` sin acento y `1º` en otras leyes.
+
+Huecos del corpus detectados (no hay texto que los responda): reglas y horarios de parquímetros, grabar a un agente, que un agente pida bajar del vehículo, menores en asiento delantero, y qué hacer si el otro conductor se da a la fuga. El agente debe negarse con gracia ante ellos.
+
+**Set reservado de 60 preguntas de fotocívicas (`data/eval/heldout_fotocivicas.jsonl`, 54 con respuesta esperada, 20 con etiqueta verificada leyendo el artículo).** Línea base medida *antes* de tocar nada: cruda recall@5 = 0.54; reescritura + RRF = 0.78; + reordenamiento = **0.85** (MRR 0.621); en las 20 etiquetas verificadas, 1.00. Es decir, el pipeline **generaliza** a preguntas nuevas (0.84 en el primer set, 0.85 en este). Después se indexó la Ley de tecnología para la seguridad ciudadana (arts. 1, 2, 15, 16, 29, 33, 34) y se arregló el troceado de artículos con introducción pesada (`HEAVY_INTRO_TOKENS`, caso del Art. 64): primer set 0.88 con y sin reordenamiento; segundo set 0.85 sin reordenamiento y 0.80 con él (ya no es un set limpio). **Conclusión:** la ganancia consistente viene de la reescritura + RRF (+0.08 a +0.24 de recall@5 sobre la búsqueda cruda en los dos sets); el reordenamiento por LLM fue +0.07 en una medición y −0.05 en otra, dentro del ruido, y cuesta ~3,000 tokens y 1-3 s por búsqueda. No se incluye en la primera versión del agente; se vuelve a evaluar en la Fase 4 con más datos.
 
 ### Fase 0 — completada el 2026-10-09
 
