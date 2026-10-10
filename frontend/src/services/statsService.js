@@ -6,11 +6,11 @@ const requestStats = async () => {
 };
 export const getDailyStats = async () => {
   
-  const data = await requestStats(); return { success: true, consultas_hoy: data.consultations_today };
+  const data = await requestStats(); return { success: true, consultas_hoy: data.messages_today };
 };
 
 export const getMonthlyStats = async () => {
-  const data = await requestStats(); return { success: true, consultas_mes: data.consultations_month };
+  const data = await requestStats(); return { success: true, consultas_mes: data.messages_month };
 };
 
 export const getMonthlyStatsAgents = async () => {
@@ -18,15 +18,14 @@ export const getMonthlyStatsAgents = async () => {
 };
 
 export const getConsultationTypes = async () => {
-  const data = await requestStats();
-  // Recharts' Pie needs an array of {name, value}, not the {category: count} dict the backend returns.
-  const tipos_consulta = Object.entries(data.consultations_by_category || {}).map(([name, value]) => ({ name, value }));
-  return { success: true, tipos_consulta };
+  // Messages are no longer classified by category, so the pie chart has nothing to show until Phase 3 redesigns this page.
+  await requestStats();
+  return { success: true, tipos_consulta: [] };
 };
 
 export const getFeedbackStats = async () => {
   const data = await requestStats();
-  // average_feedback_rating comes back as a numeric string (Postgres AVG -> Decimal) or null when there's no feedback yet.
-  const promedio = data.average_feedback_rating === null ? 0 : Number(data.average_feedback_rating);
+  // feedback_positive_rate is the share of 👍 (0..1), or null when nobody has rated an answer yet.
+  const promedio = data.feedback_positive_rate === null ? 0 : Number(data.feedback_positive_rate);
   return { success: true, promedio };
 };

@@ -1,5 +1,9 @@
 from app.core.security import create_access_token, hash_password
-from app.models.domain import Consultation, LegalResponse, User, UserRole
+from datetime import datetime, timedelta, timezone
+
+from app.models.domain import (
+    AgentLookup, Conversation, Message, MessageFeedback, MessageRole, User, UserRole,
+)
 
 
 def register(client, email="ana@example.com"):
@@ -49,19 +53,51 @@ def test_profile_requires_authentication_and_can_be_updated(client):
     assert response.json()["first_name"] == "Ana María"
 
 
+def test_the_old_consultation_and_feedback_endpoints_are_gone(client):
+    http, _ = client
+    register(http)
+    headers = auth_headers(http)
+    assert http.post("/api/v1/legal-consultations", headers=headers, json={"question": "hola mundo"}).status_code == 404
+    assert http.put("/api/v1/legal-responses/1/feedback", headers=headers, json={"response_id": 1, "rating": 5}).status_code in (404, 405)
 
-def test_feedback_only_for_response_owner_and_valid_rating(client):
+
+def test_statistics_require_an_admin_and_count_messages_conversations_and_feedback(client):
     http, factory = client
     register(http)
-    register(http, "other@example.com")
+    headers = auth_headers(http)
+    assert http.get("/api/v1/admin/statistics", headers=headers).status_code == 403
+
     with factory() as db:
-        owner = db.query(User).filter_by(email="ana@example.com").one()
-        consultation = Consultation(user_id=owner.id, question="Pregunta")
-        db.add(consultation); db.flush()
-        response = LegalResponse(consultation_id=consultation.id, text="Respuesta", category="general")
-        db.add(response); db.commit(); response_id = response.id
-    other_login = http.post("/api/v1/auth/login", json={"email": "other@example.com", "password": "a secure password"}).json()
-    headers = {"Authorization": f"Bearer {other_login['access_token']}"}
-    assert http.put(f"/api/v1/legal-responses/{response_id}/feedback", headers=headers, json={"response_id": response_id, "rating": 5}).status_code == 403
-    assert http.put(f"/api/v1/legal-responses/{response_id}/feedback", headers=auth_headers(http), json={"response_id": response_id, "rating": 6}).status_code == 422
-    assert http.put(f"/api/v1/legal-responses/{response_id}/feedback", headers=auth_headers(http), json={"response_id": response_id, "rating": 5}).status_code == 204
+        user = db.query(User).filter_by(email="ana@example.com").one()
+        user.role = UserRole.ADMIN
+        conversation = Conversation(user_id=user.id, title="Placas")
+        db.add(conversation)
+        db.flush()
+        question = Message(conversation_id=conversation.id, role=MessageRole.USER, content="¿Placas?")
+        answer = Message(conversation_id=conversation.id, role=MessageRole.ASSISTANT, content="Sí [1]")
+        old = Message(
+            conversation_id=conversation.id, role=MessageRole.USER, content="antigua",
+            created_at=datetime.now(timezone.utc) - timedelta(days=90),
+        )
+        db.add_all([question, answer, old])
+        db.flush()
+        db.add(MessageFeedback(message_id=answer.id, user_id=user.id, value=1))
+        db.add(AgentLookup(user_id=user.id))
+        db.commit()
+
+    stats = http.get("/api/v1/admin/statistics", headers=headers).json()
+    assert stats["messages_total"] == 2  # only the user's messages count, not the assistant's
+    assert stats["messages_today"] == 1 and stats["messages_month"] == 1
+    assert stats["conversations_total"] == 1
+    assert stats["agent_lookups_month"] == 1
+    assert (stats["feedback_positive"], stats["feedback_negative"], stats["feedback_positive_rate"]) == (1, 0, 1.0)
+
+
+def test_statistics_without_any_feedback_report_no_rate(client):
+    http, factory = client
+    register(http)
+    with factory() as db:
+        db.query(User).filter_by(email="ana@example.com").one().role = UserRole.ADMIN
+        db.commit()
+    stats = http.get("/api/v1/admin/statistics", headers=auth_headers(http)).json()
+    assert stats["feedback_positive_rate"] is None and stats["messages_total"] == 0

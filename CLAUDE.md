@@ -56,23 +56,26 @@ npm test                                      # React Testing Library, interacti
 
 Set `REACT_APP_API_URL=http://localhost:8000/api/v1` for the frontend if the default doesn't match the backend.
 
-AI / RAG (optional, lazy-loaded):
+RAG (needs `OPENAI_API_KEY` in `backend/.env` and the `db` service running; run from `backend/`):
 
 ```bash
-cd backend && uv sync --group ai
+uv sync --group dev --group ingest             # PyMuPDF + tiktoken, used only by the offline scripts
+uv run python -m scripts.fetch_sources         # download and register the official sources (data/sources.json)
+uv run python -m scripts.ingest_sources        # parse, chunk and embed into legal_chunks (--only <slug>, --force)
+uv run python -m scripts.eval_retrieval        # recall@k and MRR on data/eval/*.jsonl (--rewrite, --rerank, --cases <file>)
 ```
 
-Requires Ollama running with the configured chat/embedding models, `AI_ENABLED=true`, and `AI_INDEX_PATH` set. No index is checked in (the legacy pickle-based FAISS index was removed); build one from the trusted PDFs in `data/legal-sources/`, and set `AI_ALLOW_LEGACY_FAISS_DESERIALIZATION=true` only for an index you built and validated on the deployment machine. When AI is unavailable, legal consultation returns HTTP 503 rather than a fabricated answer.
+The retrieval pipeline and its measured results are in `docs/superpowers/specs/2026-10-08-asistente-legal-design.md`.
 
 ## Backend architecture
 
 - Entry point `app/main.py` builds the app via `create_app()`, wiring CORS (from `settings.cors_origin_list`) and the single router from `app/api/routes.py`. All endpoints live in that one router file, prefixed `/api/v1`.
 - `app/core/config.py` exposes a cached `Settings` (pydantic-settings, reads `.env`); `app/core/security.py` handles Argon2 password hashing (`pwdlib`) and JWT creation.
 - `app/api/deps.py` defines the auth dependency chain: `current_user` decodes the Bearer JWT and loads the user; `admin_user` additionally requires `UserRole.ADMIN`. Route handlers take `CurrentUser` / `AdminUser` / `DbSession` as typed `Annotated` dependencies rather than reading `Depends(...)` inline.
-- **Authentication is Bearer JWT.** Registration always creates the `user` role — there is no self-service admin signup. Only an existing administrator can promote/demote roles, via `PATCH /api/v1/admin/users/{id}`. Identity and ownership are always derived from the token's subject, never from a client-supplied user ID (see `submit_feedback` in `routes.py` checking `consultation.user_id != user.id`).
-- `app/models/domain.py` holds all SQLAlchemy models: `User`, `OfficialSource` (versioned official documents, one current per slug), `AuthorizedAgent`, `AgentLookup`, `Consultation`, `LegalResponse`, `Feedback`. `Consultation` and `LegalResponse` are separate tables (one-to-one) so a consultation's question is recorded even if answer generation fails partway.
-- `app/services/legal_ai.py` is a lazy, optional Ollama/LangChain RAG adapter used by the `/legal-consultations` endpoint; it raises `LegalAIUnavailable` when AI is disabled/misconfigured, which the route converts to a 503.
-- Alembic migrations (`backend/migrations/`) are the source of truth for schema, mirrored conceptually in `database/schema.sql`. The new schema deliberately replaces legacy `usuario`/`consulta`-style tables from the old Flask/Express backends and does **not** auto-migrate an existing production database — a data migration must be planned and tested explicitly before deploying against one.
+- **Authentication is Bearer JWT.** Registration always creates the `user` role — there is no self-service admin signup. Only an existing administrator can promote/demote roles, via `PATCH /api/v1/admin/users/{id}`. Identity and ownership are always derived from the token's subject, never from a client-supplied user ID (conversations and message feedback are always looked up by the token's user).
+- `app/models/domain.py` holds all SQLAlchemy models: `User`, `OfficialSource` (versioned official documents, one current per slug), `AuthorizedAgent`, `AgentLookup`, `LegalChunk` (article/fraction chunks with a pgvector embedding and a generated Spanish `tsvector`), `Conversation`, `Message` (role, status, citations and tool calls as JSONB, token usage) and `MessageFeedback` (👍/👎, one per user per message). A user's message is stored before the answer is generated, so it survives a failed generation.
+- `app/services/retrieval.py` does hybrid search (pgvector cosine + Postgres full-text, fused with RRF; `search_many` fuses several phrasings) over chunks of `is_current` sources and `get_article`; it knows nothing about the agent. `app/services/query_rewrite.py` and `app/services/rerank.py` are optional LLM steps measured by `scripts.eval_retrieval`. `app/services/ingestion/` (parser, chunker, embedder, pipeline) is used only by the offline scripts. The chat agent (`app/services/agent/`) is being built in Phase 2 of the legal-assistant spec.
+- Alembic migrations (`backend/migrations/`) are the source of truth for schema, mirrored in `database/schema.sql` (generated with `pg_dump --schema-only`; regenerate it after each migration). The new schema deliberately replaces legacy `usuario`/`consulta`-style tables from the old Flask/Express backends and does **not** auto-migrate an existing production database — a data migration must be planned and tested explicitly before deploying against one.
 - Tests run against PostgreSQL (see `backend/tests/conftest.py`; requires the `db` service from `docker-compose.yml` running, or a `TEST_DATABASE_URL` override), overriding the `get_db` dependency and creating/dropping all tables per test via a `client` fixture that yields `(test_client, session_factory)`. This matches production so Postgres-only behavior (e.g. native enum columns) is actually exercised.
 
 ## Introducing new technology

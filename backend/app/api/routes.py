@@ -1,4 +1,5 @@
 from datetime import datetime, time, timezone
+from zoneinfo import ZoneInfo
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -6,11 +7,11 @@ from sqlalchemy import func, select
 
 from app.api.deps import AdminUser, CurrentUser, DbSession, OptionalUser
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models.domain import AgentLookup, Consultation, Feedback, LegalResponse, User
-from app.schemas.api import (AdminUserUpdate, AgentPublic, AgentSearchResponse, OfficialSourcePublic, FeedbackRequest, LegalConsultationRequest, LegalConsultationResponse, LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserPublic)
+from app.models.domain import AgentLookup, Conversation, Message, MessageFeedback, MessageRole, User
+from app.schemas.api import (AdminUserUpdate, AgentPublic, AgentSearchResponse, OfficialSourcePublic, LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserPublic)
 from app.services.agents_registry import EmptyAgentQuery, search_agents
-from app.services.legal_ai import LegalAIService, LegalAIUnavailable
-from app.core.config import get_settings
+
+MEXICO_CITY = ZoneInfo("America/Mexico_City")  # the product's calendar: "today" and "this month" follow the user's day
 
 router = APIRouter(prefix="/api/v1")
 
@@ -100,51 +101,29 @@ def search_authorized_agents(
     )
 
 
-@router.post("/legal-consultations", response_model=LegalConsultationResponse, status_code=status.HTTP_201_CREATED)
-def legal_consultation(payload: LegalConsultationRequest, user: CurrentUser, db: DbSession) -> LegalConsultationResponse:
-    try:
-        generated = LegalAIService(get_settings()).answer(payload.question)
-    except LegalAIUnavailable as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
-    consultation = Consultation(user_id=user.id, question=payload.question)
-    db.add(consultation)
-    db.flush()
-    answer = LegalResponse(consultation_id=consultation.id, text=generated.answer, category=generated.category)
-    db.add(answer)
-    db.commit()
-    db.refresh(answer)
-    return LegalConsultationResponse(response_id=answer.id, answer=answer.text, category=answer.category, citations=generated.citations)
-
-
-@router.put("/legal-responses/{response_id}/feedback", status_code=status.HTTP_204_NO_CONTENT)
-def submit_feedback(response_id: int, payload: FeedbackRequest, user: CurrentUser, db: DbSession) -> Response:
-    if payload.response_id != response_id:
-        raise HTTPException(status_code=422, detail="Response ID must match the URL")
-    response = db.get(LegalResponse, response_id)
-    if response is None:
-        raise HTTPException(status_code=404, detail="Legal response not found")
-    consultation = db.get(Consultation, response.consultation_id)
-    if consultation is None or consultation.user_id != user.id:
-        raise HTTPException(status_code=403, detail="You can only rate your own legal responses")
-    feedback = db.scalar(select(Feedback).where(Feedback.response_id == response_id, Feedback.user_id == user.id))
-    if feedback:
-        feedback.rating = payload.rating
-    else:
-        db.add(Feedback(response_id=response_id, user_id=user.id, rating=payload.rating))
-    db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
 @router.get("/admin/statistics")
 def statistics(_: AdminUser, db: DbSession) -> dict:
-    today = datetime.now(timezone.utc).date()
-    month_start = today.replace(day=1)
-    consultation_count = db.scalar(select(func.count()).select_from(Consultation)) or 0
+    now = datetime.now(MEXICO_CITY)
+    day_start = datetime.combine(now.date(), time.min, tzinfo=MEXICO_CITY)
+    month_start = day_start.replace(day=1)
+
+    def user_messages(since: datetime | None = None) -> int:
+        query = select(func.count()).select_from(Message).where(Message.role == MessageRole.USER)
+        if since is not None:
+            query = query.where(Message.created_at >= since)
+        return db.scalar(query) or 0
+
+    def feedback(value: int) -> int:
+        return db.scalar(select(func.count()).select_from(MessageFeedback).where(MessageFeedback.value == value)) or 0
+
+    positive, negative = feedback(1), feedback(-1)
     return {
-        "consultations_today": db.scalar(select(func.count()).select_from(Consultation).where(Consultation.created_at >= datetime.combine(today, time.min, tzinfo=timezone.utc))) or 0,
-        "consultations_month": db.scalar(select(func.count()).select_from(Consultation).where(Consultation.created_at >= datetime.combine(month_start, time.min, tzinfo=timezone.utc))) or 0,
-        "agent_lookups_month": db.scalar(select(func.count()).select_from(AgentLookup).where(AgentLookup.created_at >= datetime.combine(month_start, time.min, tzinfo=timezone.utc))) or 0,
-        "consultations_total": consultation_count,
-        "consultations_by_category": dict(db.execute(select(LegalResponse.category, func.count()).group_by(LegalResponse.category)).all()),
-        "average_feedback_rating": db.scalar(select(func.avg(Feedback.rating)))
+        "messages_today": user_messages(day_start),
+        "messages_month": user_messages(month_start),
+        "messages_total": user_messages(),
+        "conversations_total": db.scalar(select(func.count()).select_from(Conversation)) or 0,
+        "agent_lookups_month": db.scalar(select(func.count()).select_from(AgentLookup).where(AgentLookup.created_at >= month_start)) or 0,
+        "feedback_positive": positive,
+        "feedback_negative": negative,
+        "feedback_positive_rate": positive / (positive + negative) if positive + negative else None,
     }
