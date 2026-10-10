@@ -1,5 +1,6 @@
+from datetime import date
+from decimal import Decimal
 from functools import lru_cache
-from pathlib import Path
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -15,12 +16,16 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr | None = None
     openai_embedding_model: str = "text-embedding-3-small"
     openai_chat_model: str = "gpt-5-mini"
-    ai_enabled: bool = False
-    ai_ollama_base_url: str = "http://localhost:11434"
-    ai_chat_model: str = "gemma2:2b"
-    ai_embedding_model: str = "mxbai-embed-large"
-    ai_index_path: Path = Path("../data/legal-embeddings")
-    ai_allow_legacy_faiss_deserialization: bool = False
+    # Chat limits (spec section 2). Reasoning tokens count toward the output cap.
+    chat_max_output_tokens: int = 1800  # measured: a 400-word answer used ~1,100 incl. reasoning; 1,200 was too tight
+    chat_max_agent_steps: int = 6  # model calls per turn: up to 5 rounds of tools plus the final answer
+    chat_context_messages: int = 12  # history sent to the model; the full history is still stored and shown
+    # UMA (Unidad de Medida y Actualización): fines are expressed as "N veces la UMA". INEGI publishes the value each
+    # January in the DOF and it applies from 1 February to 31 January. The tool warns when this window has passed.
+    uma_value: Decimal = Decimal("117.31")
+    uma_valid_from: date = date(2026, 2, 1)
+    uma_valid_until: date = date(2027, 1, 31)
+    uma_source: str = "INEGI, publicada en el DOF el 9 de enero de 2026 (https://www.inegi.org.mx/temas/uma/)"
 
     @property
     def cors_origin_list(self) -> list[str]:

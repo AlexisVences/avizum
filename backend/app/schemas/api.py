@@ -68,24 +68,3 @@ class AgentSearchResponse(BaseModel):
     matched_by: Literal["plate", "name"]
     results: list[AgentPublic]
     source: OfficialSourcePublic | None
-
-
-class FeedbackRequest(BaseModel):
-    response_id: int
-    rating: int = Field(ge=1, le=5)
-
-
-class LegalConsultationRequest(BaseModel):
-    question: str = Field(min_length=3, max_length=5000)
-
-
-class Citation(BaseModel):
-    document: str
-    page: str | int | None = None
-
-
-class LegalConsultationResponse(BaseModel):
-    response_id: int
-    answer: str
-    category: str
-    citations: list[Citation]

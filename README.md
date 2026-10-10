@@ -79,12 +79,12 @@ flowchart LR
 **Key design decisions**
 
 - **Modular monolith, not microservices.** One FastAPI app, one PostgreSQL database, one deployable. Route handlers stay thin; reusable logic lives in `app/services/`.
-- **Identity comes from the token, never the request.** Ownership checks (for example on feedback) always compare against the JWT subject. There is no self-service admin signup: registration always creates the `user` role, and only an existing admin can change roles.
+- **Identity comes from the token, never the request.** Ownership checks (for example on conversations and feedback) always compare against the JWT subject. There is no self-service admin signup: registration always creates the `user` role, and only an existing admin can change roles.
 - **Passwords use Argon2** (`pwdlib`). JWT is a Bearer token.
 - **Alembic is the schema source of truth.** The test suite runs against real PostgreSQL, not SQLite, so Postgres-only behavior such as native enum columns is actually exercised.
-- **Consultations and responses are separate tables**, so a user's question is recorded even if answer generation fails halfway.
-- **AI is optional and fails closed.** When it is disabled or misconfigured, the API returns 503. It never produces an unsourced answer.
-- **Security-minded about data.** Official sources are downloaded over verified TLS and versioned by SHA-256; the legacy pickle-based FAISS index was removed rather than trusted.
+- **Conversations, messages and per-message feedback are separate tables**, so a user's message is recorded even if answer generation fails halfway.
+- **The assistant declines rather than improvises.** Answers must come from retrieved official sources; without grounds it says so.
+- **Security-minded about data.** Official sources are downloaded over verified TLS and versioned by SHA-256; the legacy pickle-based FAISS index was removed rather than trusted, and the vectors now live in PostgreSQL (pgvector).
 
 ## The legal assistant: design
 
@@ -181,9 +181,7 @@ All routes are under `/api/v1`. Interactive docs are served at `/docs`.
 | `POST` | `/auth/register` | public | Create a `user` account |
 | `POST` | `/auth/login` | public | Exchange credentials for a JWT |
 | `GET` `PATCH` | `/users/me` | user | Read or update own profile |
-| `GET` | `/agents/{plate}` | public | Check whether an officer is authorized |
-| `POST` | `/legal-consultations` | user | Legal consultation (503 when AI is unavailable) |
-| `PUT` | `/legal-responses/{id}/feedback` | owner | Rate a response |
+| `GET` | `/agents/search?q=` | public | Check whether an officer is authorized (by plate or name) |
 | `GET` | `/admin/users` | admin | List users |
 | `PATCH` | `/admin/users/{id}` | admin | Change a user's role |
 | `GET` | `/admin/statistics` | admin | Usage statistics |
