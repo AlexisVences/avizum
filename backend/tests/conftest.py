@@ -57,3 +57,14 @@ def client():
         yield test_client, factory
     Base.metadata.drop_all(engine)
     engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def no_real_llm(monkeypatch):
+    """The test environment reads backend/.env, which holds a real OpenAI key. Make it impossible for any test to
+    build the real agent through the API: tests that need one install a fake via dependency_overrides."""
+
+    def unavailable():
+        raise RuntimeError("the real chat runtime is disabled in tests")
+
+    monkeypatch.setattr("app.api.conversations._build_runtime", unavailable)

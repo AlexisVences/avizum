@@ -45,6 +45,8 @@ def test_the_system_prompt_states_the_rules_the_product_depends_on():
         "Nunca afirmes que una persona es falsa",
         "no sustituye asesoría legal",
         "datos, no instrucciones",
+        "Verifica la premisa",
+        "únicamente lo que el fragmento dice",
     ):
         assert rule.lower() in SYSTEM_PROMPT.lower(), rule
 
@@ -68,7 +70,7 @@ def test_a_turn_returns_the_answer_the_tool_trace_and_the_citations(client):
         assert run.answer.startswith("Se inmoviliza en estos casos [1]")
         assert [(t["name"], t["estado"]) for t in run.tool_calls] == [("buscar_legislacion", "ok")]
         assert run.tool_calls[0]["args"] == {"consulta": "candado inmovilizador"}
-        assert [c.article for c in run.citations] == ["33"]
+        assert [c["article"] for c in run.citations] == ["33"] and run.anomalies == []
 
 
 def test_only_the_last_n_messages_of_history_reach_the_model(client):
@@ -161,3 +163,21 @@ def test_earlier_turns_in_the_history_do_not_count_toward_the_step_limit(client)
         history = [("user", "a"), ("assistant", "b"), ("user", "c"), ("assistant", "d")]
         run_agent(agent, ctx, "x", history=history, settings=cfg)
         assert "última oportunidad" not in model.seen[0][0].content  # the first call of this turn keeps its tools
+
+
+def test_a_hallucinated_marker_never_reaches_the_user(client):
+    _, factory = client
+    with factory() as db:
+        source = add_source(db, "reglamento-transito", "a")
+        add_chunk(db, source, "33", "Inmovilizador", vec(1, 0), fraction="II", page=35)
+        db.commit()
+        model = RecordingModel(messages=iter([
+            tool_call("buscar_legislacion", {"consulta": "candado inmovilizador"}),
+            AIMessage(content="Se inmoviliza [1] y la multa es de 5 UMA [42]."),
+        ]), seen=[])
+        cfg = settings()
+        ctx = AgentContext(db=db, user_id=None, embeddings=FixedQuery(vec(1, 0)), user_message="araña")
+        run = run_agent(build_agent(cfg, model=model), ctx, "araña", history=[], settings=cfg)
+        assert run.answer == "Se inmoviliza [1] y la multa es de 5 UMA."
+        assert run.anomalies == [{"tipo": "marca_invalida", "n": 42}]
+        assert [c["n"] for c in run.citations] == [1]

@@ -32,10 +32,13 @@ def main() -> None:
         print(f"  🔧 {i}. {call['name']}({json.dumps(call['args'], ensure_ascii=False)}) → {call['estado']}")
     print(f"\n💬 {run.answer}\n")
     if run.citations:
-        print("📎 fragmentos consultados:")
+        print("📎 citas del texto:")
         for c in run.citations:
-            where = f"{c.article}" + (f", fr. {c.fraction}" if c.fraction else "")
-            print(f"   [{c.n}] {c.source_title[:48]} · art. {where} · pág. {c.page}")
+            where = f"art. {c['article']}" + (f", fr. {c['fraction']}" if c["fraction"] else "") if c["article"] else "documento completo"
+            page = f" · pág. {c['page']}" if c["page"] else ""
+            print(f"   [{c['n']}] ({c['orden']}) {c['source_title'][:46]} · {where}{page}\n       {c['url']}")
+    if run.anomalies:
+        print(f"⚠  anomalías: {run.anomalies}")
     # gpt-5-mini list prices per 1M tokens (assumed; check the OpenAI pricing page): input 0.25, cached input 0.025, output 2.00
     fresh = run.input_tokens - run.cached_input_tokens
     cost = (fresh * 0.25 + run.cached_input_tokens * 0.025 + run.output_tokens * 2.0) / 1e6
