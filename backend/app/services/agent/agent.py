@@ -1,6 +1,6 @@
 """Builds the LangChain agent and runs one turn of it (non-streaming; the chat service streams, see step 12)."""
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import ModelCallLimitMiddleware, ToolCallLimitMiddleware, wrap_model_call
@@ -8,7 +8,8 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
 from app.core.config import Settings
-from app.services.agent.context import AgentContext, Citation
+from app.services.agent.citations import resolve_citations
+from app.services.agent.context import AgentContext
 from app.services.agent.prompt import SYSTEM_PROMPT
 from app.services.agent.tools import TOOLS
 
@@ -22,12 +23,13 @@ LIMIT_ANSWER = (
 class AgentRun:
     answer: str
     tool_calls: list[dict]  # [{"name", "args", "estado"}] in the order they ran: the turn's trace
-    citations: list[Citation]  # everything the tools returned this turn (filtering to the cited ones is step 11)
+    citations: list[dict]  # only the citations the answer actually uses, ready for JSON and the interface
     input_tokens: int
     output_tokens: int
     model: str
     cached_input_tokens: int = 0  # part of input_tokens that OpenAI billed at the cached rate
     limit_reached: bool = False
+    anomalies: list[dict] = field(default_factory=list)  # invalid markers, answers with tools but no citations
 
 
 def build_chat_model(settings: Settings) -> BaseChatModel:
@@ -128,10 +130,12 @@ def run_agent(
     limit_reached = len(tool_rounds) >= settings.chat_max_agent_steps
     answer = LIMIT_ANSWER if limit_reached else _text(ai_messages[-1].content).strip() if ai_messages else ""
 
+    resolved = resolve_citations(answer, ctx.citations) if not limit_reached else None
     return AgentRun(
-        answer=answer,
+        answer=resolved.text if resolved else answer,
         tool_calls=trace,
-        citations=ctx.citations.all(),
+        citations=resolved.citations if resolved else [],
+        anomalies=resolved.anomalies if resolved else [],
         input_tokens=sum(u.get("input_tokens", 0) for u in usage),
         output_tokens=sum(u.get("output_tokens", 0) for u in usage),
         cached_input_tokens=sum((u.get("input_token_details") or {}).get("cache_read", 0) for u in usage),

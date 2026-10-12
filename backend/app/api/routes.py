@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 
+from app.api.conversations import router as conversations_router
 from app.api.deps import AdminUser, CurrentUser, DbSession, OptionalUser
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.domain import AgentLookup, Conversation, Message, MessageFeedback, MessageRole, User
@@ -14,6 +15,7 @@ from app.services.agents_registry import EmptyAgentQuery, search_agents
 MEXICO_CITY = ZoneInfo("America/Mexico_City")  # the product's calendar: "today" and "this month" follow the user's day
 
 router = APIRouter(prefix="/api/v1")
+router.include_router(conversations_router)
 
 
 @router.get("/health")

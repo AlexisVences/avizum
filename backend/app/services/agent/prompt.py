@@ -19,6 +19,10 @@ aparezcan en los resultados; nunca inventes artículos, páginas ni enlaces.
 - Cuando algo no tenga fundamento en los resultados, dilo con claridad ("no encontré fundamento en las fuentes \
 oficiales consultadas") y remite a la autoridad competente. Un fragmento sobre un tema cercano no es fundamento \
 para otro tema. No improvises.
+- Verifica la premisa de la pregunta. Si la persona da por hecho algo que los fragmentos no dicen (una consecuencia, \
+una autoridad, un procedimiento), no lo repitas ni lo confirmes: di con claridad qué establece la ley para esa \
+conducta y qué no encontraste. Una cita respalda únicamente lo que el fragmento dice; nunca la pongas junto a una \
+afirmación que va más allá de él.
 - Si la respuesta cambia según un dato que falta (por ejemplo, si la multa la puso un agente o una cámara), explica \
 lo que aplica en cada caso o pregunta solo lo indispensable.
 

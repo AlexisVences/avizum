@@ -69,7 +69,7 @@ The retrieval pipeline and its measured results are in `docs/superpowers/specs/2
 
 ## Backend architecture
 
-- Entry point `app/main.py` builds the app via `create_app()`, wiring CORS (from `settings.cors_origin_list`) and the single router from `app/api/routes.py`. All endpoints live in that one router file, prefixed `/api/v1`.
+- Entry point `app/main.py` builds the app via `create_app()`, wiring CORS (from `settings.cors_origin_list`) and the single router from `app/api/routes.py`. The auth, agents and admin endpoints live in that file; the chat endpoints (`app/api/conversations.py`) are a sub-router included by it, all prefixed `/api/v1`.
 - `app/core/config.py` exposes a cached `Settings` (pydantic-settings, reads `.env`); `app/core/security.py` handles Argon2 password hashing (`pwdlib`) and JWT creation.
 - `app/api/deps.py` defines the auth dependency chain: `current_user` decodes the Bearer JWT and loads the user; `admin_user` additionally requires `UserRole.ADMIN`. Route handlers take `CurrentUser` / `AdminUser` / `DbSession` as typed `Annotated` dependencies rather than reading `Depends(...)` inline.
 - **Authentication is Bearer JWT.** Registration always creates the `user` role — there is no self-service admin signup. Only an existing administrator can promote/demote roles, via `PATCH /api/v1/admin/users/{id}`. Identity and ownership are always derived from the token's subject, never from a client-supplied user ID (conversations and message feedback are always looked up by the token's user).
