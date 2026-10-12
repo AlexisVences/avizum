@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     chat_max_output_tokens: int = 1800  # measured: a 400-word answer used ~1,100 incl. reasoning; 1,200 was too tight
     chat_max_agent_steps: int = 6  # model calls per turn: up to 5 rounds of tools plus the final answer
     chat_context_messages: int = 12  # history sent to the model; the full history is still stored and shown
+    chat_daily_message_limit: int = 40  # user messages per day per user (Mexico City calendar)
+    chat_max_message_chars: int = 2000
+    chat_in_flight_seconds: int = 120  # an unanswered question this young means a reply is still being generated
+    chat_max_messages_per_conversation: int = 200  # user + assistant; the UI then proposes a new conversation
     # UMA (Unidad de Medida y Actualización): fines are expressed as "N veces la UMA". INEGI publishes the value each
     # January in the DOF and it applies from 1 February to 31 January. The tool warns when this window has passed.
     uma_value: Decimal = Decimal("117.31")
