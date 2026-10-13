@@ -1,19 +1,22 @@
 """Conversations, their messages and per-message feedback. Ownership always comes from the token's user;
 a conversation or message that is not yours looks exactly like one that does not exist (404)."""
+import json
 import logging
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DbSession
 from app.core.config import get_settings
+from app.db.session import get_session_factory
 from app.models.domain import Conversation, Message, MessageFeedback, MessageRole
 from app.schemas.chat import (
     ConversationPublic, ConversationRename, FeedbackRequest, MessagePublic, SendMessageRequest, SendMessageResponse,
 )
-from app.services.chat import ChatRuntime, send_message
+from app.services.chat import ChatRuntime, begin_turn, send_message, stream_turn
 from app.services.chat_limits import ChatLimitError
 
 logger = logging.getLogger(__name__)
@@ -137,21 +140,46 @@ def clear_feedback(message_id: int, user: CurrentUser, db: DbSession) -> Respons
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/conversations/{conversation_id}/messages", response_model=SendMessageResponse, status_code=status.HTTP_201_CREATED)
+def _sse(event: str, data) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False, default=str)}\n\n"
+
+
+def _public(message: Message) -> MessagePublic:
+    return MessagePublic(
+        id=message.id, role=message.role, content=message.content, status=message.status,
+        citations=message.citations, created_at=message.created_at, feedback=None,
+    )
+
+
+@router.post("/conversations/{conversation_id}/messages", status_code=status.HTTP_201_CREATED, response_model=None)
 def post_message(
-    conversation_id: int, payload: SendMessageRequest, user: CurrentUser, db: DbSession,
-    runtime: Annotated[ChatRuntime, Depends(get_chat_runtime)],
-) -> SendMessageResponse:
+    conversation_id: int, payload: SendMessageRequest, request: Request, user: CurrentUser, db: DbSession,
+    runtime: Annotated[ChatRuntime, Depends(get_chat_runtime)], session_factory=Depends(get_session_factory),
+):
+    """JSON by default; with `Accept: text/event-stream` the answer arrives as Server-Sent Events.
+
+    Limit and ownership errors are always plain HTTP, decided before any stream opens."""
     conversation = owned_conversation(db, user.id, conversation_id)
+    settings = get_settings()
+    streaming = "text/event-stream" in request.headers.get("accept", "")
     try:
-        turn = send_message(db, user.id, conversation, payload.content, get_settings(), runtime)
+        if not streaming:
+            turn = send_message(db, user.id, conversation, payload.content, settings, runtime)
+            return SendMessageResponse(user_message=_public(turn.user_message), assistant_message=_public(turn.assistant_message))
+        prepared = begin_turn(db, user.id, conversation, payload.content, settings)
     except ChatLimitError as error:
         raise HTTPException(status_code=error.status_code, detail={"code": error.code, "message": error.message}) from error
 
-    def public(message: Message) -> MessagePublic:
-        return MessagePublic(
-            id=message.id, role=message.role, content=message.content, status=message.status,
-            citations=message.citations, created_at=message.created_at, feedback=None,
-        )
+    def events():
+        yield _sse("message_start", {"user_message_id": prepared.user_message_id})
+        inner = stream_turn(session_factory, user.id, prepared, settings, runtime)
+        try:
+            for kind, data in inner:
+                yield _sse(kind, data)
+        finally:
+            inner.close()  # a closed response must reach the turn so it can save the partial answer
 
-    return SendMessageResponse(user_message=public(turn.user_message), assistant_message=public(turn.assistant_message))
+    return StreamingResponse(
+        events(), media_type="text/event-stream", status_code=status.HTTP_200_OK,
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )

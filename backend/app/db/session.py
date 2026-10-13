@@ -15,3 +15,8 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 def get_db():
     with SessionLocal() as session:
         yield session
+
+
+def get_session_factory():
+    """For work that outlives the request (streaming), which must open its own session."""
+    return SessionLocal
