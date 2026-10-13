@@ -232,3 +232,88 @@ def test_the_assistant_is_unavailable_not_broken_when_it_cannot_be_built(client)
     http.app.dependency_overrides.pop(get_chat_runtime, None)  # real dependency; the test environment has no OpenAI key
     response = http.post(f"/api/v1/conversations/{conversation_id}/messages", headers=ana, json={"content": "hola"})
     assert response.status_code == 503 and "no está disponible" in response.json()["detail"]["message"]
+
+
+# ---------- el mismo endpoint como flujo SSE (Accept: text/event-stream)
+
+import json as _json
+
+from tests.fakes import FakeStreaming, tool_call as streaming_tool_call
+
+
+def install_streaming_runtime(http, script, **model_fields):
+    cfg = Settings(_env_file=None, openai_api_key="test-key")
+    model = FakeStreaming(script=script, **model_fields)
+    http.app.dependency_overrides[get_chat_runtime] = lambda: ChatRuntime(agent=build_agent(cfg, model=model), embeddings=FixedQuery(vec(1)))
+
+
+def read_sse(response) -> list[tuple[str, dict]]:
+    events, event = [], None
+    for line in response.iter_lines():
+        if line.startswith("event: "):
+            event = line[7:]
+        elif line.startswith("data: "):
+            events.append((event, _json.loads(line[6:])))
+    return events
+
+
+def test_streaming_the_same_endpoint_emits_the_events_in_order_and_stores_the_turn(client):
+    http, factory = client
+    ana = signup(http, "ana@example.com")
+    with factory() as db:
+        from tests.test_retrieval import add_chunk, add_source
+        source = add_source(db, "reglamento-transito", "a")
+        add_chunk(db, source, "33", "Inmovilizador en vehículos estacionados", vec(1), fraction="II", page=35)
+        db.commit()
+    install_streaming_runtime(http, [
+        streaming_tool_call("buscar_legislacion", {"consulta": "candado inmovilizador"}),
+        AIMessage(content="Se inmoviliza en estos casos [1] según el Reglamento."),
+    ])
+    conversation_id = seed_conversation(factory, "ana@example.com")
+
+    with http.stream("POST", f"/api/v1/conversations/{conversation_id}/messages", headers={**ana, "accept": "text/event-stream"},
+                     json={"content": "me pusieron la araña"}) as response:
+        assert response.status_code == 200 and response.headers["content-type"].startswith("text/event-stream")
+        assert response.headers["cache-control"] == "no-cache"
+        events = read_sse(response)
+
+    names = [name for name, _ in events]
+    assert names[0] == "message_start" and names[1:3] == ["tool_start", "tool_end"]
+    assert names[-2:] == ["citations", "done"] and names.count("token") >= 3
+    start, done = events[0][1], events[-1][1]
+    stored = http.get(f"/api/v1/conversations/{conversation_id}/messages", headers=ana).json()
+    assert [m["id"] for m in stored] == [start["user_message_id"], done["assistant_message_id"]]
+    assert stored[1]["content"] == done["text"] == "Se inmoviliza en estos casos [1] según el Reglamento."
+    assert stored[1]["citations"][0]["article"] == "33"
+
+
+def test_limit_errors_come_back_as_plain_http_before_any_stream_opens(client):
+    http, factory = client
+    ana = signup(http, "ana@example.com")
+    install_streaming_runtime(http, [AIMessage(content="ok")])
+    conversation_id = seed_conversation(factory, "ana@example.com")
+    url = f"/api/v1/conversations/{conversation_id}/messages"
+    headers = {**ana, "accept": "text/event-stream"}
+
+    empty = http.post(url, headers=headers, json={"content": "   "})
+    assert empty.status_code == 422 and empty.headers["content-type"].startswith("application/json")
+    assert empty.json()["detail"]["code"] == "mensaje_vacio"
+    seed_message(factory, conversation_id, MessageRole.USER, "esperando respuesta")
+    assert http.post(url, headers=headers, json={"content": "otra"}).status_code == 409
+    other = signup(http, "luis@example.com")
+    assert http.post(url, headers={**other, "accept": "text/event-stream"}, json={"content": "hola"}).status_code == 404
+
+
+def test_a_failure_while_streaming_ends_with_an_error_event_and_a_stored_error_message(client):
+    http, factory = client
+    ana = signup(http, "ana@example.com")
+    install_streaming_runtime(http, [AIMessage(content="Una respuesta que se corta a la mitad del camino")], fail_after_words=2)
+    conversation_id = seed_conversation(factory, "ana@example.com")
+
+    with http.stream("POST", f"/api/v1/conversations/{conversation_id}/messages", headers={**ana, "accept": "text/event-stream"},
+                     json={"content": "hola"}) as response:
+        events = read_sse(response)
+
+    assert events[-1][0] == "error" and "sk-SECRET" not in _json.dumps(events)
+    stored = http.get(f"/api/v1/conversations/{conversation_id}/messages", headers=ana).json()
+    assert [(m["role"], m["status"]) for m in stored] == [("user", "complete"), ("assistant", "error")]

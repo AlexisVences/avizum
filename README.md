@@ -182,6 +182,11 @@ All routes are under `/api/v1`. Interactive docs are served at `/docs`.
 | `POST` | `/auth/login` | public | Exchange credentials for a JWT |
 | `GET` `PATCH` | `/users/me` | user | Read or update own profile |
 | `GET` | `/agents/search?q=` | public | Check whether an officer is authorized (by plate or name) |
+| `GET` `POST` | `/conversations` | user | List or create the user's conversations |
+| `PATCH` `DELETE` | `/conversations/{id}` | owner | Rename (1-80 chars) or delete a conversation |
+| `GET` | `/conversations/{id}/messages` | owner | Messages with citations and the viewer's own vote |
+| `POST` | `/conversations/{id}/messages` | owner | Ask the assistant: JSON, or Server-Sent Events with `Accept: text/event-stream` (limits: 2,000 chars, 40/day, 200 per conversation) |
+| `PUT` `DELETE` | `/messages/{id}/feedback` | owner | 👍 / 👎 on an assistant answer |
 | `GET` | `/admin/users` | admin | List users |
 | `PATCH` | `/admin/users/{id}` | admin | Change a user's role |
 | `GET` | `/admin/statistics` | admin | Usage statistics |

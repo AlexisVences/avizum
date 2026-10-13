@@ -1,11 +1,12 @@
 """Builds the LangChain agent and runs one turn of it (non-streaming; the chat service streams, see step 12)."""
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import ModelCallLimitMiddleware, ToolCallLimitMiddleware, wrap_model_call
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, SystemMessage, ToolMessage
 
 from app.core.config import Settings
 from app.services.agent.citations import resolve_citations
@@ -106,17 +107,14 @@ def _estado(message: ToolMessage) -> str | None:
         return None
 
 
-def run_agent(
-    agent, ctx: AgentContext, user_message: str, history: list[tuple[str, str]], settings: Settings
-) -> AgentRun:
+def _input_messages(user_message: str, history: list[tuple[str, str]], settings: Settings) -> list[dict]:
     """`history` is [(role, text)] oldest first; only the last `chat_context_messages` reach the model."""
     recent = history[-settings.chat_context_messages :] if settings.chat_context_messages else []
-    messages = [{"role": role, "content": content} for role, content in recent]
-    messages.append({"role": "user", "content": user_message})
+    return [*({"role": role, "content": content} for role, content in recent), {"role": "user", "content": user_message}]
 
-    result = agent.invoke({"messages": messages}, context=ctx)
 
-    new_messages = result["messages"][len(messages) :]
+def _summarize(new_messages: list, ctx: AgentContext, settings: Settings) -> AgentRun:
+    """Everything the agent produced this turn -> the answer, the trace, the citations and the usage."""
     ai_messages = [m for m in new_messages if isinstance(m, AIMessage)]
     tool_rounds = [m for m in ai_messages if m.tool_calls]
     states = {m.tool_call_id: _estado(m) for m in new_messages if isinstance(m, ToolMessage)}
@@ -142,3 +140,38 @@ def run_agent(
         model=settings.openai_chat_model,
         limit_reached=limit_reached,
     )
+
+
+def run_agent(
+    agent, ctx: AgentContext, user_message: str, history: list[tuple[str, str]], settings: Settings
+) -> AgentRun:
+    messages = _input_messages(user_message, history, settings)
+    result = agent.invoke({"messages": messages}, context=ctx)
+    return _summarize(result["messages"][len(messages) :], ctx, settings)
+
+
+def stream_agent(
+    agent, ctx: AgentContext, user_message: str, history: list[tuple[str, str]], settings: Settings
+) -> Iterator[tuple[str, object]]:
+    """Same turn as `run_agent`, but yields events as they happen: ("tool_start" | "tool_end" | "token", dict) and,
+    last, ("run", AgentRun). Text tokens are raw: invalid citation markers are cleaned only in the final answer."""
+    messages = _input_messages(user_message, history, settings)
+    produced: list = []
+    for chunk in agent.stream({"messages": messages}, context=ctx, stream_mode=["messages", "updates"], version="v2"):
+        kind, data = chunk["type"], chunk["data"]
+        if kind == "messages":
+            token, metadata = data
+            if isinstance(token, ToolMessage):
+                yield "tool_end", {"name": token.name, "ok": token.status != "error"}
+            elif isinstance(token, AIMessageChunk) and metadata.get("langgraph_node") == "model":
+                text = _text(token.content)
+                if text:
+                    yield "token", {"text": text}
+        elif kind == "updates":
+            for update in data.values():
+                for message in (update.get("messages", []) if isinstance(update, dict) else []):
+                    produced.append(message)
+                    if isinstance(message, AIMessage) and message.tool_calls:
+                        for call in message.tool_calls:
+                            yield "tool_start", {"name": call["name"], "args": call["args"]}
+    yield "run", _summarize(produced, ctx, settings)
