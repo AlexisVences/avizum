@@ -6,11 +6,14 @@ export const authHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-// FastAPI errors carry `detail`, either a string (HTTPException) or a list of
-// validation errors (422) — never `message`.
+// FastAPI errors carry `detail`: a string (HTTPException), a list of validation errors (422) or, on the chat
+// routes, an object `{ code, message }`.
 export const extractErrorMessage = (data, fallback) => {
   const detail = data?.detail;
   if (typeof detail === 'string') return detail;
+  if (detail && typeof detail === 'object' && !Array.isArray(detail) && typeof detail.message === 'string') {
+    return detail.message;
+  }
   if (Array.isArray(detail) && detail.length) {
     return detail.map((e) => e.msg).filter(Boolean).join(', ') || fallback;
   }

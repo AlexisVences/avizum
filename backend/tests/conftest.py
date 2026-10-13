@@ -14,7 +14,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
 from app.api.deps import get_db
-from app.db.session import Base
+from app.db.session import Base, get_session_factory
 import app.db.base  # noqa: F401
 from app.main import create_app
 
@@ -53,6 +53,7 @@ def client():
         with factory() as db:
             yield db
     app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[get_session_factory] = lambda: factory
     with TestClient(app) as test_client:
         yield test_client, factory
     Base.metadata.drop_all(engine)

@@ -24,7 +24,7 @@ database/schema.sql     PostgreSQL schema
 
 Within `backend/`: HTTP routes live in `app/api/`, configuration and security in `app/core/`, SQLAlchemy models in `app/models/`, request/response schemas in `app/schemas/`, and integration logic (e.g. the AI adapter) in `app/services/`. Alembic migrations are the source of truth for the database schema and live in `backend/migrations/`.
 
-Within `frontend/`: UI components in `src/components/`, route views in `src/pages/`, API clients in `src/services/`, styles/assets in `src/styles/` and `src/assets/`.
+Within `frontend/`: UI components in `src/components/` (the chat is in `src/components/chat/`), route views in `src/pages/`, API clients in `src/services/`, state hooks in `src/hooks/` (`chatReducer.js` is a pure reducer, `useChat.js` wires it to `chatService.js`), styles/assets in `src/styles/` and `src/assets/`.
 
 ## Commands
 
@@ -54,7 +54,7 @@ npm run build                                 # production build
 npm test                                      # React Testing Library, interactive watch mode
 ```
 
-Set `REACT_APP_API_URL=http://localhost:8000/api/v1` for the frontend if the default doesn't match the backend.
+Set `REACT_APP_API_URL=http://localhost:8000/api/v1` for the frontend if the default doesn't match the backend. The chat renders answers with `react-markdown` (ESM-only): CRA's Jest needs the `jest.transformIgnorePatterns` and `moduleNameMapper` entries in `frontend/package.json`; `react-router-dom` v7 is mocked in page tests (it does not resolve under CRA's Jest).
 
 RAG (needs `OPENAI_API_KEY` in `backend/.env` and the `db` service running; run from `backend/`):
 
