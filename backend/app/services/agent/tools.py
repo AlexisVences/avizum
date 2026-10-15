@@ -61,7 +61,8 @@ def buscar_agente(placa_o_nombre: str, runtime: ToolRuntime[AgentContext]) -> st
     """Verifica si una persona policial aparece en la lista oficial VIGENTE de personal autorizado para infraccionar
     en la Ciudad de México (Acuerdo 30/2026 de la SSC). Úsala cuando el usuario quiera saber si un agente es legítimo
     o está facultado para multar. No la uses para preguntas sobre reglas, multas o procedimientos."""
-    return _json(operations.find_agent(runtime.context, placa_o_nombre))
+    with runtime.context.lock:
+        return _json(operations.find_agent(runtime.context, placa_o_nombre))
 
 
 @tool(args_schema=BuscarLegislacionInput)
@@ -71,14 +72,16 @@ def buscar_legislacion(consulta: str, ley: str | None = None, *, runtime: ToolRu
     fragmentos con un número de cita [n], artículo, fracción y páginas. Úsala para cualquier pregunta sobre qué está
     prohibido, cuánto se multa, qué procedimiento sigue la autoridad o cómo impugnar. Toda afirmación legal de tu
     respuesta debe salir de estos fragmentos."""
-    return _json(operations.search_legislation(runtime.context, consulta, ley))
+    with runtime.context.lock:
+        return _json(operations.search_legislation(runtime.context, consulta, ley))
 
 
 @tool(args_schema=ObtenerArticuloInput)
 def obtener_articulo(ley: str, articulo: str, *, runtime: ToolRuntime[AgentContext]) -> str:
     """Devuelve el texto completo de UN artículo (todas sus fracciones) de una fuente. Úsala para leer un artículo
     que ya conoces por número, por ejemplo cuando un fragmento remite a otro ('artículo 64')."""
-    return _json(operations.fetch_article(runtime.context, ley, articulo))
+    with runtime.context.lock:
+        return _json(operations.fetch_article(runtime.context, ley, articulo))
 
 
 @tool(args_schema=CalcularMultaInput)
@@ -89,7 +92,8 @@ def calcular_multa(
     """Convierte 'N veces la UMA' a pesos con la UMA vigente y explica cuál sanción (mínima, media o máxima) se aplica
     y el descuento del 50% por pronto pago. Úsala SIEMPRE que des un monto en pesos: nunca hagas esa aritmética tú.
     Primero busca el artículo con buscar_legislacion y toma de ahí los múltiplos de UMA."""
-    return _json(operations.calculate_fine(runtime.context, veces_uma_minima, veces_uma_media, veces_uma_maxima))
+    with runtime.context.lock:
+        return _json(operations.calculate_fine(runtime.context, veces_uma_minima, veces_uma_media, veces_uma_maxima))
 
 
 TOOLS = [buscar_agente, buscar_legislacion, obtener_articulo, calcular_multa]

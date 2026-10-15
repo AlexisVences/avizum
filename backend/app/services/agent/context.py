@@ -4,6 +4,7 @@ LangChain passes this object to every tool through `ToolRuntime.context`; the mo
 invent a database session or a user id. The citation registry is what turns the fragments the tools returned into
 the `[n]` markers the model writes and the links the user sees.
 """
+import threading
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
@@ -75,6 +76,10 @@ class AgentContext:
     settings: Settings = field(default_factory=get_settings)
     today: date | None = None  # injectable for tests; defaults to the current date in Mexico City
     searched: list[str] = field(default_factory=list)  # legislation queries already run this turn
+    # LangGraph runs the tool calls of ONE model message in parallel threads, and a SQLAlchemy Session is not
+    # thread-safe ("concurrent operations are not permitted"). Every tool holds this lock while it touches the session
+    # or the shared registry, so parallel calls queue instead of colliding.
+    lock: threading.RLock = field(default_factory=threading.RLock, repr=False, compare=False)
 
     @property
     def searches_run(self) -> int:
