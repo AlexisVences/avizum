@@ -216,3 +216,78 @@ def test_a_conduct_with_no_penalty_in_its_fraction_is_reported_not_invented():
     result = extract_sanctions("44", "IV", text)
     assert [s.inciso for s in result.sanctions] == ["a", "b"]
     assert [i.kind for i in result.issues] == ["cobertura_incompleta"] and "c" in result.issues[0].detail
+
+
+ARTICLES = json.loads((Path(__file__).parent / "fixtures" / "sanctions" / "articles.json").read_text(encoding="utf-8"))
+
+
+def _real_article(number: str, fraction: str | None = None):
+    chunk = next(c for c in ARTICLES[number] if c["fraction"] == fraction)
+    return extract_sanctions(number, chunk["fraction"], chunk["text"])
+
+
+def test_exceptions_are_not_conducts_art_12_36_and_47():
+    """"Se prohíbe remolcar, excepto cuando: I... II..." — the fractions are exemptions: one row, the header's conduct."""
+    for number, snippet in (("12", "remolcar o empujar"), ("36", "realizar el pago correspondiente"), ("47", "acatar los programas ambientales")):
+        result = _real_article(number)
+        assert len(result.sanctions) == 1, number
+        row = result.sanctions[0]
+        assert snippet in row.conduct_text and row.fraction is None, number
+    assert "Se trate de vehículos de emergencia" not in " ".join(r.conduct_text for r in _real_article("36").sanctions)
+
+
+def test_art_27_keeps_each_fraction_with_its_own_clause_across_a_gazette_note():
+    """"... G.O. CDMX 10/10/25 II. Abstenerse": the note before the marker used to merge fractions II-IV into I."""
+    result = _real_article("27")
+    assert [(r.fraction, r.uma_min, r.uma_max) for r in result.sanctions] == [
+        ("I", D(100), D(300)), ("II", D(100), D(300)), ("IV", D(200), D(400)), ("V", D(200), D(400)),
+    ]
+    assert "fraccion_sin_sancion" in [i.kind for i in result.issues]  # III has no penalty in the text
+
+
+def test_a_conduct_that_ends_in_the_letter_o_keeps_it_and_art_35_splits_at_the_connector():
+    seat = _run("37_II").sanctions[1]
+    assert seat.conduct_text.endswith("colocarse el propio")  # rstrip("; y o") used to leave "propi"
+    result = _real_article("35")
+    assert [r.fraction for r in result.sanctions] == ["I", "II"]
+    assert result.sanctions[0].conduct_text.startswith("Que no sean movidos por más de 15 días")
+
+
+def test_a_clause_that_names_its_own_conduct_is_not_pinned_on_the_fraction():
+    """Art. 33 II: the 40 UMA are for whoever removes a clamp unpaid; Art. 66: 180 UMA for driving with a cancelled licence."""
+    rows = _real_article("33", "II").sanctions
+    assert [r.uma_min for r in rows] == [D(5), D(40)]
+    assert rows[1].conduct_text.startswith("Aquella persona que retire inmovilizadores")
+    licence = _real_article("66").sanctions
+    assert len(licence) == 1 and licence[0].conduct_text.startswith("Las personas cuya licencia haya sido cancelada y conduzcan")
+    assert licence[0].uma_min == D(180) and "remisión del vehículo al depósito" in licence[0].other_consequences
+
+
+def test_an_arrest_without_a_fine_is_a_sanction_too_art_50():
+    """Driving drunk: arrest 20 to 36 hours, six points, vehicle to the pound. The 60 UMA are what the OWNER pays."""
+    driver, owner = _real_article("50").sanctions
+    assert driver.uma_min is None and driver.points_license == 6
+    assert "arresto administrativo inconmutable de 20 a 36 horas" in driver.other_consequences
+    assert owner.uma_min == D(60) and owner.conduct_text.startswith("En caso de que el infractor no sea el propietario")
+
+
+def test_points_on_the_plate_written_as_placa_de_matricula_and_how_they_combine():
+    cumulative = _real_article("39").sanctions[0]
+    assert (cumulative.points_license, cumulative.points_plate, cumulative.points_mode) == (1, 1, "acumulativos")
+    assert cumulative.lead_text is None or "Artículo 39" not in cumulative.conduct_text
+    alternative = _run("37_II").sanctions[0]
+    assert alternative.points_mode == "alternativos_por_via"  # licencia o, si la capta una cámara, matrícula
+    assert "Los conductores y ocupantes de los vehículos deben" in alternative.lead_text
+
+
+def test_a_fraction_that_is_only_the_penalty_clause_is_article_wide_and_takes_the_header_as_conduct():
+    row = _real_article("8", "VII").sanctions[0]  # fraction VII of Art. 8 is literally the clause
+    assert row.article_wide and row.conduct_text == "Los conductores de todo tipo de vehículos deben:"
+
+
+def test_a_conduct_never_ends_in_a_dangling_connector_and_arts_51_52_do_not_repeat_art_50():
+    first = _real_article("35").sanctions[0]
+    assert not first.conduct_text.endswith(("ó", " o", " y"))
+    assert first.conduct_text.endswith("fauna nociva")
+    # the lettered steps of the breathalyser procedure restate Art. 50; only Art. 50 carries the arrest row
+    assert _real_article("51", "I").sanctions == [] and _real_article("52").sanctions == []

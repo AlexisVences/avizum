@@ -9,6 +9,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, SystemMessage, ToolMessage
 
 from app.core.config import Settings
+from app.services.agent.amounts import check_amounts
 from app.services.agent.citations import resolve_citations
 from app.services.agent.context import AgentContext
 from app.services.agent.prompt import SYSTEM_PROMPT
@@ -133,7 +134,7 @@ def _summarize(new_messages: list, ctx: AgentContext, settings: Settings) -> Age
         answer=resolved.text if resolved else answer,
         tool_calls=trace,
         citations=resolved.citations if resolved else [],
-        anomalies=resolved.anomalies if resolved else [],
+        anomalies=(resolved.anomalies + check_amounts(resolved.text, ctx)) if resolved else [],
         input_tokens=sum(u.get("input_tokens", 0) for u in usage),
         output_tokens=sum(u.get("output_tokens", 0) for u in usage),
         cached_input_tokens=sum((u.get("input_token_details") or {}).get("cache_read", 0) for u in usage),

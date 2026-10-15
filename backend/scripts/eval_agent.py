@@ -17,6 +17,7 @@ from app.db.session import SessionLocal
 from app.services.agent.agent import build_agent, run_agent
 from app.services.agent.context import AgentContext
 from app.services.ingestion.embedder import build_embeddings
+from app.services.sanction_eval import resolve_ref
 
 CASES = Path(__file__).resolve().parents[2] / "data" / "eval" / "agent_cases.jsonl"
 RUNS = CASES.parent / "runs"
@@ -26,6 +27,27 @@ PRICE_IN, PRICE_CACHED, PRICE_OUT = 0.25, 0.025, 2.00
 
 def load_cases(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+VERIFIED = CASES.parents[1] / "sanctions" / "verified.json"
+
+
+def resolve_sanction_cases(cases: list[dict], uma) -> tuple[list[dict], list[str]]:
+    """Fill the expected amounts of `sanction_ref` cases from the verified rows; skip the ones not verified yet."""
+    entries = json.loads(VERIFIED.read_text(encoding="utf-8")) if VERIFIED.exists() else []
+    ready, skipped = [], []
+    for case in cases:
+        ref = (case.get("expect") or {}).get("sanction_ref")
+        if not ref:
+            ready.append(case)
+            continue
+        resolved = resolve_ref(entries, ref, uma)
+        if resolved is None:
+            skipped.append(case["id"])
+            continue
+        ready.append({**case, "expect": {**case["expect"], "uma_expected": resolved["uma"], "pesos_expected": resolved["pesos"],
+                                         "confusers": resolved["confusers"]}})
+    return ready, skipped
 
 
 def cost_usd(run) -> float:
@@ -53,10 +75,13 @@ def main() -> None:
         cases = [c for c in cases if c["id"] in wanted]
     if args.limit:
         cases = cases[: args.limit]
+    settings = get_settings()
+    cases, skipped = resolve_sanction_cases(cases, settings.uma_value)
+    if skipped:
+        print(f"saltados (su fila de sanción aún no está verificada en data/sanctions/verified.json): {', '.join(skipped)}")
     if not cases:
         raise SystemExit("no cases match the filters")
 
-    settings = get_settings()
     agent = build_agent(settings)
     embeddings = build_embeddings(settings)
     RUNS.mkdir(exist_ok=True)

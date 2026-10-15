@@ -35,17 +35,19 @@ def main() -> None:
                 record = json.loads(line)
                 groups[(model_of(path), record.get("category") or "otros")].append(record)
 
-    lines = ["| modelo | categoría | n | comportamiento | fiel | promete de más | cita esperada | tool correcta | s (media / p95) | USD/turno |",
-             "|---|---|---|---|---|---|---|---|---|---|"]
+    lines = ["| modelo | categoría | n | comportamiento | fiel | promete de más | monto exacto | monto de otra fila | cita esperada | tool correcta | s (media / p95) | USD/turno |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for (model, category), rows in sorted(groups.items()):
         judge = [r["judge"] for r in rows if "judge" in r and "error" not in r["judge"]]
         faithful = [j["faithful"] for j in judge if j.get("faithful") is not None]
+        exact = [r["checks"]["amount_ok"] for r in rows if "amount_ok" in r.get("checks", {})]
+        mixed = [not r["checks"]["no_confuser_amount"] for r in rows if "no_confuser_amount" in r.get("checks", {})]
         cite = [r["checks"]["citation_hit"] for r in rows if "citation_hit" in r.get("checks", {})]
         tools = [r["checks"]["tool_ok"] for r in rows if "tool_ok" in r.get("checks", {})]
         secs = [r["seconds"] for r in rows if r.get("seconds") is not None]
         cost = [r["cost_usd"] for r in rows if r.get("cost_usd") is not None]
         lines.append(
-            f"| {model} | {category} | {len(rows)} | {pct([j['behavior_ok'] for j in judge])} | {pct(faithful)} | {sum(1 for j in judge if j.get('overpromises'))}/{len(judge)} | {pct(cite)} "
+            f"| {model} | {category} | {len(rows)} | {pct([j['behavior_ok'] for j in judge])} | {pct(faithful)} | {sum(1 for j in judge if j.get('overpromises'))}/{len(judge)} | {pct(exact)} | {sum(mixed)}/{len(mixed)} | {pct(cite)} "
             f"| {pct(tools)} | {statistics.mean(secs):.1f} / {p95(secs):.1f} | {statistics.mean(cost) if cost else 0:.4f} |"
         )
     report = "\n".join(lines)

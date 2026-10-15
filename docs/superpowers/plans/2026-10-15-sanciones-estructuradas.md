@@ -1,6 +1,6 @@
 # Sanciones estructuradas — plan de implementación
 
-> **Estado: EN CURSO (2026-10-15).** Pasos 1 y 2 hechos (migraciones `20261015_07` y `_08`, modelo `LegalSanction`, extractor determinista `app/services/ingestion/sanctions.py` con 17 pruebas). Pasos 3 a 6 pendientes.
+> **Estado (2026-10-16): primera revisión humana HECHA (230 de 247 filas verificadas, 17 rechazadas); extractor `det-2` corrige lo que esa revisión encontró; quedan 19 filas nuevas por revisar (`reglamento-transito.cambios.md`).** Histórico previo: construido, a la espera de la revisión humana (2026-10-15). Pasos 1, 2, 4 y 6 hechos y probados (223 pruebas verdes); paso 3: herramientas hechas, **falta que una persona marque la hoja** `data/sanctions/review/reglamento-transito.md` y corra `scripts.sanctions apply`; paso 5: casos escritos (`data/eval/sanction_cases.jsonl`), se corren cuando haya filas verificadas. Mientras no haya filas `verified` el agente se comporta exactamente como antes.
 
 **Problema (medido):** en la evaluación del agente (`data/eval/runs/`, mini ×2), d03 "¿cuánto cuesta no usar el cinturón?" falló en **los dos intentos** con 10, 15 o 20 UMA; el Art. 37 II dice 5, 7 o 10 (10/15/20 solo para el inciso c). Causa reproducida: el modelo recibió 37 II y 37 III (motocicletas), que usan **las mismas letras de inciso con montos distintos**, con el medio recortado (`[…]`) y la cláusula de sanción lejos de la conducta. Leyó "inciso b) → 10, 15 o 20" de la fracción equivocada. La expansión de fracciones hermanas que se añadió en la Fase 2 **aumentó** la confusión. Dimensión: 148 fragmentos con cláusula de sanción en el Reglamento, **77 con dos o más**; de 246 cláusulas, solo 31 declaran su alcance por inciso.
 
@@ -34,29 +34,58 @@
 
 **Medido sobre el corpus indexado (12 fuentes, 1,997 fragmentos):** 248 filas candidatas, 244 del Reglamento de Tránsito; 30 fragmentos con dos o más cláusulas distintas. Sin resolver (reportado, sin fila): 1 tabla (Art. 6 V, a capturar a mano), 41 rangos (Cultura Cívica, Justicia Administrativa y Ley de Movilidad Art. 251: son rangos de un juez, no tres niveles) y 1 cobertura incompleta real (Art. 44 IV: el inciso c) no tiene sanción en el texto; el agente no debe inventarla).
 
-### 3. Hoja de revisión (humana, obligatoria)
-- [ ] Script que genera una hoja lado a lado (artículo con la cláusula resaltada | filas propuestas) para el 100% de las fracciones multi-cláusula y todo lo que falle una validación.
-- [ ] Carga a `data/sanctions/verified.json` con revisor, fecha y `chunk_hash`; importación a la BD como `verified`.
+### 3. Hoja de revisión (humana, obligatoria) — HERRAMIENTAS HECHAS, REVISIÓN PENDIENTE
+- [x] `app/services/ingestion/sanction_store.py` y `scripts/sanctions.py` (`extract`, `review`, `apply`, `status`): candidatas `pending` idempotentes, hoja en Markdown con casillas, `verified.json` en git y recarga tras una reconstrucción.
+- [x] Hoja por riesgo: tanda 1 = cláusulas que asignan montos por inciso (59 filas en 14 fragmentos), tanda 2 = `applies_to` (15), tanda 3 = lo no resuelto (2), tanda 4 = una cláusula por fracción (171; casilla maestra, muestra ★). La casilla maestra **solo** alcanza a la tanda 4 (hay prueba).
+- [x] Las 3 filas de la tabla del Art. 6 V se capturaron a mano en `data/sanctions/manual.json`.
+- [ ] **Una persona revisa la hoja y corre `uv run python -m scripts.sanctions apply --reviewer "Nombre"`**; luego se commitea `data/sanctions/verified.json`.
 
-### 4. Servir al agente
-- [ ] Adjuntar filas `verified` en `search_legislation` y `fetch_article` (misma llamada), con pesos mínimo/medio/máximo y con el 50% por pronto pago.
-- [ ] `calcular_multa` acepta `sancion_id`; sigue aceptando múltiplos libres para cálculos fuera de la tabla.
-- [ ] Verificador determinista al cierre del turno: toda terna "N, M o K veces la UMA" de la respuesta debe existir en las filas o en el texto de los fragmentos citados; si no, anomalía `monto_no_respaldado`.
-- [ ] Prompt: elegir la fila cuya conducta coincide; si dos aplican, enumerarlas; sin monto si ninguna coincide. Capacidades en lista cerrada. Jurisdicción: si la autoridad es de otro estado, una línea de alcance y puntero genérico, sin nombrar dependencias; si la autoridad es de la CDMX (p. ej. placas foráneas en cámaras de la CDMX) se responde.
+### 3b. Primera revisión humana y extractor `det-2` (2026-10-16)
+La revisión (230 `[x]`, 17 `[!]`, ninguna fila aprobada en bloque en la tanda 4) encontró que **los montos casi siempre coinciden con su cláusula; lo que falla es a qué conducta se le pega**. Los 17 rechazos no se sirven. Causas y arreglos, cada uno con prueba sobre el texto real (`tests/fixtures/sanctions/articles.json`):
+- **Excepciones leídas como infracciones** (Arts. 12, 36, 47): si el encabezado dice "excepto / salvo / exceptuados", las fracciones son exenciones y la fila es una sola, con la conducta del encabezado.
+- **Cláusula con conducta propia** (Art. 33 II 40 UMA, Art. 50 propietario, Art. 66 licencia cancelada): si la cláusula no dice "la presente disposición / este artículo", su conducta es su propio sujeto, no la de la fracción.
+- **Sanción sin multa** (Art. 50: arresto inconmutable de 20 a 36 horas, 6 puntos, depósito): ahora se extrae como fila sin monto en UMA, con la consecuencia en `otras`. Solo a nivel de artículo: los pasos de los Arts. 51-52 repiten el 50 y no generan fila.
+- **Fracciones colapsadas** (Art. 27, nota de Gaceta "G.O. CDMX 10/10/25 II."): el marcador romano cuenta si es el siguiente número de la secuencia, no solo tras puntuación.
+- **Conducta vacía o fusionada** (Arts. 8 VII, 26 I, 35 I): nuevas fronteras de oración (", y Los conductores…", "ó El incumplimiento…"); una fracción que es solo la cláusula toma el encabezado como conducta.
+- **Cláusula de artículo** ("el presente artículo", Arts. 8 y 45): cubre las fracciones hermanas sin cláusula propia (filas heredadas, `pending`); las fracciones sin sanción en el texto se reportan (`fraccion_sin_sancion`: Art. 20 III-V, Art. 27 III).
+- **Último carácter cortado** («propi», «nocturn»): era un `rstrip("; y o")`; ahora se quita la palabra conectora, no letras.
+- **Puntos**: "placa de matrícula" (Art. 39) y nuevo `points_mode` (`alternativos_por_via` licencia o matrícula según la vía, `acumulativos` ambos); `lead_text` guarda el encabezado verbatim para que el agente sepa si la conducta es una prohibición o un deber. Ambos son contexto derivado del mismo texto (migración `20261016_09`) y no reabren una aprobación.
+- **`other_consequences`** ahora son solo las frases de consecuencia (arresto, remisión al depósito…), no la cláusula completa.
+- **Una aprobación es del contenido que la persona vio**: `load_verified` ya no restaura `verified` si el extractor propone otro contenido (queda `pending`, reportado como `diverged`); solo se toleran puntuación final, el prefijo "Artículo N.-", una conducta que antes salía recortada y `other_consequences` destilado.
+- La hoja de revisión principal **nunca se sobrescribe** si tiene marcas; los cambios salen en `reglamento-transito.cambios.md` (`review --delta`, con "antes (lo que revisaste)") y se aplican con `apply --sheet`.
 
-### 5. Evaluación
-- [ ] Casos generados de las filas verificadas (una pregunta por fragmento multi-cláusula, ~20-25) con `--repeat 3`.
-- [ ] Criterio de salida: 100% de aciertos de monto en esos casos, **cero** `monto_no_respaldado`, d03 corregido, sin regresión en el recall@5 del retrieval, y latencia/costo medidos contra la línea base (se espera menos latencia en preguntas de monto por una ronda menos).
+**Resultado:** las 230 aprobaciones siguen vigentes; 19 filas pendientes (3 en la tanda 3: Art. 27; 16 en la 4: versiones corregidas de lo rechazado y fracciones hermanas nuevas).
 
-### 6. Reingesta
-- [ ] `refresh_sanctions(slug)` idempotente: detecta fragmentos con hash distinto, extrae, valida y deja filas `pending`, con reporte ("N cambiaron, M por revisar").
-- [ ] Engancharlo a `scripts.ingest_sources`. El script automático de actualización del final solo tendrá que llamarlo.
-- [ ] Indicador de salud: % de fragmentos con sanción que tienen fila `verified` vigente; el reporte lo marca si baja de un umbral.
+### 4. Servir al agente — HECHO
+- [x] `app/services/sanctions_lookup.py`: solo filas `verified`, con `chunk_hash` igual al hash del texto actual (comparado en SQL) y fuente `is_current`.
+- [x] `search_legislation` y `fetch_article` adjuntan `sanciones` por fragmento en la misma llamada (sin ronda extra): conducta, inciso, `aplica_a`, `veces_uma`, `pesos`, `pronto_pago_50` (no en Art. 30 XXI ni 33 II), puntos, vigencia de la UMA y los Arts. 62 y 64 citables.
+- [x] **Desviación del plan:** `calcular_multa` **no** recibe `sancion_id`. Las filas ya traen los pesos, así que sería redundante, y exponer ids de base de datos fue un error medido: el modelo los citó como marcas (`[51]`, `[52]`). Las filas no llevan ningún id.
+- [x] Verificador de montos al cierre del turno (`app/services/agent/amounts.py`): toda terna de UMA y todo monto en pesos de la respuesta debe salir de lo que las tools devolvieron en ese turno; si no, anomalía `monto_no_respaldado`.
+- [x] Prompt: sección "Sanciones y montos", jurisdicción por autoridad que interviene (otra entidad: una línea de alcance y puntero genérico, sin nombrar dependencias), lista cerrada de capacidades y trato de tú.
+
+**Límite conocido del verificador, probado a propósito:** no atrapa un monto que es real pero pertenece a otra conducta (10, 15 o 20 es un monto verdadero del inciso c de Art. 37 II). Eso lo resuelve elegir la fila correcta y lo mide la Tarea 5 con `no_confuser_amount`; el verificador solo evita cifras inventadas.
+
+### 5. Evaluación — CASOS LISTOS, FALTA CORRERLOS CON FILAS VERIFICADAS
+- [x] `data/eval/sanction_cases.jsonl`: 26 casos en lenguaje natural sobre conductas de la tanda 1, 2 y 4, con contrastes (cinturón vs casco, polarizado de particular vs transporte público, velocidad con override, tabla manual del Art. 6 V, licencia cancelada) y la laguna del Art. 44 IV (no debe dar la terna de a y b como si fuera la suya).
+- [x] La verdad de cada caso sale de la fila verificada (`app/services/sanction_eval.py`): el runner salta los casos cuya fila no está verificada; el juez calcula `amount_ok` y `no_confuser_amount` con los montos de las filas hermanas.
+- [ ] Correr: `uv run python -m scripts.eval_agent --cases ../data/eval/sanction_cases.jsonl --repeat 3`, luego `judge_agent --no-llm` y `eval_report`. Criterio de salida: `amount_ok` 100%, `no_confuser_amount` 100% y cero `monto_no_respaldado`.
+
+**Experimento con el modelo real (mini, 12 preguntas × 2 corridas, filas verificadas de forma TRANSITORIA y revertidas; no sustituye la revisión humana; archivo en `data/eval/runs/_experiments/`):**
+- d03 (cinturón): **correcto en las dos corridas** (5, 7 o 10 UMA, $586.55 / $821.17 / $1,173.10); antes fallaba en las dos.
+- `calcular_multa` pasó de 4 llamadas a **0**; herramientas por turno 1.61 → 1.04; en preguntas de monto la latencia bajó (c45: 11.9 s → 5.9 s; d03: 8.2 s → 6.8 s). En el conjunto no hubo mejora de latencia ni de costo (media 8.2 → 8.8 s, USD 0.0031 → 0.0035): la generación domina y las filas agregan entrada.
+- Montos revisados contra el artículo en c06, c20 y c45: correctos. c04 oscila entre "sí" y una respuesta dudosa: ruido de recuperación ya presente antes, no de las filas.
+
+### 6. Reingesta — HECHO
+- [x] `sanction_store.refresh_sanctions` (candidatas para texto nuevo o cambiado, verificadas restauradas desde git, `stale` por hash, indicador de salud) y enganchado a `scripts.ingest_sources` para `reglamento-transito`. El script automático de actualización del final solo tendrá que llamarlo.
+- [x] Prueba: tras un `--force` con un artículo reformado, lo verificado vuelve y el artículo cambiado queda `pending`.
 
 ## Fuera de alcance de este plan
 
 - **c87** (cita del Art. 12 como causal de grúa): es una cita válida con una afirmación que el texto no dice; necesita un verificador de fidelidad general, más caro, y va en una fase aparte.
 - El disparador automático de actualización (detectar la reforma y descargar el PDF): sigue pendiente al final, como estaba.
+- Ley de Movilidad, Cultura Cívica y Justicia Administrativa: 41 rangos y tablas que no se leen sin adivinar; se retoman con su propia revisión.
+- Si la revisión humana confirma que `monto_no_respaldado` casi no da falsos positivos, evaluar mostrarlo al usuario como aviso (hoy solo se registra).
+- Origen del consejo "no entregues documentos si no hay boleta" del mensaje de `buscar_agente` cuando no hay coincidencia: confirmar en la fuente oficial; el Art. 59 II e) dice que el agente solicita los documentos para su revisión.
 
 ## Review Focus
 

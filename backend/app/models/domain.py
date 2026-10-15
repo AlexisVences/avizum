@@ -226,6 +226,9 @@ class LegalSanction(Timestamped, Base):
     points_license: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     points_plate: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)  # when caught by technological systems
     other_consequences: Mapped[str | None] = mapped_column(Text, nullable=True)  # depósito, arresto... as written
+    # Context the extractor derives from the same text; it does not change what a person verified (amount, conduct):
+    lead_text: Mapped[str | None] = mapped_column(Text, nullable=True)  # the article's wording that introduces its list
+    points_mode: Mapped[str | None] = mapped_column(String(30), nullable=True)  # alternativos_por_via | acumulativos
     chunk_hash: Mapped[str] = mapped_column(String(64))  # sha256 of the chunk text this row was extracted from
     extractor_version: Mapped[str] = mapped_column(String(30))
     status: Mapped[SanctionStatus] = mapped_column(

@@ -12,6 +12,7 @@ from app.models.domain import AgentLookup, LegalChunk, OfficialSource
 from app.services.agent.context import AgentContext
 from app.services.agents_registry import EmptyAgentQuery, search_agents
 from app.services.retrieval import SearchHit, get_article, search_many
+from app.services.sanctions_lookup import verified_by_chunk
 
 MIN_SIMILARITY = 0.25  # off-topic queries scored 0.22-0.24; relevant ones were >= 0.30 (see the spec, section 7)
 MAX_FRAGMENTS = 14  # measured: the answer sat at rank 8-13 for natural queries; recall@20 was 0.96 vs 0.88 at 10
@@ -24,6 +25,9 @@ SIBLING_CHARS = 900
 MAX_AGENT_RESULTS = 5
 FRAGMENT_CHARS = 1500
 ARTICLE_CHARS = 6000
+MAX_SANCTION_ROWS = 30  # per tool result; a long article is read whole with obtener_articulo
+SANCTION_CONDUCT_CHARS = 160
+NO_DISCOUNT = {("30", "XXI"), ("33", "II")}  # Reglamento de Tránsito Art. 62: these fines are not discounted
 
 LIST_LABELS = {
     "via_publica": "vía pública (equipos electrónicos portátiles)",
@@ -114,6 +118,7 @@ def _clip(text: str, chars: int) -> str:
 
 def _fragment(ctx: AgentContext, hit: SearchHit, chars: int) -> dict:
     citation = ctx.citations.register(hit)
+    ctx.fragment_texts.append(" ".join(hit.text.split()))
     pages = str(hit.page_start) if hit.page_start == hit.page_end else f"{hit.page_start}-{hit.page_end}"
     return {
         "cita": citation.n,
@@ -173,6 +178,112 @@ def _sibling_fragments(ctx: AgentContext, hits: list[SearchHit]) -> list[dict]:
     return extras
 
 
+def _levels(row) -> dict[str, Decimal]:
+    values = [v for v in (row.uma_min, row.uma_mid, row.uma_max) if v is not None]
+    if len(values) == 1:
+        return {"unica": values[0]}
+    labels = ["minima", "media", "maxima"] if row.uma_mid is not None else ["minima", "maxima"]
+    return dict(zip(labels, values))
+
+
+def _sanction_view(ctx: AgentContext, row, fragment_fraction: str | None) -> dict:
+    """One verified conduct with its penalty already resolved, ready for the model to pick the matching row."""
+    uma = ctx.settings.uma_value
+    # No database id here: measured, the model cited a row id as if it were a fragment mark ([51], [52]).
+    view: dict = {"conducta": _clip(row.conduct_text, SANCTION_CONDUCT_CHARS)}
+    if row.fraction and row.fraction != fragment_fraction:
+        view["fraccion"] = row.fraction
+    if row.inciso:
+        view["inciso"] = row.inciso
+    if row.applies_to:
+        view["aplica_a"] = row.applies_to
+    levels = _levels(row)
+    if levels:
+        pesos = {name: _pesos(value, uma) for name, value in levels.items()}
+        view["veces_uma"] = {name: f"{value.normalize():f}" for name, value in levels.items()}
+        view["pesos"] = {name: str(amount) for name, amount in pesos.items()}
+        ctx.served_uma_values.update(levels.values())
+        ctx.served_uma_triples.add(tuple(v.normalize() for v in (row.uma_min, row.uma_mid, row.uma_max) if v is not None))
+        ctx.served_amounts.update(pesos.values())
+        if (row.article, row.fraction) in NO_DISCOUNT:
+            view["sin_descuento"] = "esta sanción no tiene el 50% de pronto pago (Art. 62)"
+        else:
+            half = {name: (amount / 2).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) for name, amount in pesos.items()}
+            view["pronto_pago_50"] = {name: str(amount) for name, amount in half.items()}
+            ctx.served_amounts.update(half.values())
+    if row.lead_text:
+        view["encabezado"] = _clip(row.lead_text, 140)  # the article's own wording: it tells prohibition from duty
+    if row.points_license is not None:
+        view["puntos_licencia"] = row.points_license
+    if row.points_plate is not None:
+        view["puntos_matricula"] = row.points_plate
+    if row.points_mode == "alternativos_por_via":
+        view["puntos_nota"] = "los puntos van a la licencia si la boleta la levanta un agente, o a la matrícula si la capta un sistema tecnológico (no se suman)"
+    elif row.points_mode == "acumulativos":
+        view["puntos_nota"] = "se aplican ambos: puntos a la licencia y a la matrícula"
+    if row.other_consequences:
+        view["otras_consecuencias"] = _clip(row.other_consequences, 220)
+    return view
+
+
+def _rule_citations(ctx: AgentContext) -> list[dict]:
+    """Arts. 62 (discount) and 64 (minimum/medium/maximum) made citable like any fragment."""
+    cited = []
+    for article, marker in (("62", "descuente un 50%"), ("64", "sanción mínima")):
+        for hit in get_article(ctx.db, "reglamento-transito", article):
+            if marker in " ".join(hit.text.split()):
+                f = _fragment(ctx, hit, 0)
+                cited.append({key: f[key] for key in ("cita", "articulo", "fraccion", "paginas")})
+                break
+    return cited
+
+
+def _attach_sanctions(ctx: AgentContext, result: dict) -> None:
+    """Put the verified penalty rows next to the fragments they belong to (same tool call, no extra model round).
+
+    A row is one conduct with the amount that applies to THAT conduct. Choosing a row from a short closed list replaces
+    reading which inciso a clause covers out of prose, which is where amounts went wrong (seat belt, Art. 37 II vs III).
+    """
+    fragments = result.get("fragmentos") or []
+    chunk_of: dict[int, int] = {}
+    for fragment in fragments:
+        citation = ctx.citations.get(fragment["cita"])
+        if citation is not None and citation.chunk_id > 0:
+            chunk_of[fragment["cita"]] = citation.chunk_id
+    rows_by_chunk = verified_by_chunk(ctx.db, sorted(set(chunk_of.values())))
+    attached = 0
+    for fragment in fragments:
+        rows = rows_by_chunk.get(chunk_of.get(fragment["cita"]), [])
+        if not rows:
+            continue
+        room = MAX_SANCTION_ROWS - attached
+        if room <= 0:
+            result["nota_sanciones_truncadas"] = "Hay más sanciones: lee el artículo completo con obtener_articulo."
+            break
+        fragment["sanciones"] = [_sanction_view(ctx, row, fragment.get("fraccion")) for row in rows[:room]]
+        attached += len(fragment["sanciones"])
+    if not attached:
+        return
+    settings, today = ctx.settings, ctx.current_date()
+    result["uma"] = {
+        "valor_pesos": str(settings.uma_value),
+        "vigencia": f"{settings.uma_valid_from.isoformat()} a {settings.uma_valid_until.isoformat()}",
+    }
+    if not (settings.uma_valid_from <= today <= settings.uma_valid_until):
+        result["advertencia_uma"] = (
+            f"El valor de la UMA usado ({settings.uma_value}) rige del {settings.uma_valid_from} al "
+            f"{settings.uma_valid_until}; hoy puede estar desactualizada. Indica que los montos son aproximados."
+        )
+    result["nota_sanciones"] = (
+        "Cada fila de 'sanciones' es UNA conducta con la sanción que le aplica, ya verificada: elige la fila cuya "
+        "'conducta' coincide con la de la persona (misma fracción e inciso) y usa sus montos tal cual. No mezcles "
+        "montos de otra fila o fracción aunque compartan la letra del inciso. Si ninguna fila coincide, no des monto."
+    )
+    result["regla_sancion"] = SANCTION_RULE
+    result["descuento"] = DISCOUNT_RULE
+    result["fundamento_reglas"] = _rule_citations(ctx)
+
+
 def search_legislation(ctx: AgentContext, consulta: str, ley: str | None = None) -> dict:
     valid = _valid_slugs(ctx)
     if ley is not None and ley not in valid:
@@ -210,6 +321,7 @@ def search_legislation(ctx: AgentContext, consulta: str, ley: str | None = None)
         fragments.append(fragment)
     fragments += _sibling_fragments(ctx, relevant)
     result = {"estado": "ok", "fragmentos": fragments}
+    _attach_sanctions(ctx, result)
     if any(hit.fraction for hit in relevant):
         result["nota"] = (
             "Varios resultados son fracciones de un artículo. Si el artículo enumera casos por tipo de conductor, vehículo "
@@ -230,7 +342,9 @@ def fetch_article(ctx: AgentContext, ley: str, articulo: str) -> dict:
     lengths = [len(" ".join(hit.text.split())) for hit in hits]
     total = sum(lengths) or 1
     budgets = [lengths[i] if total <= ARTICLE_CHARS else max(300, int(ARTICLE_CHARS * lengths[i] / total)) for i in range(len(hits))]
-    return {"estado": "ok", "fragmentos": [_fragment(ctx, hit, budget) for hit, budget in zip(hits, budgets)]}
+    result = {"estado": "ok", "fragmentos": [_fragment(ctx, hit, budget) for hit, budget in zip(hits, budgets)]}
+    _attach_sanctions(ctx, result)
+    return result
 
 
 MAX_VECES_UMA = 1000  # no traffic fine in the sources comes close; guards against a misread number
@@ -299,15 +413,14 @@ def calculate_fine(ctx: AgentContext, veces_min: float, veces_med: float | None 
             "hoy puede estar desactualizada. Indica que los montos son aproximados y que se confirmen en el INEGI."
         )
 
+    ctx.served_uma_values.update(Decimal(str(v)) for v in given)
+    ctx.served_uma_triples.add(tuple(Decimal(str(v)).normalize() for v in given))
+    ctx.served_amounts.update(amounts.values())
+    ctx.served_amounts.update(
+        (amount / 2).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) for amount in amounts.values()
+    )
     # Make the two rule articles citable so the answer can link them like any other fragment.
-    rule_fragments = []
-    for article, marker in (("62", "descuente un 50%"), ("64", "sanción mínima")):
-        for hit in get_article(ctx.db, "reglamento-transito", article):
-            if marker in " ".join(hit.text.split()):
-                rule_fragments.append(_fragment(ctx, hit, 0) | {"texto": None})
-                break
+    rule_fragments = _rule_citations(ctx)
     if rule_fragments:
-        result["fundamento"] = [
-            {key: f[key] for key in ("cita", "articulo", "fraccion", "paginas")} for f in rule_fragments
-        ]
+        result["fundamento"] = rule_fragments
     return result
