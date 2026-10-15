@@ -1,12 +1,13 @@
 -- Generated from the Alembic migrations with:
 --   docker compose exec -T db pg_dump -U avizum -d avizum --schema-only --no-owner --no-privileges
 -- Alembic (backend/migrations) is the source of truth; regenerate this file after each migration.
--- Head at generation time: 20261010_06
+-- Head at generation time: 20261015_08
 
 --
 -- PostgreSQL database dump
 --
 
+\restrict fjtLQbxr6Y9jW8CKtgfMtoQtkRM3neKobie3NZo0GMbd3opMzZxlubyDcQfQzyZ
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -92,6 +93,18 @@ CREATE TYPE public.message_status AS ENUM (
     'complete',
     'error',
     'cancelled'
+);
+
+
+--
+-- Name: sanction_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.sanction_status AS ENUM (
+    'pending',
+    'verified',
+    'rejected',
+    'stale'
 );
 
 
@@ -270,6 +283,61 @@ ALTER SEQUENCE public.legal_chunks_id_seq OWNED BY public.legal_chunks.id;
 
 
 --
+-- Name: legal_sanctions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.legal_sanctions (
+    id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    chunk_id integer NOT NULL,
+    ordinal smallint NOT NULL,
+    source_slug character varying(100) NOT NULL,
+    article character varying(50) NOT NULL,
+    fraction character varying(50),
+    inciso character varying(20),
+    conduct_text text NOT NULL,
+    clause_text text NOT NULL,
+    uma_min numeric(8,2),
+    uma_mid numeric(8,2),
+    uma_max numeric(8,2),
+    points_license smallint,
+    points_plate smallint,
+    other_consequences text,
+    chunk_hash character varying(64) NOT NULL,
+    extractor_version character varying(30) NOT NULL,
+    status public.sanction_status DEFAULT 'pending'::public.sanction_status NOT NULL,
+    reviewed_by character varying(100),
+    reviewed_at timestamp with time zone,
+    applies_to text,
+    CONSTRAINT ck_legal_sanctions_chunk_hash_len CHECK ((char_length((chunk_hash)::text) = 64)),
+    CONSTRAINT ck_legal_sanctions_points_license CHECK (((points_license IS NULL) OR (points_license >= 0))),
+    CONSTRAINT ck_legal_sanctions_points_plate CHECK (((points_plate IS NULL) OR (points_plate >= 0))),
+    CONSTRAINT ck_legal_sanctions_uma_ascending CHECK ((((uma_min IS NULL) AND (uma_mid IS NULL) AND (uma_max IS NULL)) OR ((uma_min IS NOT NULL) AND (uma_min > (0)::numeric) AND ((uma_mid IS NULL) OR (uma_mid >= uma_min)) AND ((uma_max IS NULL) OR (uma_max >= COALESCE(uma_mid, uma_min))))))
+);
+
+
+--
+-- Name: legal_sanctions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.legal_sanctions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: legal_sanctions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.legal_sanctions_id_seq OWNED BY public.legal_sanctions.id;
+
+
+--
 -- Name: message_feedback; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -445,6 +513,13 @@ ALTER TABLE ONLY public.legal_chunks ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
+-- Name: legal_sanctions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.legal_sanctions ALTER COLUMN id SET DEFAULT nextval('public.legal_sanctions_id_seq'::regclass);
+
+
+--
 -- Name: message_feedback id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -513,6 +588,14 @@ ALTER TABLE ONLY public.legal_chunks
 
 
 --
+-- Name: legal_sanctions legal_sanctions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.legal_sanctions
+    ADD CONSTRAINT legal_sanctions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: message_feedback message_feedback_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -542,6 +625,14 @@ ALTER TABLE ONLY public.official_sources
 
 ALTER TABLE ONLY public.authorized_agents
     ADD CONSTRAINT uq_authorized_agents_plate_type UNIQUE (plate, authorization_type);
+
+
+--
+-- Name: legal_sanctions uq_legal_sanctions_chunk_ordinal; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.legal_sanctions
+    ADD CONSTRAINT uq_legal_sanctions_chunk_ordinal UNIQUE (chunk_id, ordinal);
 
 
 --
@@ -632,6 +723,20 @@ CREATE INDEX ix_legal_chunks_tsv ON public.legal_chunks USING gin (tsv);
 
 
 --
+-- Name: ix_legal_sanctions_article; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_legal_sanctions_article ON public.legal_sanctions USING btree (source_slug, article, fraction);
+
+
+--
+-- Name: ix_legal_sanctions_chunk_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_legal_sanctions_chunk_status ON public.legal_sanctions USING btree (chunk_id, status);
+
+
+--
 -- Name: ix_messages_conversation_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -700,6 +805,14 @@ ALTER TABLE ONLY public.legal_chunks
 
 
 --
+-- Name: legal_sanctions legal_sanctions_chunk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.legal_sanctions
+    ADD CONSTRAINT legal_sanctions_chunk_id_fkey FOREIGN KEY (chunk_id) REFERENCES public.legal_chunks(id) ON DELETE CASCADE;
+
+
+--
 -- Name: message_feedback message_feedback_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -727,4 +840,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
+\unrestrict fjtLQbxr6Y9jW8CKtgfMtoQtkRM3neKobie3NZo0GMbd3opMzZxlubyDcQfQzyZ
 

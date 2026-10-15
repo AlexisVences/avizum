@@ -1,8 +1,9 @@
 import enum
 from datetime import date, datetime
+from decimal import Decimal
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import CheckConstraint, Computed, Date, DateTime, Enum, ForeignKey, Index, Integer, SmallInteger, String, Text, UniqueConstraint, func, text
+from sqlalchemy import CheckConstraint, Computed, Date, DateTime, Enum, ForeignKey, Index, Integer, Numeric, SmallInteger, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -173,3 +174,63 @@ class MessageFeedback(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     value: Mapped[int] = mapped_column(SmallInteger)  # 1 = 👍, -1 = 👎
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class SanctionStatus(str, enum.Enum):
+    PENDING = "pending"  # extracted and validated by the machine, not reviewed by a person: never served
+    VERIFIED = "verified"  # a person approved it against the source text: the only status the agent may serve
+    REJECTED = "rejected"  # a person found it wrong
+    STALE = "stale"  # the chunk it came from changed (hash mismatch) after it was verified
+
+
+class LegalSanction(Timestamped, Base):
+    """One sanctionable conduct of a legal chunk, with the penalty that applies to THAT conduct.
+
+    Articles list several conducts and several penalty clauses ("los incisos a), b), d) y e) ... 5, 7 o 10 veces la
+    UMA; el inciso c) ... 10, 15 o 20"), and mapping one to the other in prose is where the model made mistakes.
+    The numbers come from the verbatim clause (regex), never from a model. `chunk_hash` ties the row to the exact
+    text it was verified against: if the chunk changes, the row stops being served until it is reviewed again.
+    """
+
+    __tablename__ = "legal_sanctions"
+    __table_args__ = (
+        UniqueConstraint("chunk_id", "ordinal", name="uq_legal_sanctions_chunk_ordinal"),
+        CheckConstraint(
+            "(uma_min IS NULL AND uma_mid IS NULL AND uma_max IS NULL) OR "
+            "(uma_min IS NOT NULL AND uma_min > 0 AND (uma_mid IS NULL OR uma_mid >= uma_min) "
+            "AND (uma_max IS NULL OR uma_max >= COALESCE(uma_mid, uma_min)))",
+            name="ck_legal_sanctions_uma_ascending",
+        ),
+        CheckConstraint("points_license IS NULL OR points_license >= 0", name="ck_legal_sanctions_points_license"),
+        CheckConstraint("points_plate IS NULL OR points_plate >= 0", name="ck_legal_sanctions_points_plate"),
+        CheckConstraint("char_length(chunk_hash) = 64", name="ck_legal_sanctions_chunk_hash_len"),
+        Index("ix_legal_sanctions_chunk_status", "chunk_id", "status"),
+        Index("ix_legal_sanctions_article", "source_slug", "article", "fraction"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chunk_id: Mapped[int] = mapped_column(ForeignKey("legal_chunks.id", ondelete="CASCADE"), nullable=False)
+    ordinal: Mapped[int] = mapped_column(SmallInteger)  # position inside the chunk, stable for a given text
+    # Denormalised so the reviewed file in git (data/sanctions/verified.json) can be matched without chunk ids.
+    source_slug: Mapped[str] = mapped_column(String(100))
+    article: Mapped[str] = mapped_column(String(50))
+    fraction: Mapped[str | None] = mapped_column(String(50), nullable=True)  # the fraction this conduct sits in
+    inciso: Mapped[str | None] = mapped_column(String(20), nullable=True)  # "b", "e Bis"; null when the whole fraction
+    # A qualifier the text puts on the penalty ("vehículos de transporte público de pasajeros y carga"): the same
+    # conduct then has several rows and the agent must pick the one that matches the person's vehicle. Null = general.
+    applies_to: Mapped[str | None] = mapped_column(Text, nullable=True)
+    conduct_text: Mapped[str] = mapped_column(Text)  # verbatim from the chunk
+    clause_text: Mapped[str] = mapped_column(Text)  # the verbatim penalty clause the numbers were read from
+    uma_min: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+    uma_mid: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+    uma_max: Mapped[Decimal | None] = mapped_column(Numeric(8, 2), nullable=True)
+    points_license: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    points_plate: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)  # when caught by technological systems
+    other_consequences: Mapped[str | None] = mapped_column(Text, nullable=True)  # depósito, arresto... as written
+    chunk_hash: Mapped[str] = mapped_column(String(64))  # sha256 of the chunk text this row was extracted from
+    extractor_version: Mapped[str] = mapped_column(String(30))
+    status: Mapped[SanctionStatus] = mapped_column(
+        Enum(SanctionStatus, name="sanction_status", values_callable=lambda e: [m.value for m in e]),
+        default=SanctionStatus.PENDING, server_default=SanctionStatus.PENDING.value, nullable=False,
+    )
+    reviewed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
