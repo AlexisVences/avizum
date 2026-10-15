@@ -41,7 +41,7 @@ const Bienvenida = () => {
                     <div className="tw-mx-auto tw-max-w-5xl tw-grid tw-grid-cols-1 md:tw-grid-cols-3 tw-gap-5">
                         <AccionCard
                             folio="01 · ASESORÍA"
-                            titulo="Asesoría legal gratuita"
+                            titulo="Asesoría legal"
                             to="/asesoria-ia"
                             cta="Entrar"
                             retraso={0}

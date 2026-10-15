@@ -33,7 +33,7 @@ beforeEach(() => {
 test('starts with a welcome and suggestions; picking one asks it', async () => {
   chat.streamMessage.mockResolvedValue();
   renderPage();
-  expect(await screen.findByText('¿En qué te ayudo?')).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: /¿En qué te\s*ayudo\s*\?/ })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /inmovilizador/ }));
   await waitFor(() => expect(chat.streamMessage).toHaveBeenCalled());
   expect(chat.streamMessage.mock.calls[0][0].content).toMatch(/inmovilizador/);
@@ -53,7 +53,7 @@ test('a question is answered live: tool indicator, text, citation chip and votes
     };
   }));
   renderPage();
-  await screen.findByText('¿En qué te ayudo?');
+  await screen.findByRole('heading', { name: /¿En qué te\s*ayudo\s*\?/ });
 
   fireEvent.change(screen.getByLabelText('Tu pregunta'), { target: { value: '¿Debo portar licencia?' } });
   fireEvent.keyDown(screen.getByLabelText('Tu pregunta'), { key: 'Enter' });
@@ -72,7 +72,7 @@ test('a question is answered live: tool indicator, text, citation chip and votes
 test('the daily limit is explained and the typed question is not lost', async () => {
   chat.streamMessage.mockRejectedValue(new ChatError('Llegaste al límite de 40 mensajes por día. Vuelve mañana.', { status: 429, code: 'limite_diario' }));
   renderPage();
-  await screen.findByText('¿En qué te ayudo?');
+  await screen.findByRole('heading', { name: /¿En qué te\s*ayudo\s*\?/ });
 
   fireEvent.change(screen.getByLabelText('Tu pregunta'), { target: { value: 'otra duda' } });
   fireEvent.keyDown(screen.getByLabelText('Tu pregunta'), { key: 'Enter' });
@@ -85,13 +85,13 @@ test('the daily limit is explained and the typed question is not lost', async ()
 test('a full conversation offers to start a new one', async () => {
   chat.streamMessage.mockRejectedValue(new ChatError('Esta conversación llegó a su límite.', { status: 409, code: 'conversacion_llena' }));
   renderPage();
-  await screen.findByText('¿En qué te ayudo?');
+  await screen.findByRole('heading', { name: /¿En qué te\s*ayudo\s*\?/ });
   fireEvent.change(screen.getByLabelText('Tu pregunta'), { target: { value: 'hola' } });
   fireEvent.keyDown(screen.getByLabelText('Tu pregunta'), { key: 'Enter' });
 
   const alert = await screen.findByRole('alert');
   fireEvent.click(within(alert).getByRole('button', { name: 'Nueva conversación' }));
-  expect(await screen.findByText('¿En qué te ayudo?')).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: /¿En qué te\s*ayudo\s*\?/ })).toBeInTheDocument();
 });
 
 test('an expired session sends the person back to log in', async () => {
