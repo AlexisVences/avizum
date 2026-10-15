@@ -1,0 +1,14 @@
+[
+ {"source_slug": "reglamento-transito", "article": "6", "chunk_fraction": "V", "fraction": "V",
+  "conduct_text": "El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones",
+  "clause_text": "Conductores de vehículos de uso particular. 10 a 20 veces 10 veces 15 veces 20 veces 3 puntos",
+  "applies_to": "vehículos de uso particular", "uma_min": "10", "uma_mid": "15", "uma_max": "20", "points_license": 3},
+ {"source_slug": "reglamento-transito", "article": "6", "chunk_fraction": "V", "fraction": "V",
+  "conduct_text": "El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones",
+  "clause_text": "Conductores de vehículos de transporte de carga. 40 a 60 veces 40 veces 50 veces 60 veces 3 puntos",
+  "applies_to": "vehículos de transporte de carga", "uma_min": "40", "uma_mid": "50", "uma_max": "60", "points_license": 3},
+ {"source_slug": "reglamento-transito", "article": "6", "chunk_fraction": "V", "fraction": "V",
+  "conduct_text": "El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones",
+  "clause_text": "Conductores de vehículos 60 a 80 veces 60 veces 70 veces 80 veces 3 puntos de transporte público de pasajeros.",
+  "applies_to": "vehículos de transporte público de pasajeros", "uma_min": "60", "uma_mid": "70", "uma_max": "80", "points_license": 3}
+]
