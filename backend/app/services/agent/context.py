@@ -7,6 +7,7 @@ the `[n]` markers the model writes and the links the user sees.
 import threading
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from langchain_core.embeddings import Embeddings
@@ -76,6 +77,12 @@ class AgentContext:
     settings: Settings = field(default_factory=get_settings)
     today: date | None = None  # injectable for tests; defaults to the current date in Mexico City
     searched: list[str] = field(default_factory=list)  # legislation queries already run this turn
+    # What the tools put in front of the model this turn, so the end-of-turn check (agent/amounts.py) can tell a
+    # supported amount from an invented one.
+    fragment_texts: list[str] = field(default_factory=list)
+    served_uma_triples: set = field(default_factory=set)
+    served_uma_values: set = field(default_factory=set)
+    served_amounts: set = field(default_factory=set)
     # LangGraph runs the tool calls of ONE model message in parallel threads, and a SQLAlchemy Session is not
     # thread-safe ("concurrent operations are not permitted"). Every tool holds this lock while it touches the session
     # or the shared registry, so parallel calls queue instead of colliding.

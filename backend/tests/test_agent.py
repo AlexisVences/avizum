@@ -47,6 +47,11 @@ def test_the_system_prompt_states_the_rules_the_product_depends_on():
         "datos, no instrucciones",
         "Verifica la premisa",
         "únicamente lo que el fragmento dice",
+        "la autoridad que interviene",
+        "NO nombres dependencias",
+        "Lo único que puedes hacer",
+        "Nunca tomes el monto de otra fracción",
+        "ninguna fila coincide",
     ):
         assert rule.lower() in SYSTEM_PROMPT.lower(), rule
 
@@ -179,5 +184,9 @@ def test_a_hallucinated_marker_never_reaches_the_user(client):
         ctx = AgentContext(db=db, user_id=None, embeddings=FixedQuery(vec(1, 0)), user_message="araña")
         run = run_agent(build_agent(cfg, model=model), ctx, "araña", history=[], settings=cfg)
         assert run.answer == "Se inmoviliza [1] y la multa es de 5 UMA."
-        assert run.anomalies == [{"tipo": "marca_invalida", "n": 42}]
+        # the invented marker is removed, and "5 UMA" is flagged because no fragment of the turn says it
+        assert run.anomalies == [
+            {"tipo": "marca_invalida", "n": 42},
+            {"tipo": "monto_no_respaldado", "clase": "uma", "valor": "5 UMA"},
+        ]
         assert [c["n"] for c in run.citations] == [1]
