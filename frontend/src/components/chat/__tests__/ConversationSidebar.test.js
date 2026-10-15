@@ -13,14 +13,14 @@ test('lists conversations, marks the open one and names untitled ones', () => {
   setup();
   expect(screen.getByRole('button', { name: 'Placas en banqueta' })).toHaveAttribute('aria-current', 'true');
   expect(screen.getByRole('button', { name: 'Conversación sin título' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Nueva conversación' })).toBeInTheDocument(); // the action, not a row
+  expect(screen.getByRole('button', { name: 'Nueva consulta' })).toBeInTheDocument(); // the action, not a row
 });
 
 test('selecting a conversation and starting a new one', () => {
   const h = setup();
   fireEvent.click(screen.getByRole('button', { name: 'Placas en banqueta' }));
   expect(h.onSelect).toHaveBeenCalledWith(1);
-  fireEvent.click(screen.getByRole('button', { name: 'Nueva conversación' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Nueva consulta' }));
   expect(h.onNew).toHaveBeenCalled();
 });
 

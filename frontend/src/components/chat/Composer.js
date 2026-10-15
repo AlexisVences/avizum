@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FaPaperPlane } from 'react-icons/fa';
+import { FaArrowUp } from 'react-icons/fa';
 
 // `canSend` is false while an answer is generating or loading: the button is disabled, but the person can keep
 // typing their next question. The server enforces the same rule (409), this only makes it visible.
-export default function Composer({ onSend, canSend, draft = '', maxChars = 2000 }) {
+// `variant="hero"` is the big pill of the empty state; `"dock"` is the same pill, smaller, pinned under a conversation.
+export default function Composer({ onSend, canSend, draft = '', maxChars = 2000, variant = 'dock' }) {
+  const hero = variant === 'hero';
   const [text, setText] = useState('');
   const areaRef = useRef(null);
 
@@ -13,6 +15,7 @@ export default function Composer({ onSend, canSend, draft = '', maxChars = 2000 
 
   const trimmed = text.trim();
   const tooLong = text.length > maxChars;
+  const showCounter = text.length >= maxChars * 0.8; // quiet until it matters
   const ready = canSend && trimmed.length > 0 && !tooLong;
 
   const submit = () => {
@@ -24,48 +27,56 @@ export default function Composer({ onSend, canSend, draft = '', maxChars = 2000 
 
   return (
     <form
-      className="tw-shrink-0 tw-border-t tw-border-rule tw-bg-paper tw-px-4 tw-py-3 sm:tw-px-6"
+      className={hero ? 'tw-w-full' : 'tw-shrink-0 tw-bg-paper tw-px-4 tw-pb-3 tw-pt-2 sm:tw-px-6'}
       onSubmit={(event) => {
         event.preventDefault();
         submit();
       }}
     >
-      <div className="tw-mx-auto tw-flex tw-max-w-3xl tw-items-end tw-gap-2">
-        <div className="tw-relative tw-flex-1">
-          <textarea
-            ref={areaRef}
-            value={text}
-            rows={2}
-            onChange={(event) => setText(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent?.isComposing) {
-                event.preventDefault();
-                submit();
-              }
-            }}
-            placeholder="Escribe tu pregunta de tránsito…"
-            aria-label="Tu pregunta"
-            className="tw-w-full tw-resize-none tw-rounded-xl tw-border tw-border-rule tw-bg-paper-raised tw-px-4 tw-py-3 tw-pb-6 tw-text-ink focus:tw-border-azul focus:tw-outline-none"
-          />
-          <span
-            className={`tw-pointer-events-none tw-absolute tw-bottom-1.5 tw-right-3 tw-text-xs ${tooLong ? 'tw-text-danger' : 'tw-text-ink-soft'}`}
-            aria-live="polite"
-          >
+      <div
+        className={`tw-mx-auto tw-flex tw-w-full tw-items-center tw-gap-3 tw-bg-ink/[.06] tw-transition-colors focus-within:tw-bg-ink/[.09] ${
+          hero ? 'tw-min-h-[76px] tw-max-w-[740px] tw-rounded-[38px] tw-py-3 tw-pl-8 tw-pr-3' : 'tw-min-h-[60px] tw-max-w-3xl tw-rounded-[30px] tw-py-2 tw-pl-6 tw-pr-2'
+        }`}
+      >
+        <textarea
+          ref={areaRef}
+          value={text}
+          rows={1}
+          onChange={(event) => setText(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent?.isComposing) {
+              event.preventDefault();
+              submit();
+            }
+          }}
+          placeholder={hero ? 'Escribe tu pregunta de tránsito' : 'Escribe tu pregunta de tránsito…'}
+          aria-label="Tu pregunta"
+          className={`tw-max-h-32 tw-min-w-0 tw-flex-1 tw-resize-none tw-border-0 tw-bg-transparent tw-p-0 tw-text-ink placeholder:tw-text-ink-soft focus:tw-outline-none ${
+            hero ? 'tw-text-base sm:tw-text-lg' : 'tw-text-base'
+          }`}
+          style={{ fieldSizing: 'content' }}
+        />
+        {showCounter && (
+          <span className={`tw-shrink-0 tw-text-xs ${tooLong ? 'tw-text-danger' : 'tw-text-ink-soft'}`} aria-live="polite">
             {text.length}/{maxChars}
           </span>
-        </div>
+        )}
         <button
           type="submit"
           disabled={!ready}
           aria-label="Enviar pregunta"
-          className="tw-flex tw-h-12 tw-w-12 tw-shrink-0 tw-items-center tw-justify-center tw-rounded-xl tw-bg-magenta tw-text-white tw-transition-opacity disabled:tw-cursor-not-allowed disabled:tw-opacity-40"
+          className={`tw-flex tw-shrink-0 tw-items-center tw-justify-center tw-rounded-full tw-border-0 tw-bg-magenta tw-text-white tw-transition-colors disabled:tw-cursor-not-allowed disabled:tw-bg-ink/[.1] disabled:tw-text-ink-soft ${
+            hero ? 'tw-h-[52px] tw-w-[52px]' : 'tw-h-11 tw-w-11'
+          }`}
         >
-          <FaPaperPlane aria-hidden="true" />
+          <FaArrowUp aria-hidden="true" size={hero ? 18 : 15} />
         </button>
       </div>
-      <p className="tw-mx-auto tw-mt-2 tw-max-w-3xl tw-text-center tw-text-xs tw-text-ink-soft">
-        Información orientativa; no sustituye asesoría legal.
-      </p>
+      {!hero && (
+        <p className="tw-mx-auto tw-mb-0 tw-mt-2 tw-max-w-3xl tw-text-center tw-text-xs tw-text-ink-soft">
+          Información orientativa; no sustituye asesoría legal.
+        </p>
+      )}
     </form>
   );
 }
