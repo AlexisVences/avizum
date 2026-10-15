@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.services.retrieval import get_article
+from app.services.sanction_eval import amount_in_answer, confuser_in_answer
 
 FRAGMENT_CHARS = 1800
 MAX_FRAGMENTS = 6
@@ -93,6 +94,12 @@ def deterministic(record: dict) -> dict:
     if expect.get("articles"):
         cited = {(c["source_slug"], str(c["article"])) for c in record.get("citations", []) if c.get("article")}
         checks["citation_hit"] = any((a["source"], str(a["article"])) in cited for a in expect["articles"])
+    if expect.get("uma_expected"):
+        checks["amount_ok"] = amount_in_answer(record.get("answer") or "", expect["uma_expected"], expect.get("pesos_expected", []))
+        checks["no_confuser_amount"] = not confuser_in_answer(
+            record.get("answer") or "", expect["uma_expected"], expect.get("confusers", [])
+        )
+    checks["no_unsupported_amount"] = not any(a.get("tipo") == "monto_no_respaldado" for a in record.get("anomalies", []))
     checks["no_step_limit"] = not record.get("limit_reached")
     checks["no_anomalies"] = not record.get("anomalies")
     return checks

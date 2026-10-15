@@ -18,6 +18,7 @@ from app.services.sources import load_manifest, local_path, sha256_of
 from scripts.fetch_sources import MANIFEST, SOURCES_DIR
 
 INGESTIBLE_KINDS = {"ley", "reglamento", "codigo", "protocolo"}  # acuerdos feed the agents registry, not the RAG
+SANCTION_SLUGS = {"reglamento-transito"}  # sources with structured sanctions (plan 2026-10-15-sanciones-estructuradas)
 
 
 def main() -> None:
@@ -47,6 +48,13 @@ def main() -> None:
             written = ingest_articles(db, source, articles, embeddings, count_tokens, replace=args.force)
             db.commit()
             print(f"{spec.slug}: {len(articles)} artículos -> {written} chunks" if written else f"{spec.slug}: ya indexado (usa --force)")
+            if spec.slug in SANCTION_SLUGS:
+                # New or reformed text invalidates structured sanctions by hash; restore what a person verified and
+                # queue the rest for review. Until reviewed, the agent reads the prose for those articles.
+                from scripts.sanctions import print_refresh, refresh
+
+                print_refresh(refresh(db, spec.slug))
+                db.commit()
 
 
 if __name__ == "__main__":
