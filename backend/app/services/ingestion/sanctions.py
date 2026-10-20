@@ -39,6 +39,9 @@ _INCISO_MARK = re.compile(r"(?:^|[:;.,]\s+)(?:y\s+)?([a-z](?:\s+Bis)?)[.)]\s+(?=
 # is not "fracción", "y", "al"...: a note such as "G.O. CDMX 10/10/25 II. Abstenerse" still starts fraction II.
 _ROMAN_MARK = re.compile(r"(?:^|(?<=\s))([IVXL]+)\.\s+(?=[A-ZÁÉÍÓÚÑ¿\"“])")
 _ROMAN_GUARD = re.compile(r"(?:fracci[oó]n(?:es)?|\by\b|\bo\b|\bal\b|\ba\b|\bde\b|\bla\b|\bel\b|,)\s*$", re.I)
+_PROHIBITION = re.compile(r"\b(?:queda\s+prohibido|se\s+proh[ií]be|est[aá]\s+prohibido|prohibido\s+(?:remolcar|empujar|circular))\b", re.I)
+_PREVIOUS_PARAGRAPH = re.compile(r"p[aá]rrafo\s+anterior|lapso\s+a\s+que\s+se\s+refiere", re.I)
+_EXTRA_CONDUCT = re.compile(r"(?:este|presente)\s+art[ií]culo\s*,?\s*(?:o|y)\s+(?P<extra>\S.{24,})$", re.I)
 _HEADER = re.compile(r"^Art[ií]culo\s+\d+(?:\s*(?:Bis|Ter|Qu[aá]ter))?\s*\.?\s*-\s*", re.I)
 _TRAILING_MARK = re.compile(r"\s*[IVXL]+\.\s*$")
 _EXCEPTION = re.compile(r"\b(?:excepto|exceptuad[oa]s?|salvo|con\s+excepci[oó]n)\b", re.I)
@@ -135,8 +138,11 @@ class Sanction:
     other_consequences: str | None
     applies_to: str | None
     lead_text: str | None = None  # the article's own wording before its list ("Se prohíbe estacionar cualquier vehículo:")
-    points_mode: str | None = None  # 'alternativos_por_via' (licencia o matrícula) | 'acumulativos' (ambos)
+    points_mode: str | None = None  # 'alternativos_por_captacion' (licencia o matrícula) | 'acumulativos' (ambos)
     article_wide: bool = False  # the clause says "el presente artículo": it covers fractions that have none of their own
+    # Text the clause depends on: the exemptions of "excepto cuando: I… II…", or the paragraph a clause points to
+    # ("en el lapso a que se refiere el párrafo anterior"). Verbatim, so the agent can answer without guessing.
+    context_text: str | None = None
 
 
 @dataclass(frozen=True)
@@ -150,6 +156,9 @@ class Issue:
 class Extraction:
     sanctions: list[Sanction] = field(default_factory=list)
     issues: list[Issue] = field(default_factory=list)
+    # The article-wide clause, kept even when its own fraction is only the clause and so yields no row: the sibling
+    # fractions inherit from it (see sanction_store.sync_pending).
+    wide_template: Sanction | None = None
 
 
 def chunk_hash(text: str) -> str:
@@ -172,7 +181,7 @@ def _roman(label: str) -> int:
 
 def _lead(raw: str) -> str:
     """The article's own wording that introduces its list, without "Artículo N.-" and without the trailing marker."""
-    return _HEADER.sub("", _TRAILING_MARK.sub("", raw), count=1).strip()[:400]
+    return _HEADER.sub("", _TRAILING_MARK.sub("", raw), count=1).strip()[:700]
 
 
 def _fractions(flat: str, fraction: str | None) -> tuple[str, list[tuple[str | None, str]]]:
@@ -269,9 +278,9 @@ def _points(clause: str) -> tuple[int | None, int | None, str | None, str | None
                 issues.append(Issue("puntos_no_reconocidos", match.group(0), clause))
     mode = None
     if license_points is not None and (plate_points is not None or note):
-        mode = "alternativos_por_via" if _ALTERNATIVE_POINTS.search(clause) else "acumulativos"
+        mode = "alternativos_por_captacion" if _ALTERNATIVE_POINTS.search(clause) else "acumulativos"
     elif _ALTERNATIVE_POINTS.search(clause) and (license_points is not None or plate_points is not None):
-        mode = "alternativos_por_via"
+        mode = "alternativos_por_captacion"
     return license_points, plate_points, note, mode, issues
 
 
@@ -347,8 +356,20 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
 
     lead, segments = _fractions(flat, fraction)
     exception_mode = bool(lead) and bool(_EXCEPTION.search(lead[-220:]))
+    exceptions_text: str | None = None
+    prohibitions: list[tuple[str | None, str]] = []
     if exception_mode:
         # "Se prohíbe X, excepto cuando: I... II...": the fractions are the exemptions, never the conduct.
+        parts = []
+        for marker, segment in segments:
+            spans_here = _clauses(segment)
+            exemption = (segment[: spans_here[0][0]] if spans_here else segment).strip()
+            if exemption and _PROHIBITION.search(exemption):
+                # "IV. Tratándose de VEMEPE, queda prohibido remolcar…": a prohibition, not an exemption of the above.
+                prohibitions.append((marker, exemption))
+            elif exemption:
+                parts.append(f"{marker}. {exemption}" if marker else exemption)
+        exceptions_text = " ".join(parts)[:1500] or None
         segments = [(None, _HEADER.sub("", flat, count=1))]
 
     keyed: list[tuple[tuple[int, int, int, int], Sanction]] = []
@@ -392,12 +413,19 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
             head = _head(clause)
             wide = bool(_ARTICLE_WIDE.search(head)) or (not body.strip() and kind == "whole")
 
+            context = exceptions_text
+            if context is None and _PREVIOUS_PARAGRAPH.search(head):
+                before = segment[: start].strip()
+                previous = re.split(r"(?<=[.;])\s+", before)
+                context = " ".join(previous[-1:]).strip()[:600] or None  # the sentence the clause points back to
+
             def row(inciso: str | None, conduct: str, applies_to: str | None = None, wide_row: bool = False) -> Sanction:
                 return Sanction(
                     ordinal=0, fraction=None if exception_mode else seg_fraction, inciso=inciso,
                     conduct_text=_clean(conduct)[:CONDUCT_CHARS], clause_text=clause, uma_min=low, uma_mid=mid, uma_max=high,
                     points_license=license_points, points_plate=plate_points, other_consequences=other,
                     applies_to=applies_to, lead_text=lead or None, points_mode=mode, article_wide=wide_row,
+                    context_text=context,
                 )
 
             clause_index = len(keyed)
@@ -421,10 +449,25 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
                     conduct = head.strip(" ,;")  # the clause names its own conduct ("Aquella persona que retire inmovilizadores…")
                 else:
                     conduct = body.strip() or lead
+                if not body.strip() and not exception_mode and _GENERIC.search(head):
+                    # The fraction IS the clause: it has no conduct of its own. No row (the article header would
+                    # look like a conduct and say nothing); its sibling fractions inherit the clause instead.
+                    wide_template = row(None, lead or head.strip(), wide_row=True)
+                    result.issues.append(Issue(
+                        "fraccion_solo_clausula",
+                        f"fracción {seg_fraction}: el texto es solo la cláusula; aplica a las demás fracciones del artículo", clause,
+                    ))
+                    continue
                 sanction = row(None, conduct, wide_row=wide)
                 keyed.append(((seg_index, 0, 0, clause_index), sanction))
                 if wide:
                     wide_template = sanction
+                extra = _EXTRA_CONDUCT.search(head)
+                if extra:
+                    # "...lo establecido en este artículo o emitan humo ostensiblemente contaminante...": the same
+                    # clause also punishes a second conduct that a search must be able to find.
+                    second = re.sub(r"^(?:o|y)\s+", "", extra.group("extra")).strip(" ,;")
+                    keyed.append(((seg_index, 0, 1, clause_index), row(None, second)))
 
         if covered and general_whole:
             result.issues.append(Issue("alcance_mixto", f"fracción {seg_fraction}: mezcla cláusulas de incisos con una general"))
@@ -433,6 +476,12 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
                 "cobertura_incompleta", f"fracción {seg_fraction}: incisos sin cláusula: {sorted(set(items) - set(covered))}"
             ))
 
+    if prohibitions and keyed and len(seen_clauses) == 1:
+        base = keyed[0][1]  # the article's single clause also punishes the extra prohibition
+        for marker, text in prohibitions:
+            keyed.append(((len(segments), 0, 0, 20_000), Sanction(**{
+                **base.__dict__, "fraction": marker, "conduct_text": _clean(text)[:CONDUCT_CHARS], "context_text": None,
+            })))
     if without_clause:
         if wide_template is not None:
             # "el presente artículo": fractions with no clause of their own are covered by the article-wide one.
@@ -444,6 +493,7 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
         elif keyed:
             where = ", ".join(str(f) for _, f, _ in without_clause)
             result.issues.append(Issue("fraccion_sin_sancion", f"fracciones sin sanción en el texto: {where}"))
+    result.wide_template = wide_template
 
     # Rows are numbered in reading order: fraction, general before qualified, inciso position, clause order.
     keyed.sort(key=lambda pair: pair[0])
@@ -462,4 +512,5 @@ def inherit_article_wide(template: Sanction, fraction: str | None, article_text:
     return Sanction(**{
         **template.__dict__, "ordinal": 0, "fraction": fraction, "inciso": None, "applies_to": None,
         "conduct_text": fraction_body(article_text, fraction)[:CONDUCT_CHARS], "article_wide": False,
+        "context_text": None,
     })

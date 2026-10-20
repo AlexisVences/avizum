@@ -167,15 +167,14 @@ const Home = () => {
                                 ¿Quiénes somos?
                             </h2>
                             <p className="tw-text-ink-soft tw-leading-relaxed tw-mb-4">
-                                Desarrollado por estudiantes de la Escuela Superior de Cómputo del Instituto Politécnico
-                                Nacional, Avizum es una herramienta creada para brindar asesoría legal en materia de
-                                tránsito en la Ciudad de México. Somos un equipo comprometido con facilitar el acceso a
-                                la información pública para todos y la justicia por igual; esta página utiliza
+                                Avizum es un proyecto independiente, diseñado y desarrollado por Alexis Vences, para
+                                brindar asesoría legal en materia de tránsito en la Ciudad de México. Está pensado para
+                                facilitar el acceso a la información pública para todos y la justicia por igual; esta página utiliza
                                 inteligencia artificial para facilitar la comprensión de los reglamentos, artículos,
                                 sanciones, procedimientos y derechos ciudadanos relacionados con el tránsito vehicular.
                             </p>
                             <p className="tw-text-ink-soft tw-leading-relaxed tw-m-0">
-                                Nuestra misión es apoyar a los ciudadanos en la defensa de sus derechos viales, poniendo
+                                La misión del proyecto es apoyar a los ciudadanos en la defensa de sus derechos viales, poniendo
                                 a su alcance una plataforma fácil de usar, confiable y sustentada únicamente en
                                 documentos legales oficiales procesados con inteligencia artificial.
                             </p>

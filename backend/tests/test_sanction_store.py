@@ -77,7 +77,7 @@ def test_review_sheet_orders_by_risk_and_apply_only_verifies_what_was_marked(cli
         assert "⟦" in sheet and "cinturón" in sheet
 
         seat_belt = next(r for r in db.scalars(select(LegalSanction)) if r.inciso == "b")
-        line = f"- [ ] `{store.row_id(SLUG, '37', 'II', seat_belt.ordinal, seat_belt.chunk_hash)}`"
+        line = f"- [ ] `{store.row_id(SLUG, '37', 'II', seat_belt.ordinal, seat_belt.chunk_hash, store.row_digest(seat_belt))}`"
         assert line in sheet
         marked = sheet.replace(line, line.replace("[ ]", "[x]"))
 
@@ -95,7 +95,7 @@ def test_a_rejected_mark_wins_over_approving_a_whole_tanda(client):
         store.sync_pending(db, SLUG)
         rows = list(db.scalars(select(LegalSanction).order_by(LegalSanction.ordinal)))
         sheet = "- [x] **APROBAR TODA LA TANDA 4** (x)\n" + "\n".join(
-            f"- [{'!' if r.fraction == 'IV' else ' '}] `{store.row_id(SLUG, '43', None, r.ordinal, r.chunk_hash)}`" for r in rows
+            f"- [{'!' if r.fraction == 'IV' else ' '}] `{store.row_id(SLUG, '43', None, r.ordinal, r.chunk_hash, store.row_digest(r))}`" for r in rows
         )
         report = store.apply_review(db, SLUG, sheet, "Revisora")
         assert (report.approved, report.rejected) == (6, 1)
@@ -110,7 +110,7 @@ def test_approving_a_tanda_does_not_reach_the_risky_ones(client):
         store.sync_pending(db, SLUG)
         rows = list(db.scalars(select(LegalSanction)))
         sheet = "- [x] **APROBAR TODA LA TANDA 4** (x)\n" + "\n".join(
-            f"- [ ] `{store.row_id(SLUG, '37', 'II', r.ordinal, r.chunk_hash)}`" for r in rows
+            f"- [ ] `{store.row_id(SLUG, '37', 'II', r.ordinal, r.chunk_hash, store.row_digest(r))}`" for r in rows
         )
         report = store.apply_review(db, SLUG, sheet, "Revisora")
         assert report.approved == 0 and report.unmarked == 5
@@ -241,3 +241,55 @@ def test_a_repaired_conduct_text_does_not_send_a_verified_row_back_to_review(cli
         report = store.sync_pending(db, SLUG)
         db.refresh(row)
         assert report.replaced == 0 and row.status is SanctionStatus.VERIFIED and row.conduct_text == complete
+
+
+def test_an_approval_only_lands_on_the_content_the_sheet_showed(client):
+    """Ids are positional: after a re-extraction the same id can point at other content. The id carries a digest."""
+    _, factory = client
+    with factory() as db:
+        _seed(db, "37_II")
+        store.sync_pending(db, SLUG)
+        sheet, _ = store.render_review(db, SLUG)
+        marked = sheet.replace("- [ ] `", "- [x] `")
+        belt = db.scalars(select(LegalSanction).where(LegalSanction.inciso == "b")).one()
+        belt.uma_max = Decimal("11")  # the row changed after the sheet was generated
+        report = store.apply_review(db, SLUG, marked, "Revisora")
+        assert report.approved == 4 and len(report.changed_since_sheet) == 1
+        db.refresh(belt)
+        assert belt.status is SanctionStatus.PENDING
+
+
+def test_a_whole_tanda_approval_is_refused_when_its_rows_are_no_longer_the_ones_shown(client):
+    _, factory = client
+    with factory() as db:
+        _seed(db, "43")
+        store.sync_pending(db, SLUG)
+        sheet, _ = store.render_review(db, SLUG)
+        assert "<!--fp:" in sheet
+        marked = sheet.replace("- [ ] **APROBAR TODA LA TANDA 4**", "- [x] **APROBAR TODA LA TANDA 4**")
+        row = db.scalars(select(LegalSanction).where(LegalSanction.fraction == "IV")).one()
+        row.uma_max = Decimal("55")
+        report = store.apply_review(db, SLUG, marked, "Revisora")
+        assert report.master_refused == [4] and report.approved == 0
+
+        row.uma_max = Decimal("50")  # back to what the sheet showed: now it is honoured
+        report = store.apply_review(db, SLUG, marked, "Revisora")
+        assert report.master_refused == [] and report.approved == 7
+
+
+def test_a_fraction_that_is_only_the_clause_gets_no_row_of_its_own_and_its_siblings_inherit(client):
+    _, factory = client
+    articles = json.loads((Path(__file__).parent / "fixtures" / "sanctions" / "articles.json").read_text(encoding="utf-8"))
+    with factory() as db:
+        source = OfficialSource(slug=SLUG, title="Reglamento", kind="reglamento", url="https://x.mx/r.pdf", sha256="e" * 64)
+        db.add(source)
+        db.flush()
+        for chunk in articles["8"]:
+            db.add(LegalChunk(source_id=source.id, article="8", fraction=chunk["fraction"], heading_path="x", text=chunk["text"],
+                              page_start=1, page_end=1, token_count=1, embedding=[0.0] * EMBEDDING_DIMENSIONS))
+        db.flush()
+        store.sync_pending(db, SLUG)
+        rows = list(db.scalars(select(LegalSanction).where(LegalSanction.article == "8")))
+        assert "VII" not in {r.fraction for r in rows}  # the clause-only fraction yields no row
+        assert "VI" in {r.fraction for r in rows}  # but fraction VI, which had no clause, inherits it
+        assert all(r.conduct_text != "Los conductores de todo tipo de vehículos deben:" for r in rows)

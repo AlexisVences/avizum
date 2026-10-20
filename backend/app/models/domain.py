@@ -228,7 +228,9 @@ class LegalSanction(Timestamped, Base):
     other_consequences: Mapped[str | None] = mapped_column(Text, nullable=True)  # depósito, arresto... as written
     # Context the extractor derives from the same text; it does not change what a person verified (amount, conduct):
     lead_text: Mapped[str | None] = mapped_column(Text, nullable=True)  # the article's wording that introduces its list
-    points_mode: Mapped[str | None] = mapped_column(String(30), nullable=True)  # alternativos_por_via | acumulativos
+    points_mode: Mapped[str | None] = mapped_column(String(30), nullable=True)  # alternativos_por_captacion | acumulativos
+    # Verbatim text the clause depends on: the exemptions of "excepto cuando…", or the paragraph it points back to.
+    context_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     chunk_hash: Mapped[str] = mapped_column(String(64))  # sha256 of the chunk text this row was extracted from
     extractor_version: Mapped[str] = mapped_column(String(30))
     status: Mapped[SanctionStatus] = mapped_column(

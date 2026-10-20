@@ -49,10 +49,10 @@ class CalcularMultaInput(BaseModel):
         gt=0, description="Múltiplo mínimo de UMA que dice el artículo (en 'multa de 10, 15 o 20 veces la UMA' es 10).",
     )
     veces_uma_media: float | None = Field(
-        default=None, gt=0, description="Múltiplo medio (en el ejemplo, 15). Omítelo si la multa es fija.",
+        default=None, gt=0, description="Múltiplo medio (en el ejemplo, 15). Omítelo si la multa es fija o si el artículo da un rango 'de X a Y'.",
     )
     veces_uma_maxima: float | None = Field(
-        default=None, gt=0, description="Múltiplo máximo (en el ejemplo, 20). Omítelo si la multa es fija.",
+        default=None, gt=0, description="Múltiplo máximo (en el ejemplo, 20), o el extremo alto de un rango 'de X a Y'. Omítelo si la multa es fija.",
     )
 
 

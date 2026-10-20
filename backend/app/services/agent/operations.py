@@ -178,6 +178,12 @@ def _sibling_fragments(ctx: AgentContext, hits: list[SearchHit]) -> list[dict]:
     return extras
 
 
+def _whole_words(text: str, chars: int) -> str:
+    """Whole words only: a cut in the middle of a word ("para in") reads as if the text said something else."""
+    flat = " ".join(text.split())
+    return flat if len(flat) <= chars else flat[:chars].rsplit(" ", 1)[0].rstrip(" ,;:") + " …"
+
+
 def _levels(row) -> dict[str, Decimal]:
     values = [v for v in (row.uma_min, row.uma_mid, row.uma_max) if v is not None]
     if len(values) == 1:
@@ -211,18 +217,21 @@ def _sanction_view(ctx: AgentContext, row, fragment_fraction: str | None) -> dic
             half = {name: (amount / 2).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) for name, amount in pesos.items()}
             view["pronto_pago_50"] = {name: str(amount) for name, amount in half.items()}
             ctx.served_amounts.update(half.values())
-    if row.lead_text:
-        view["encabezado"] = _clip(row.lead_text, 140)  # the article's own wording: it tells prohibition from duty
     if row.points_license is not None:
         view["puntos_licencia"] = row.points_license
     if row.points_plate is not None:
         view["puntos_matricula"] = row.points_plate
-    if row.points_mode == "alternativos_por_via":
-        view["puntos_nota"] = "los puntos van a la licencia si la boleta la levanta un agente, o a la matrícula si la capta un sistema tecnológico (no se suman)"
+    if row.points_mode == "alternativos_por_captacion":
+        view["puntos_nota"] = (
+            "según cómo se capte la infracción: con un agente, los puntos van a la licencia; con un sistema tecnológico "
+            "(fotomulta), a la matrícula. No se suman."
+        )
     elif row.points_mode == "acumulativos":
         view["puntos_nota"] = "se aplican ambos: puntos a la licencia y a la matrícula"
     if row.other_consequences:
         view["otras_consecuencias"] = _clip(row.other_consequences, 220)
+    if row.context_text:
+        view["depende_de"] = _whole_words(row.context_text, 700)  # exemptions / the paragraph the clause points to
     return view
 
 
@@ -261,6 +270,14 @@ def _attach_sanctions(ctx: AgentContext, result: dict) -> None:
             result["nota_sanciones_truncadas"] = "Hay más sanciones: lee el artículo completo con obtener_articulo."
             break
         fragment["sanciones"] = [_sanction_view(ctx, row, fragment.get("fraccion")) for row in rows[:room]]
+        leads = {row.lead_text for row in rows[:room]}
+        if len(leads) == 1 and None not in leads:
+            # The article's own wording tells a prohibition from a duty; said once per fragment, complete.
+            fragment["encabezado"] = _whole_words(next(iter(leads)), 500)
+        else:
+            for view, row in zip(fragment["sanciones"], rows[:room]):
+                if row.lead_text:
+                    view["encabezado"] = _whole_words(row.lead_text, 500)
         attached += len(fragment["sanciones"])
     if not attached:
         return
@@ -370,24 +387,29 @@ def _pesos(veces: Decimal, uma: Decimal) -> Decimal:
 
 
 def calculate_fine(ctx: AgentContext, veces_min: float, veces_med: float | None = None, veces_max: float | None = None) -> dict:
-    """Pesos from "N veces la UMA". The model reads the multiples from the article; the arithmetic is done here."""
+    """Pesos from "N veces la UMA". The model reads the multiples from the article; the arithmetic is done here.
+
+    Three shapes: one fixed amount (only `veces_min`), three levels minimum/medium/maximum (Reglamento de Tránsito),
+    or a RANGE "de X a Y" (`veces_min` and `veces_max`, no medium): a range has two ends, and a made-up middle is not
+    in the law."""
     values = [veces_min, veces_med, veces_max]
     given = [Decimal(str(v)) for v in values if v is not None]
     fixed = veces_med is None and veces_max is None
+    ranged = veces_med is None and veces_max is not None
     ordered = all(a <= b for a, b in zip(given, given[1:]))
     if (
-        veces_min is None or not (fixed or (veces_med is not None and veces_max is not None))
+        veces_min is None or not (fixed or ranged or (veces_med is not None and veces_max is not None))
         or any(v <= 0 or v > MAX_VECES_UMA for v in given) or not ordered
     ):
         return {
             "estado": "valores_invalidos",
-            "mensaje": "Usa los múltiplos de UMA que dice el artículo, de menor a mayor (p. ej. 10, 15 y 20), o uno solo "
-            "si la multa es fija.",
+            "mensaje": "Usa los múltiplos de UMA que dice el artículo, de menor a mayor: tres (p. ej. 10, 15 y 20), solo el "
+            "mínimo y el máximo si el artículo da un rango 'de X a Y', o uno solo si la multa es fija.",
         }
 
     settings, today = ctx.settings, ctx.current_date()
     uma = settings.uma_value
-    labels = ["unica"] if fixed else ["minima", "media", "maxima"]
+    labels = ["unica"] if fixed else ["minima", "maxima"] if ranged else ["minima", "media", "maxima"]
     amounts = {label: _pesos(Decimal(str(v)), uma) for label, v in zip(labels, given)}
     result: dict = {
         "estado": "ok",
@@ -400,13 +422,19 @@ def calculate_fine(ctx: AgentContext, veces_min: float, veces_med: float | None 
             label: {"veces_uma": f"{Decimal(str(v)).normalize():f}", "pesos": str(amounts[label])}
             for label, v in zip(labels, given)
         },
-        "con_descuento_50": {
-            label: {"pesos": str((amount / 2).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))} for label, amount in amounts.items()
-        },
-        "regla_sancion": SANCTION_RULE,
-        "descuento": DISCOUNT_RULE,
-        "nota_fotocivicas": PHOTO_FINE_NOTE,
     }
+    if not ranged:
+        result["con_descuento_50"] = {
+            label: {"pesos": str((amount / 2).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))} for label, amount in amounts.items()
+        }
+    if ranged:
+        result["nota_rango"] = (
+            "El artículo da un RANGO: la autoridad fija el monto dentro de él. Da los dos extremos y no inventes un monto "
+            "medio. Las reglas de sanción mínima/media/máxima y el descuento del 50% son del Reglamento de Tránsito y no "
+            "se aplican a este rango salvo que el artículo lo diga."
+        )
+    else:
+        result.update({"regla_sancion": SANCTION_RULE, "descuento": DISCOUNT_RULE, "nota_fotocivicas": PHOTO_FINE_NOTE})
     if not (settings.uma_valid_from <= today <= settings.uma_valid_until):
         result["advertencia_uma"] = (
             f"El valor de la UMA usado ({uma}) rige del {settings.uma_valid_from} al {settings.uma_valid_until}; "
@@ -416,9 +444,10 @@ def calculate_fine(ctx: AgentContext, veces_min: float, veces_med: float | None 
     ctx.served_uma_values.update(Decimal(str(v)) for v in given)
     ctx.served_uma_triples.add(tuple(Decimal(str(v)).normalize() for v in given))
     ctx.served_amounts.update(amounts.values())
-    ctx.served_amounts.update(
-        (amount / 2).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) for amount in amounts.values()
-    )
+    if not ranged:
+        ctx.served_amounts.update(
+            (amount / 2).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) for amount in amounts.values()
+        )
     # Make the two rule articles citable so the answer can link them like any other fragment.
     rule_fragments = _rule_citations(ctx)
     if rule_fragments:

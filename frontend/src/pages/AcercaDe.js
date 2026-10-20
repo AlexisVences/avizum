@@ -16,10 +16,13 @@ const AcercaDe = () => {
                 en la Ciudad de México. Nació como una iniciativa para acercar el conocimiento legal a la ciudadanía mediante el uso de inteligencia artificial
                 y tecnologías accesibles, al alcance de todos.
                 </p>
+                <p>
+                Es un proyecto independiente, diseñado y desarrollado por <strong>Alexis Vences</strong>.
+                </p>
             </section>
 
             <section className="mb-4">
-                <h4 className="fw-semibold">Nuestra misión</h4>
+                <h4 className="fw-semibold">Misión</h4>
                 <p>
                 Democratizar el acceso a la información legal en temas de movilidad urbana y tránsito, ayudando a los ciudadanos a conocer sus derechos y obligaciones
                 mediante herramientas tecnológicas de fácil uso basadas en documentos oficiales.
@@ -27,29 +30,29 @@ const AcercaDe = () => {
             </section>
 
             <section className="mb-4">
-                <h4 className="fw-semibold">Nuestra visión</h4>
+                <h4 className="fw-semibold">Visión</h4>
                 <p>
                 Ser una referencia en México como asistente legal digital en temas de tránsito, fomentando una ciudadanía informada y empoderada,
-                y colaborando activamente en la transformación digital de los servicios legales en beneficio social.
+                y colaborando en la transformación digital de los servicios legales en beneficio social.
                 </p>
             </section>
 
             <section className="mb-4">
-                <h4 className="fw-semibold">Nuestros valores</h4>
+                <h4 className="fw-semibold">Valores</h4>
                 <ul>
-                <li><strong>Transparencia:</strong> Basamos toda la información en documentos legales públicos.</li>
-                <li><strong>Accesibilidad:</strong> Creamos una interfaz simple para cualquier ciudadano.</li>
-                <li><strong>Compromiso social:</strong> Nuestra meta es brindar ayuda real a quien lo necesite.</li>
-                <li><strong>Innovación:</strong> Utilizamos inteligencia artificial de forma ética y responsable.</li>
+                <li><strong>Transparencia:</strong> Toda la información se basa en documentos legales públicos.</li>
+                <li><strong>Accesibilidad:</strong> La interfaz es simple, pensada para cualquier ciudadano.</li>
+                <li><strong>Compromiso social:</strong> La meta es brindar ayuda real a quien lo necesite.</li>
+                <li><strong>Innovación:</strong> La inteligencia artificial se utiliza de forma ética y responsable.</li>
                 </ul>
             </section>
 
             <section className="mb-4">
                 <h4 className="fw-semibold">Compromiso ciudadano y tecnológico</h4>
                 <p>
-                En Avizum creemos que la tecnología puede ser una aliada para la justicia. Por eso trabajamos con responsabilidad en la integración
+                En Avizum se cree que la tecnología puede ser una aliada para la justicia. Por eso se trabaja con responsabilidad en la integración
                 de inteligencia artificial que respeta los principios legales, éticos y sociales.
-                Aspiramos a que cada usuario tenga en sus manos una herramienta que le permita actuar con conocimiento, seguridad y confianza.
+                El objetivo es que cada usuario tenga en sus manos una herramienta que le permita actuar con conocimiento, seguridad y confianza.
                 </p>
             </section>
             </div>
