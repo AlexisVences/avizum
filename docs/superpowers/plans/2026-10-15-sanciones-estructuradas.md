@@ -56,6 +56,23 @@ La revisión (230 `[x]`, 17 `[!]`, ninguna fila aprobada en bloque en la tanda 4
 
 **Resultado:** las 230 aprobaciones siguen vigentes; 19 filas pendientes (3 en la tanda 3: Art. 27; 16 en la 4: versiones corregidas de lo rechazado y fracciones hermanas nuevas).
 
+### 3c. Segunda ronda de observaciones (2026-10-16, `det-2` ampliado)
+- **Fracción que es solo la cláusula (Art. 8 VII):** ya no se rellena con el encabezado (parecía llena y no decía nada). No genera fila; se reporta `fraccion_solo_clausula` y las fracciones hermanas sin cláusula propia heredan la sanción.
+- **Puntos:** el modo es `alternativos_por_captacion` ("según cómo se capte: con un agente, a la licencia; con un sistema tecnológico/fotomulta, a la matrícula; no se suman"), no "según la vía". Se aplica a la hoja y al texto que recibe el agente.
+- **Un id aprobado no puede caer en otro contenido:** cada id lleva ahora un digest del contenido de la fila (`...:hash_fragmento:hash_fila`). `apply` solo aprueba lo que la hoja mostró y reporta `changed_since_sheet`; la casilla maestra de la tanda 4 lleva la huella de las filas que cubría y se rechaza si ya no son esas.
+- **Encabezados completos:** el recorte a media palabra era solo para leer la hoja; al agente le llega el encabezado completo (hasta 500 caracteres, cortado en palabra) una vez por fragmento. La hoja corta ahora en palabra, no a media.
+- **Excepciones y referencias (`context_text`, migración `20261016_10`):** los Arts. 12 y 36 llevan las fracciones de "excepto cuando / salvo que" (el agente las recibe como `depende_de`); el Art. 66 lleva el párrafo al que remite ("tres años"). Una prohibición mezclada entre las exenciones (Art. 12 IV, VEMEPE) es fila propia.
+- **Segunda conducta en la misma cláusula (Art. 47, "o emitan humo ostensiblemente contaminante"):** segunda fila, para que una búsqueda por "humo" la encuentre.
+
+### 5b. Primera evaluación de sanciones con el modelo real (2026-10-16, mini, 25 casos × 3, USD 0.31)
+Con las 230 filas verificadas sirviéndose al agente (`data/eval/runs/20261015-174523-gpt-5-mini*.jsonl`):
+- **Monto exacto: 69 de 70.** **Monto de otra fila: 0 de 70** (el error del cinturón no reaparece). Elección de herramienta y tope de pasos: 73/73. e26 (Art. 66) saltado: su fila sigue pendiente de revisión.
+- **Falló e13 #2** (carga de combustible con pasajeros): el modelo no eligió la fila del Art. 38 IV a) y dijo que no había sanción. Tras el resto de ajustes, **3 de 3 correctas**.
+- **Falso positivo del verificador, corregido:** "500 a 1,000 veces la UMA" se leía como "000"; y las cifras que la ley escribe en palabras ("seiscientos ochenta") se marcaban como no respaldadas al contestar el modelo con dígitos.
+- **Hallazgo real (e19, transporte escolar sin permiso):** el modelo trató el rango "350 a 450 veces la UMA" de la Ley de Movilidad como tres niveles (350–400–450), inventó la media y aplicó los montos de otra clase de transporte. `calcular_multa` ahora acepta un **rango** (solo mínimo y máximo, sin media inventada, sin descuento ni regla de mínima/media/máxima del Reglamento) y el prompt lo dice. Re-medido (3 corridas): ya da los dos extremos y distingue transporte individual de colectivo/carga; queda una corrida que omite la segunda categoría.
+- El modelo escribía "[nota en resultados]" y "según la tabla de sanciones" a la persona: el prompt ahora prohíbe mencionar campos, filas o tablas internas.
+- Los rangos de la Ley de Movilidad **no están** en la tabla estructurada (41 rangos sin leer sin adivinar); siguen dependiendo de la prosa.
+
 ### 4. Servir al agente — HECHO
 - [x] `app/services/sanctions_lookup.py`: solo filas `verified`, con `chunk_hash` igual al hash del texto actual (comparado en SQL) y fuente `is_current`.
 - [x] `search_legislation` y `fetch_article` adjuntan `sanciones` por fragmento en la misma llamada (sin ronda extra): conducta, inciso, `aplica_a`, `veces_uma`, `pesos`, `pronto_pago_50` (no en Art. 30 XXI ni 33 II), puntos, vigencia de la UMA y los Arts. 62 y 64 citables.
@@ -92,3 +109,7 @@ La revisión (230 `[x]`, 17 `[!]`, ninguna fila aprobada en bloque en la tanda 4
 1. Ninguna ruta sirve una fila no `verified`, con hash distinto o de una fuente no vigente (pruebas en las Tasks 2 y 4).
 2. El monto de una fila sale siempre de `clause_text` y nunca de la salida de un modelo.
 3. La Task 5 compara contra la línea base, no contra un criterio nuevo.
+
+## Backlog posterior (2026-10-16)
+
+Mejoras diferidas a propósito: ver `docs/evaluation/report.md` §7.

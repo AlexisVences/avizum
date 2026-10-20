@@ -230,7 +230,8 @@ def test_exceptions_are_not_conducts_art_12_36_and_47():
     """"Se prohíbe remolcar, excepto cuando: I... II..." — the fractions are exemptions: one row, the header's conduct."""
     for number, snippet in (("12", "remolcar o empujar"), ("36", "realizar el pago correspondiente"), ("47", "acatar los programas ambientales")):
         result = _real_article(number)
-        assert len(result.sanctions) == 1, number
+        # 47 also punishes emitting smoke and 12 also prohibits towing with VEMEPE: each is its own row
+        assert len(result.sanctions) == (1 if number == "36" else 2), number
         row = result.sanctions[0]
         assert snippet in row.conduct_text and row.fraction is None, number
     assert "Se trate de vehículos de emergencia" not in " ".join(r.conduct_text for r in _real_article("36").sanctions)
@@ -276,13 +277,36 @@ def test_points_on_the_plate_written_as_placa_de_matricula_and_how_they_combine(
     assert (cumulative.points_license, cumulative.points_plate, cumulative.points_mode) == (1, 1, "acumulativos")
     assert cumulative.lead_text is None or "Artículo 39" not in cumulative.conduct_text
     alternative = _run("37_II").sanctions[0]
-    assert alternative.points_mode == "alternativos_por_via"  # licencia o, si la capta una cámara, matrícula
+    assert alternative.points_mode == "alternativos_por_captacion"  # licencia o, si la capta una cámara, matrícula
     assert "Los conductores y ocupantes de los vehículos deben" in alternative.lead_text
 
 
-def test_a_fraction_that_is_only_the_penalty_clause_is_article_wide_and_takes_the_header_as_conduct():
-    row = _real_article("8", "VII").sanctions[0]  # fraction VII of Art. 8 is literally the clause
-    assert row.article_wide and row.conduct_text == "Los conductores de todo tipo de vehículos deben:"
+def test_a_fraction_that_is_only_the_penalty_clause_yields_no_row_and_an_issue_art_8_vii():
+    """The header must not fill in as the conduct: it reads as filled and says nothing. It goes to review with a notice."""
+    result = _real_article("8", "VII")
+    assert result.sanctions == []
+    assert [i.kind for i in result.issues] == ["fraccion_solo_clausula"]
+    assert result.wide_template is not None and result.wide_template.article_wide  # the siblings inherit from it
+
+
+def test_exemptions_travel_with_the_row_art_12_and_36():
+    """"¿Me multan por empujar un coche que estorba?" needs the fractions of "excepto cuando"."""
+    art12 = _real_article("12").sanctions[0]
+    assert "Se trate de remolques u otros vehículos expresamente diseñados" in art12.context_text
+    assert "El vehículo se encuentre obstruyendo la circulación" in art12.context_text
+    art36 = _real_article("36").sanctions[0]
+    assert "vehículos de emergencia" in art36.context_text and "libre acceso" in art36.context_text
+
+
+def test_a_clause_that_also_punishes_a_second_conduct_gets_a_second_row_art_47():
+    rows = _real_article("47").sanctions
+    assert len(rows) == 2 and rows[0].clause_text == rows[1].clause_text
+    assert "humo ostensiblemente contaminante" in rows[1].conduct_text and rows[1].uma_min == D(20)
+
+
+def test_a_clause_that_points_to_the_previous_paragraph_carries_it_art_66():
+    row = _real_article("66").sanctions[0]
+    assert "tres años" in row.context_text  # the lapse the clause refers to
 
 
 def test_a_conduct_never_ends_in_a_dangling_connector_and_arts_51_52_do_not_repeat_art_50():
@@ -291,3 +315,12 @@ def test_a_conduct_never_ends_in_a_dangling_connector_and_arts_51_52_do_not_repe
     assert first.conduct_text.endswith("fauna nociva")
     # the lettered steps of the breathalyser procedure restate Art. 50; only Art. 50 carries the arrest row
     assert _real_article("51", "I").sanctions == [] and _real_article("52").sanctions == []
+
+
+def test_a_prohibition_listed_among_the_exemptions_is_its_own_row_art_12_iv():
+    """"IV. Tratándose de VEMEPE, queda prohibido remolcar…" sits after the exemptions but is not one of them."""
+    result = _real_article("12")
+    general, vemepe = result.sanctions
+    assert general.fraction is None and "VEMEPE" not in general.context_text
+    assert vemepe.fraction == "IV" and "queda prohibido remolcar" in vemepe.conduct_text
+    assert (vemepe.uma_min, vemepe.uma_max) == (general.uma_min, general.uma_max)

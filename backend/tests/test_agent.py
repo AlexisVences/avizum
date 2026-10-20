@@ -52,6 +52,8 @@ def test_the_system_prompt_states_the_rules_the_product_depends_on():
         "Lo único que puedes hacer",
         "Nunca tomes el monto de otra fracción",
         "ninguna fila coincide",
+        "nunca inventes un monto medio",
+        "nunca menciones a la persona los",
     ):
         assert rule.lower() in SYSTEM_PROMPT.lower(), rule
 

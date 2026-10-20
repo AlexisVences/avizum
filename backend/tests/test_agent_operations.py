@@ -2,7 +2,7 @@ from sqlalchemy import select
 
 from app.models.domain import AgentLookup, AuthorizationType
 from app.services.agent.context import AgentContext, CitationRegistry
-from app.services.agent.operations import fetch_article, find_agent, search_legislation
+from app.services.agent.operations import calculate_fine, fetch_article, find_agent, search_legislation
 from tests.factories import add_agent, add_agents_source
 from tests.test_retrieval import FixedQuery, PerQuery, add_chunk, add_source, vec
 
@@ -200,7 +200,7 @@ def test_a_fixed_fine_has_a_single_amount(client):
 def test_impossible_inputs_are_rejected_instead_of_computed(client):
     _, factory = client
     with factory() as db:
-        for args in ((0, 5, 7), (-10, 15, 20), (20, 15, 10), (10, None, 20), (5000, 5000, 5000)):
+        for args in ((0, 5, 7), (-10, 15, 20), (20, 15, 10), (20, None, 10), (None, None, 20), (5000, 5000, 5000)):  # (10, None, 20) is a valid RANGE
             assert calculate_fine(fine_context(db), *args)["estado"] == "valores_invalidos", args
 
 
@@ -343,3 +343,17 @@ def test_an_article_budget_goes_to_the_long_fractions_not_split_evenly(client):
         long_one = next(f for f in fragments if f["fraccion"] == "I")
         assert len(long_one["texto"]) > ARTICLE_CHARS // 5 and long_one["texto"].endswith("veces la UMA.")
         assert sum(len(f["texto"]) for f in fragments) <= ARTICLE_CHARS + 100
+
+
+def test_a_range_has_two_ends_and_no_invented_middle_or_discount(client):
+    _, factory = client
+    with factory() as db:
+        ctx = context(db)
+        result = calculate_fine(ctx, 350, None, 450)
+        assert result["estado"] == "ok"
+        assert set(result["montos"]) == {"minima", "maxima"}
+        assert result["montos"]["minima"]["pesos"] == "41058.50" and result["montos"]["maxima"]["pesos"] == "52789.50"
+        assert "con_descuento_50" not in result and "regla_sancion" not in result and "nota_rango" in result
+        # the three-level shape still carries the Reglamento rules
+        full = calculate_fine(context(db), 10, 15, 20)
+        assert set(full["montos"]) == {"minima", "media", "maxima"} and "con_descuento_50" in full and "regla_sancion" in full

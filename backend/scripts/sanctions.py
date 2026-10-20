@@ -82,6 +82,12 @@ def main() -> None:
             db.commit()
             print(f"aprobadas {report.approved} · rechazadas {report.rejected} · sin marcar {report.unmarked} · "
                   f"exportadas a verified.json: {exported}")
+            if report.changed_since_sheet:
+                print(f"  ⚠ cambiaron DESPUÉS de generar la hoja (no se aprobaron; regenera con --delta): {report.changed_since_sheet}")
+            if report.master_refused:
+                print(f"  ⚠ la casilla maestra de la(s) tanda(s) {report.master_refused} no coincide con las filas actuales: no se aplicó")
+            if report.legacy_ids:
+                print(f"  ({report.legacy_ids} aprobaciones por ids de una hoja anterior, sin huella de contenido)")
             if report.unknown_ids:
                 print(f"  ids que no existen (¿la hoja es de otra extracción?): {report.unknown_ids}")
         else:

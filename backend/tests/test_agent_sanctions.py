@@ -186,3 +186,29 @@ def test_the_served_rows_make_the_right_amount_available_through_the_real_agent(
         belt = [r for f in payload["fragmentos"] for r in f.get("sanciones", []) if r.get("inciso") == "b" and "cinturón" in r["conducta"]]
         assert belt and belt[0]["veces_uma"]["minima"] == "5"
         assert {a["clase"] for a in run.anomalies if a["tipo"] == "monto_no_respaldado"} == {"uma_terna", "pesos"}
+
+
+def test_thousands_with_a_comma_are_one_number_not_a_phantom_amount(client):
+    """"de 500 a 1,000 veces la UMA" was read as "000 veces la UMA" and flagged as unsupported."""
+    _, factory = client
+    with factory() as db:
+        source = add_source(db, "ley-movilidad", "m")
+        add_chunk(db, source, "251", "Se sancionará con multa de 500 a 1,000 veces la Unidad de Medida y Actualización.", vec(1, 0))
+        db.commit()
+        ctx = _context(db)
+        search_legislation(ctx, "multa transporte peligrosos")
+        assert check_amounts("La multa va de 500 a 1,000 veces la UMA.", ctx) == []
+        assert [a["valor"] for a in check_amounts("La multa es de 2,000 veces la UMA.", ctx)] == ["2,000 veces la UMA"]
+
+
+def test_multiples_the_law_writes_in_words_count_as_supported(client):
+    """Ley de Movilidad writes "de quinientos a seiscientos ochenta veces la Unidad de Medida"; the answer says 500 a 680."""
+    _, factory = client
+    with factory() as db:
+        source = add_source(db, "ley-movilidad", "m")
+        add_chunk(db, source, "251", "Se sancionará con multa de quinientos a seiscientos ochenta veces la Unidad de Medida y Actualización de la Ciudad de México vigente.", vec(1, 0))
+        db.commit()
+        ctx = _context(db)
+        search_legislation(ctx, "multa concesión")
+        assert check_amounts("La multa va de 500 a 680 veces la UMA.", ctx) == []
+        assert [a["valor"] for a in check_amounts("La multa va de 500 a 700 veces la UMA.", ctx)] == ["700 veces la UMA"]

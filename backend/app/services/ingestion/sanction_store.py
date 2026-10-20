@@ -5,6 +5,7 @@ Flow: `sync_pending` extracts candidate rows (status `pending`, idempotent) -> a
 (git is the source of truth: `load_verified` rebuilds the verified rows after a database rebuild or a re-ingest).
 Nothing here reaches the agent: only rows with status `verified` and a matching `chunk_hash` may be served.
 """
+import hashlib
 import json
 import re
 from dataclasses import dataclass, field
@@ -32,7 +33,8 @@ TANDA_TITLES = {
     4: "Tanda 4 — una cláusula por fracción, sin incisos (deterministas): revisa la muestra ★ y aprueba la tanda",
 }
 _DECISION = re.compile(r"^- \[(?P<mark>[ xX!])\] `(?P<id>[^`]+)`", re.M)
-_SECTION = re.compile(r"^- \[(?P<mark>[ xX])\] \*\*APROBAR TODA LA TANDA (?P<tanda>\d)\*\*", re.M)
+_SECTION = re.compile(r"^- \[(?P<mark>[ xX])\] \*\*APROBAR TODA LA TANDA (?P<tanda>\d)\*\*.*?(?:<!--fp:(?P<fp>\w+)-->)?\s*$", re.M)
+_DELTA = re.compile(r"<!--sheet delta=(\d)-->")
 
 
 @dataclass
@@ -52,11 +54,27 @@ def _chunks(db: Session, slug: str) -> list[LegalChunk]:
     ))
 
 
-def row_id(slug: str, article: str, chunk_fraction: str | None, ordinal: int, digest: str) -> str:
-    return f"{slug}:{article}:{chunk_fraction or '-'}:{ordinal}:{digest[:8]}"
+def row_digest(row) -> str:
+    """Hash of what a person approves: conduct, clause, amounts, points, qualifier. Ids are positional, so an id alone
+    could end up pointing at other content after a re-extraction; the digest in the id prevents approving it blind."""
+    def text(value) -> str:
+        if value is None:
+            return ""
+        return format(value.normalize(), "f") if isinstance(value, Decimal) else str(value)  # 50 and 50.00 are one amount
+
+    payload = "\x1f".join(text(getattr(row, name)) for name in (
+        "fraction", "inciso", "applies_to", "conduct_text", "clause_text", "uma_min", "uma_mid", "uma_max",
+        "points_license", "points_plate", "other_consequences",
+    ))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:8]
 
 
-SUPPLEMENTARY_FIELDS = ("lead_text", "points_mode")  # derived from the same text; updating them never un-verifies a row
+def row_id(slug: str, article: str, chunk_fraction: str | None, ordinal: int, digest: str, content: str = "") -> str:
+    base = f"{slug}:{article}:{chunk_fraction or '-'}:{ordinal}:{digest[:8]}"
+    return f"{base}:{content}" if content else base
+
+
+SUPPLEMENTARY_FIELDS = ("lead_text", "points_mode", "context_text")  # derived from the same text; updating them never un-verifies a row
 
 
 def _content(obj) -> tuple:
@@ -117,7 +135,11 @@ def sync_pending(db: Session, slug: str, manual: list[dict] | None = None) -> Sy
     for chunk in chunks:
         by_article.setdefault(chunk.article, []).append(chunk)
     for siblings in by_article.values():
-        template = next((s for c in siblings for s in extractions[c.id].sanctions if s.article_wide), None)
+        template = next(
+            (extractions[c.id].wide_template or next((s for s in extractions[c.id].sanctions if s.article_wide), None)
+             for c in siblings if extractions[c.id].wide_template or any(s.article_wide for s in extractions[c.id].sanctions)),
+            None,
+        )
         if template is None:
             continue
         for chunk in siblings:
@@ -190,6 +212,14 @@ def _uma(row: LegalSanction) -> str:
     return f"**{text} UMA**" if len(values) > 1 else f"**{text} UMA** (monto único)"
 
 
+def _clip_words(text: str, chars: int) -> str:
+    """Cut at a word boundary with an ellipsis; never in the middle of a word (for reading the review sheet)."""
+    text = " ".join(text.split())
+    if len(text) <= chars:
+        return text
+    return text[:chars].rsplit(" ", 1)[0].rstrip(" ,;:") + " …"
+
+
 def _tanda(rows: list[LegalSanction], issues: list[Issue]) -> int:
     if issues:
         return 3
@@ -216,6 +246,7 @@ def render_review(
     before = {(e["article"], e["chunk_fraction"], e["ordinal"]): e for e in (previous or [])}
     by_tanda: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
     counts = {1: 0, 2: 0, 3: 0, 4: 0}
+    tanda_ids: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
     sampled = 0
     for chunk in _chunks(db, slug):
         rows = list(db.scalars(
@@ -223,8 +254,6 @@ def render_review(
         ))
         if only_pending:
             rows = [r for r in rows if r.status is SanctionStatus.PENDING]
-            if not rows:
-                continue
         issues = extract_sanctions(chunk.article, chunk.fraction, chunk.text).issues
         if any(r.extractor_version == "manual" for r in rows):
             issues = [i for i in issues if i.kind != "tabla"]
@@ -232,6 +261,7 @@ def render_review(
             continue
         tanda = _tanda(rows, issues)
         counts[tanda] += len(rows)
+        tanda_ids[tanda] += [row_id(slug, r.article, chunk.fraction, r.ordinal, r.chunk_hash, row_digest(r)) for r in rows]
         where = f"Art. {chunk.article}" + (f" · fracción {chunk.fraction}" if chunk.fraction else "")
         star = ""
         if tanda == 4:
@@ -256,20 +286,26 @@ def render_review(
             qualifier = f" — **solo si:** {row.applies_to}" if row.applies_to else ""
             manual = " _(capturada a mano)_" if row.extractor_version == "manual" else ""
             lines.append(
-                f"- [ ] `{row_id(slug, row.article, chunk.fraction, row.ordinal, row.chunk_hash)}` **{who}**{qualifier}{manual}"
+                f"- [ ] `{row_id(slug, row.article, chunk.fraction, row.ordinal, row.chunk_hash, row_digest(row))}` "
+                f"**{who}**{qualifier}{manual}"
             )
             old = before.get((row.article, chunk.fraction, row.ordinal))
             if only_pending and old is not None and old["chunk_hash"] == row.chunk_hash:
                 old_amount = "/".join(str(Decimal(old[k]).normalize()) for k in ("uma_min", "uma_mid", "uma_max") if old[k]) or "sin monto"
                 lines.append(f"  - **antes (lo que revisaste):** «{old['conduct_text'][:140]}» → {old_amount} UMA")
             if row.lead_text:
-                lines.append(f"  - encabezado: «{row.lead_text[:160]}»")
-            conduct = row.conduct_text if len(row.conduct_text) <= 200 else row.conduct_text[:200] + "…"
+                lines.append(f"  - encabezado: «{_clip_words(row.lead_text, 320)}»")
+            if row.context_text:
+                lines.append(f"  - **depende de:** «{_clip_words(row.context_text, 500)}»")
+            conduct = _clip_words(row.conduct_text, 220)
             lines.append(f"  - conducta: «{conduct}»")
             if tanda == 4:
-                clause = row.clause_text if len(row.clause_text) <= 260 else row.clause_text[:260] + "…"
+                clause = _clip_words(row.clause_text, 300)
                 lines.append(f"  - cláusula: «{clause}»")
-            mode = {"alternativos_por_via": " (licencia O matrícula, según la vía)", "acumulativos": " (ambos se suman)"}.get(row.points_mode or "", "")
+            mode = {
+                "alternativos_por_captacion": " (según cómo se capte: agente → licencia; sistema tecnológico/fotomulta → matrícula; no se suman)",
+                "acumulativos": " (se aplican ambos: licencia y matrícula)",
+            }.get(row.points_mode or "", "")
             lines.append(f"  - sanción: {_uma(row)}" + (f"; {points}{mode}" if points else "")
                          + (f"; otras: {row.other_consequences}" if row.other_consequences else ""))
         for issue in issues:
@@ -277,8 +313,10 @@ def render_review(
         lines.append("")
         by_tanda[tanda].append("\n".join(lines))
 
+    fingerprints = {t: _fingerprint(ids) for t, ids in tanda_ids.items()}
     out = [
-        f"# Revisión de sanciones — `{slug}`" + (" (solo lo que cambió)" if only_pending else ""), "",
+        f"# Revisión de sanciones — `{slug}`" + (" (solo lo que cambió)" if only_pending else ""),
+        f"<!--sheet delta={int(only_pending)}-->", "",
         "Marca `[x]` en cada fila que coincida con el artículo, `[!]` en la que esté mal (y anota por qué debajo).",
         "Una fila que no marques **no se sirve** al agente. Lo resaltado `⟦…⟧` es la cláusula de la que salió el monto.", "",
     ]
@@ -287,13 +325,23 @@ def render_review(
             continue
         out += [f"## {TANDA_TITLES[tanda]}", f"_{counts[tanda]} filas en {len(by_tanda[tanda])} fragmentos._", ""]
         if tanda == 4:
-            out += [f"- [ ] **APROBAR TODA LA TANDA 4** (revisé las marcadas con ★ y el resto sigue el mismo patrón)", ""]
+            out += [f"- [ ] **APROBAR TODA LA TANDA 4** (revisé las marcadas con ★ y el resto sigue el mismo patrón) "
+                    f"<!--fp:{fingerprints[4]}-->", ""]
         out += by_tanda[tanda]
     return "\n".join(out), counts
 
 
+def _fingerprint(ids: list[str]) -> str:
+    return hashlib.sha256("\n".join(sorted(ids)).encode("utf-8")).hexdigest()[:10]
+
+
 def parse_review(markdown: str) -> tuple[dict[str, str], set[int]]:
     """({row id: 'approve' | 'reject'}, tandas approved as a whole)."""
+    decisions, tandas, _, _ = parse_review_full(markdown)
+    return decisions, tandas
+
+
+def parse_review_full(markdown: str) -> tuple[dict[str, str], set[int], dict[int, str | None], bool]:
     decisions = {}
     for match in _DECISION.finditer(markdown):
         mark = match.group("mark")
@@ -301,8 +349,13 @@ def parse_review(markdown: str) -> tuple[dict[str, str], set[int]]:
             decisions[match.group("id")] = "approve"
         elif mark == "!":
             decisions[match.group("id")] = "reject"
-    tandas = {int(m.group("tanda")) for m in _SECTION.finditer(markdown) if m.group("mark") in "xX"}
-    return decisions, tandas
+    tandas, fingerprints = set(), {}
+    for m in _SECTION.finditer(markdown):
+        if m.group("mark") in "xX":
+            tandas.add(int(m.group("tanda")))
+        fingerprints[int(m.group("tanda"))] = m.group("fp")
+    delta = _DELTA.search(markdown)
+    return decisions, tandas, fingerprints, bool(delta and delta.group(1) == "1")
 
 
 def _entry(row: LegalSanction, chunk: LegalChunk) -> dict:
@@ -316,7 +369,7 @@ def _entry(row: LegalSanction, chunk: LegalChunk) -> dict:
         "uma_min": dec(row.uma_min), "uma_mid": dec(row.uma_mid), "uma_max": dec(row.uma_max),
         "points_license": row.points_license, "points_plate": row.points_plate,
         "other_consequences": row.other_consequences, "extractor_version": row.extractor_version,
-        "lead_text": row.lead_text, "points_mode": row.points_mode,
+        "lead_text": row.lead_text, "points_mode": row.points_mode, "context_text": row.context_text,
         "reviewed_by": row.reviewed_by, "reviewed_at": row.reviewed_at.isoformat() if row.reviewed_at else None,
     }
 
@@ -327,35 +380,69 @@ class ApplyReport:
     rejected: int = 0
     unmarked: int = 0
     unknown_ids: list[str] = field(default_factory=list)
+    changed_since_sheet: list[str] = field(default_factory=list)  # content differs from what the sheet showed: not approved
+    legacy_ids: int = 0  # ids from a sheet made before row digests existed
+    master_refused: list[int] = field(default_factory=list)  # a whole-tanda approval over rows that are not the ones shown
     exported: int = 0
 
 
 def apply_review(db: Session, slug: str, markdown: str, reviewer: str, now: datetime | None = None) -> ApplyReport:
-    """Mark approved rows `verified` (rejected ones `rejected`). Returns what happened; export separately."""
+    """Mark approved rows `verified` (rejected ones `rejected`). Returns what happened; export separately.
+
+    Ids are positional, so each carries a digest of the row content; an approval only lands on the content that the
+    sheet showed. A whole-tanda approval carries a fingerprint of the rows it covered for the same reason."""
     now = now or datetime.now(timezone.utc)
-    decisions, tandas = parse_review(markdown)
+    decisions, tandas, fingerprints, delta = parse_review_full(markdown)
     report = ApplyReport()
     known: set[str] = set()
+    current: list[tuple[LegalSanction, LegalChunk, int]] = []
     for chunk in _chunks(db, slug):
         rows = list(db.scalars(select(LegalSanction).where(LegalSanction.chunk_id == chunk.id)))
         issues = extract_sanctions(chunk.article, chunk.fraction, chunk.text).issues
         if any(r.extractor_version == "manual" for r in rows):
             issues = [i for i in issues if i.kind != "tabla"]
         tanda = _tanda(rows, issues) if rows else None
-        for row in rows:
-            rid = row_id(slug, row.article, chunk.fraction, row.ordinal, row.chunk_hash)
-            known.add(rid)
-            decision = decisions.get(rid) or ("approve" if tanda in tandas and decisions.get(rid) != "reject" else None)
-            if row.chunk_hash != chunk_hash(chunk.text):
-                continue  # never verify a row against a text it was not extracted from
-            if decision == "approve":
-                row.status, row.reviewed_by, row.reviewed_at = SanctionStatus.VERIFIED, reviewer, now
-                report.approved += 1
-            elif decision == "reject":
-                row.status, row.reviewed_by, row.reviewed_at = SanctionStatus.REJECTED, reviewer, now
-                report.rejected += 1
-            else:
-                report.unmarked += 1
+        current += [(row, chunk, tanda) for row in rows]
+
+    # A whole-tanda approval is honoured only if the rows of that tanda are exactly the ones the sheet fingerprinted.
+    approved_tandas: set[int] = set()
+    for tanda in tandas:
+        shown = [
+            row_id(slug, r.article, c.fraction, r.ordinal, r.chunk_hash, row_digest(r))
+            for r, c, t in current if t == tanda and (not delta or r.status is SanctionStatus.PENDING)
+        ]
+        expected = fingerprints.get(tanda)
+        if expected is None or expected == _fingerprint(shown):
+            approved_tandas.add(tanda)
+        else:
+            report.master_refused.append(tanda)
+
+    for row, chunk, tanda in current:
+        base = row_id(slug, row.article, chunk.fraction, row.ordinal, row.chunk_hash)
+        full = row_id(slug, row.article, chunk.fraction, row.ordinal, row.chunk_hash, row_digest(row))
+        known.update({base, full})
+        decision = decisions.get(full)
+        if decision is None and base in decisions:  # a sheet from before the digests existed
+            decision = decisions[base]
+            report.legacy_ids += 1
+        if decision is None:
+            stale = [k for k in decisions if k.startswith(base + ":")]  # same position, other content than the sheet's
+            if stale:
+                known.update(stale)
+                report.changed_since_sheet.append(base)
+                continue
+            if tanda in approved_tandas and (not delta or row.status is SanctionStatus.PENDING):
+                decision = "approve"
+        if row.chunk_hash != chunk_hash(chunk.text):
+            continue  # never verify a row against a text it was not extracted from
+        if decision == "approve":
+            row.status, row.reviewed_by, row.reviewed_at = SanctionStatus.VERIFIED, reviewer, now
+            report.approved += 1
+        elif decision == "reject":
+            row.status, row.reviewed_by, row.reviewed_at = SanctionStatus.REJECTED, reviewer, now
+            report.rejected += 1
+        else:
+            report.unmarked += 1
     report.unknown_ids = sorted(set(decisions) - known)
     db.flush()
     return report
