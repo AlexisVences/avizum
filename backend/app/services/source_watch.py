@@ -119,7 +119,7 @@ class Watched:
 @dataclass
 class Finding:
     slug: str
-    kind: str  # nueva_version | reforma_nueva | no_encontrado | contenido_cambio | error
+    kind: str  # nueva_version | reforma_nueva | no_encontrado | contenido_cambio | inaccesible | error
     detail: str
     new_url: str | None = None
     fingerprint: str = field(default="")
@@ -190,7 +190,8 @@ def compare(state: dict[str, Watched], specs: list[SourceSpec], entries: list[In
                                         new_url=base + (entry.pdf_path or "")))
         else:
             if errors and spec.slug in errors:
-                findings.append(Finding(spec.slug, "error", f"no se pudo descargar: {errors[spec.slug]}"))
+                # Not a change in the document: the site did not answer (some government hosts refuse cloud IPs).
+                findings.append(Finding(spec.slug, "inaccesible", f"no se pudo descargar: {errors[spec.slug]}"))
             elif hashes.get(spec.slug) != watched.sha256:
                 findings.append(Finding(spec.slug, "contenido_cambio",
                                         f"el archivo cambió (sha256 {str(watched.sha256)[:12]} → {str(hashes.get(spec.slug))[:12]}); "
@@ -211,12 +212,22 @@ def accept(state: dict[str, Watched], slug: str, entries: list[IndexEntry], hash
     return watched
 
 
+def split_findings(findings: list[Finding]) -> tuple[list[Finding], list[Finding]]:
+    """(changes, unreachable). A source that could not be read says nothing about whether it changed."""
+    return [f for f in findings if f.kind != "inaccesible"], [f for f in findings if f.kind == "inaccesible"]
+
+
 def render_report(findings: list[Finding]) -> str:
-    if not findings:
-        return "Sin cambios en las fuentes vigiladas."
+    changes, unreachable = split_findings(findings)
+    note = ""
+    if unreachable:
+        note = ("\n\nNo se pudieron revisar (no es un cambio, es que el sitio no respondió): "
+                + ", ".join(f.slug for f in unreachable) + ". Revísalas desde tu computadora con `uv run python -m scripts.sources check`.")
+    if not changes:
+        return "Sin cambios en las fuentes que se pudieron revisar." + note
     lines = ["Se detectaron cambios en las fuentes oficiales:", ""]
-    for f in findings:
+    for f in changes:
         lines.append(f"- **{f.slug}** · `{f.kind}` · {f.detail}" + (f"\n  - Nueva versión: {f.new_url}" if f.new_url else ""))
     lines += ["", "Qué sigue: revisar el cambio, descargar e indexar con `scripts.fetch_sources` / `scripts.ingest_sources`,",
               "revisar las sanciones `stale` y actualizar `data/watch-state.json` con `scripts.sources accept <slug>`."]
-    return "\n".join(lines)
+    return "\n".join(lines) + note

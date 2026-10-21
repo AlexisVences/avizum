@@ -92,7 +92,7 @@ def test_hash_sources_report_changes_and_download_errors(entries):
     specs, state, _ = baseline(entries)
     assert [f.kind for f in compare(state, specs, entries, {"acuerdo": "bbb"})] == ["contenido_cambio"]
     [finding] = compare(state, specs, entries, {}, errors={"acuerdo": "timeout"})
-    assert finding.kind == "error" and "timeout" in finding.detail
+    assert finding.kind == "inaccesible" and "timeout" in finding.detail
 
 
 def test_accept_moves_the_baseline_so_the_alert_does_not_repeat(entries):
@@ -127,3 +127,17 @@ def test_fetch_index_paginates_until_a_short_page_and_never_reads_an_empty_one_a
     assert len(got) == 3 * len(sample_items) and len(calls) == 3
     with pytest.raises(IndexStructureError):
         fetch_index(lambda url: "<html>mantenimiento</html>", pause=0)
+
+
+def test_a_download_failure_is_unreachable_not_a_change_and_never_hides_real_changes(entries):
+    from app.services.source_watch import split_findings
+
+    specs, state, _ = baseline(entries)
+    findings = compare(state, specs, entries, {}, errors={"acuerdo": "Connection reset by peer"})
+    changes, unreachable = split_findings(findings)
+    assert changes == [] and [f.slug for f in unreachable] == ["acuerdo"]
+    text = render_report(findings)
+    assert text.startswith("Sin cambios") and "acuerdo" in text and "no es un cambio" in text
+    moved = [IndexEntry(e.section, e.title, e.pdf_path, "2026-12-01" if e.title.startswith("Reglamento de Tránsito") else e.reform_date, e.description) for e in entries]
+    changes, _ = split_findings(compare(state, specs, moved, {}, errors={"acuerdo": "x"}))
+    assert [f.kind for f in changes] == ["reforma_nueva"]

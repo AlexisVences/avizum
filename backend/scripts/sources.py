@@ -12,12 +12,13 @@ import argparse
 import hashlib
 import json
 import sys
+import time
 from dataclasses import asdict
 from pathlib import Path
 
 from app.services.source_http import MAX_PDF_BYTES, http_get
 from app.services.source_watch import (IndexEntry, IndexStructureError, accept, compare, fetch_index, is_indexed,
-                                       load_state, render_report, save_state, snapshot)
+                                       load_state, render_report, save_state, snapshot, split_findings)
 from app.services.sources import load_manifest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -32,10 +33,14 @@ def read_world(specs) -> tuple[list[IndexEntry], dict[str, str], dict[str, str]]
     for spec in specs:
         if is_indexed(spec):
             continue
-        try:
-            hashes[spec.slug] = hashlib.sha256(http_get(spec.url, max_bytes=MAX_PDF_BYTES, timeout=120)).hexdigest()
-        except Exception as exc:  # network, TLS, size: reported as a finding, not as «no changes»
-            errors[spec.slug] = str(exc)
+        for attempt in range(3):
+            try:
+                hashes[spec.slug] = hashlib.sha256(http_get(spec.url, max_bytes=MAX_PDF_BYTES, timeout=120)).hexdigest()
+                errors.pop(spec.slug, None)
+                break
+            except Exception as exc:  # network, TLS, size: reported as «unreachable», never as «no changes»
+                errors[spec.slug] = str(exc)
+                time.sleep(5 * (attempt + 1))
     return entries, hashes, errors
 
 
@@ -80,13 +85,16 @@ def main() -> int:
         return 0
 
     findings = compare(state, specs, entries, hashes, errors)
+    changes, unreachable = split_findings(findings)
     report = render_report(findings)
     print(report)
+    for f in unreachable:  # GitHub shows this as a yellow annotation on the run, without failing it
+        print(f"::warning title=No se pudo revisar {f.slug}::{f.detail}")
     if args.report_file:
         Path(args.report_file).write_text(report + "\n", encoding="utf-8")
     if args.findings_file:
-        Path(args.findings_file).write_text(json.dumps([asdict(f) for f in findings], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return 2 if findings else 0
+        Path(args.findings_file).write_text(json.dumps([asdict(f) for f in changes], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return 2 if changes else 0
 
 
 if __name__ == "__main__":
