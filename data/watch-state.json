@@ -1,0 +1,121 @@
+{
+  "sources": [
+    {
+      "slug": "acuerdo-agentes-transito",
+      "mode": "hash",
+      "title": null,
+      "pdf_path": null,
+      "reform_date": null,
+      "sha256": "d45bcffd09dfe4bf868ae3bba71ebee8fac840a100a3a586cae4631a417ce158",
+      "url": "https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuerdo%2030-26.pdf"
+    },
+    {
+      "slug": "codigo-fiscal",
+      "mode": "index",
+      "title": "Código Fiscal de la Ciudad de México",
+      "pdf_path": "/images/leyes/2025/2026/210126/CODIGO_FISCAL_DE_LA_CDMX_26.1.pdf",
+      "reform_date": "2025-12-19",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/2025/2026/210126/CODIGO_FISCAL_DE_LA_CDMX_26.1.pdf"
+    },
+    {
+      "slug": "codigo-penal-df",
+      "mode": "index",
+      "title": "Código Penal para el Distrito Federal",
+      "pdf_path": "/images/leyes/2025/2026/50226/CODIGO_PENAL_PARA_EL_DF_12.9.pdf",
+      "reform_date": "2026-08-21",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/2025/2026/50226/CODIGO_PENAL_PARA_EL_DF_12.9.pdf"
+    },
+    {
+      "slug": "ley-cultura-civica",
+      "mode": "index",
+      "title": "Ley de Cultura Cívica de la Ciudad de México",
+      "pdf_path": "/images/leyes/2025/2026/190126/LEY_DE_CULTURA_CIVICA_DE_LA_CIUDAD_DE_MEXICO_3.1.pdf",
+      "reform_date": "2026-08-21",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/2025/2026/190126/LEY_DE_CULTURA_CIVICA_DE_LA_CIUDAD_DE_MEXICO_3.1.pdf"
+    },
+    {
+      "slug": "ley-justicia-administrativa",
+      "mode": "index",
+      "title": "Ley de Justicia Administrativa de la Ciudad de México",
+      "pdf_path": "/images/leyes/leyes/LEY_%20DE_JUSTICIA_ADMINISTRATIVA_DE_LA_CDMX_3.1.pdf",
+      "reform_date": "2019-12-23",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_%20DE_JUSTICIA_ADMINISTRATIVA_DE_LA_CDMX_3.1.pdf"
+    },
+    {
+      "slug": "ley-movilidad",
+      "mode": "index",
+      "title": "Ley de Movilidad de la Ciudad de México",
+      "pdf_path": "/images/leyes/2025/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf",
+      "reform_date": "2025-08-27",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/2025/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf"
+    },
+    {
+      "slug": "ley-procedimiento-administrativo",
+      "mode": "index",
+      "title": "Ley de Procedimiento Administrativo de la Ciudad de México",
+      "pdf_path": "/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf",
+      "reform_date": "2019-06-12",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf"
+    },
+    {
+      "slug": "ley-responsabilidades-administrativas",
+      "mode": "index",
+      "title": "Ley de Responsabilidades Administrativas de la Ciudad de México",
+      "pdf_path": "/images/leyes/2025/2026/210126/LEY_DE_RESPONSABILIDADES_ADMINISTRATIVAS_DE_LA_CDMX_3.1.pdf",
+      "reform_date": "2025-12-24",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/2025/2026/210126/LEY_DE_RESPONSABILIDADES_ADMINISTRATIVAS_DE_LA_CDMX_3.1.pdf"
+    },
+    {
+      "slug": "ley-tecnologia-seguridad-ciudadana",
+      "mode": "index",
+      "title": "Ley que Regula el Uso de Tecnología para la Seguridad Ciudadana de la CDMX",
+      "pdf_path": "/images/leyes/2025/181225/LEY_QUE_REGULA_EL_USO_DELA_TECNOLOGA_PARA_LA_SEGURIDAD_CIUDADANA_DE_LA_CDMX_2.7.pdf",
+      "reform_date": "2026-07-23",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/2025/181225/LEY_QUE_REGULA_EL_USO_DELA_TECNOLOGA_PARA_LA_SEGURIDAD_CIUDADANA_DE_LA_CDMX_2.7.pdf"
+    },
+    {
+      "slug": "protocolo-actuacion-policial",
+      "mode": "hash",
+      "title": null,
+      "pdf_path": null,
+      "reform_date": null,
+      "sha256": "89a4d36a97732f0ee21d1f1dc7eb5b336342ee817e68dad721825f4251ca5a9c",
+      "url": "https://www.ssc.cdmx.gob.mx/storage/app/media/Protocolos-actuacion-policial/PROTOCOLO-GRAL-DE-ACTUACION-POLICIALSSC.pdf"
+    },
+    {
+      "slug": "reglamento-estacionamiento-via-publica",
+      "mode": "index",
+      "title": "Reglamento para el Control de Estacionamiento en Vía Pública de la Ciudad de México",
+      "pdf_path": "/images/leyes/reglamentos/REGLAMENTO_PARA_EL_CONTROL_DE_ESTACIONAMIENTO_EN_VIA_PUBLICA_DE_LA_CDMX_10.pdf",
+      "reform_date": "2024-05-14",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/reglamentos/REGLAMENTO_PARA_EL_CONTROL_DE_ESTACIONAMIENTO_EN_VIA_PUBLICA_DE_LA_CDMX_10.pdf"
+    },
+    {
+      "slug": "reglamento-ley-cultura-civica",
+      "mode": "index",
+      "title": "Reglamento de la Ley de Cultura Cívica de la Ciudad de México",
+      "pdf_path": "/images/leyes/reglamentos/REGLAMENTO_DE_LA_LEY_DE_CULTURA_CIVICA_DE_LA_CDMX.pdf",
+      "reform_date": null,
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/reglamentos/REGLAMENTO_DE_LA_LEY_DE_CULTURA_CIVICA_DE_LA_CDMX.pdf"
+    },
+    {
+      "slug": "reglamento-transito",
+      "mode": "index",
+      "title": "Reglamento de Tránsito de la Ciudad de México",
+      "pdf_path": "/images/leyes/2025/181225/REGLAMENTO_DE_TRNSITO_DE_LA_CIUDAD_DE_MXICO_6.4.pdf",
+      "reform_date": "2026-06-30",
+      "sha256": null,
+      "url": "https://data.consejeria.cdmx.gob.mx/images/leyes/2025/181225/REGLAMENTO_DE_TRNSITO_DE_LA_CIUDAD_DE_MXICO_6.4.pdf"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-import { API_URL, authHeaders } from './api';
+import { API_URL, apiFetch, authHeaders } from './api';
 const requestStats = async () => {
-  const response = await fetch(`${API_URL}/admin/statistics`, { headers: authHeaders() });
+  const response = await apiFetch(`${API_URL}/admin/statistics`, { headers: authHeaders() });
   if (!response.ok) throw new Error('Error al obtener estadísticas');
   return response.json();
 };

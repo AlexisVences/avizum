@@ -22,10 +22,11 @@ def current_user(
     try:
         payload = jwt.decode(credentials.credentials, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         user_id = int(payload["sub"])
+        token_version = int(payload.get("tv", 0))
     except (jwt.PyJWTError, KeyError, TypeError, ValueError):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
     user = db.get(User, user_id)
-    if user is None or not user.is_active:
+    if user is None or not user.is_active or token_version != user.token_version:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or inactive user")
     return user
 
@@ -45,10 +46,11 @@ def optional_user(
     try:
         payload = jwt.decode(credentials.credentials, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         user_id = int(payload["sub"])
+        token_version = int(payload.get("tv", 0))
     except (jwt.PyJWTError, KeyError, TypeError, ValueError):
         return None
     user = db.get(User, user_id)
-    if user is None or not user.is_active:
+    if user is None or not user.is_active or token_version != user.token_version:
         return None
     return user
 

@@ -11,6 +11,7 @@ from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, Sys
 from app.core.config import Settings
 from app.services.agent.amounts import check_amounts
 from app.services.agent.citations import resolve_citations
+from app.services.agent.guards import LEAK_ANSWER, leaks_system_prompt, strip_external_links
 from app.services.agent.context import AgentContext
 from app.services.agent.prompt import SYSTEM_PROMPT
 from app.services.agent.tools import TOOLS
@@ -129,12 +130,20 @@ def _summarize(new_messages: list, ctx: AgentContext, settings: Settings) -> Age
     limit_reached = len(tool_rounds) >= settings.chat_max_agent_steps
     answer = LIMIT_ANSWER if limit_reached else _text(ai_messages[-1].content).strip() if ai_messages else ""
 
+    guard_anomalies: list[dict] = []
+    if leaks_system_prompt(answer):
+        answer = LEAK_ANSWER
+        guard_anomalies.append({"type": "prompt_leak"})
+    answer, had_links = strip_external_links(answer)
+    if had_links:
+        guard_anomalies.append({"type": "enlace_externo"})
+
     resolved = resolve_citations(answer, ctx.citations) if not limit_reached else None
     return AgentRun(
         answer=resolved.text if resolved else answer,
         tool_calls=trace,
         citations=resolved.citations if resolved else [],
-        anomalies=(resolved.anomalies + check_amounts(resolved.text, ctx)) if resolved else [],
+        anomalies=(guard_anomalies + resolved.anomalies + check_amounts(resolved.text, ctx)) if resolved else guard_anomalies,
         input_tokens=sum(u.get("input_tokens", 0) for u in usage),
         output_tokens=sum(u.get("output_tokens", 0) for u in usage),
         cached_input_tokens=sum((u.get("input_token_details") or {}).get("cache_read", 0) for u in usage),
