@@ -48,8 +48,9 @@ const ResultadoBusquedaAgentes = ({ resultado }) => {
                     publicado en la Gaceta Oficial puede expedir y firmar boletas de tránsito.
                 </p>
                 <p className="tw-m-0 tw-mb-2">
-                    Pide al agente su identificación y número de placa, y no entregues documentos sin que te
-                    expida una boleta. Puedes reportar irregularidades ante{' '}
+                    Pide al agente su identificación y número de placa. Tus documentos solo se entregan para su
+                    revisión y deben devolvértelos (Reglamento de Tránsito, art. 59, fr. II, incisos e y h): no permitas
+                    que se los queden. Puedes reportar irregularidades ante{' '}
                     <a href={ASUNTOS_INTERNOS_URL} target="_blank" rel="noopener noreferrer" className={linkClase}>
                         Asuntos Internos de la SSC
                     </a>.

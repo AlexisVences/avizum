@@ -14,6 +14,7 @@ class UserPublic(BaseModel):
     email: EmailStr
     role: UserRole
     is_active: bool
+    email_verified: bool
     created_at: datetime
 
 
@@ -27,6 +28,10 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+
+class GoogleLoginRequest(BaseModel):
+    credential: str = Field(min_length=20, max_length=4096)
 
 
 class TokenResponse(BaseModel):

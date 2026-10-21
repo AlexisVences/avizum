@@ -1,7 +1,7 @@
-import { API_URL, authHeaders, extractErrorMessage } from './api';
+import { API_URL, apiFetch, authHeaders, extractErrorMessage } from './api';
 
 export const createUser = async (userData) => {
-  const response = await fetch(`${API_URL}/auth/register`, {
+  const response = await apiFetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ first_name: userData.nombre, last_name: userData.apellido, email: userData.email, password: userData.password }),
@@ -16,12 +16,12 @@ export const createUser = async (userData) => {
 };
 
 export const getUser = async (userId) => {
-  const response = await fetch(`${API_URL}/users/me`, { headers: authHeaders() });
+  const response = await apiFetch(`${API_URL}/users/me`, { headers: authHeaders() });
   return await response.json();
 };
 
 export const updateUser = async (viejoUsuario,userData) => {
-  const response = await fetch(`${API_URL}/users/me`, {
+  const response = await apiFetch(`${API_URL}/users/me`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify({ first_name: userData.nombre, last_name: userData.apellido, email: userData.email, password: userData.password || undefined }),
@@ -34,7 +34,7 @@ export const deleteUser = async (userId) => {
 };
 
 export const updateUserRole = async (userId, updates) => {
-  const response = await fetch(`${API_URL}/admin/users/${userId}`, {
+  const response = await apiFetch(`${API_URL}/admin/users/${userId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(updates),
@@ -47,7 +47,7 @@ export const updateUserRole = async (userId, updates) => {
 };
 
 export const getAllUsers = async () => {
-  const response = await fetch(`${API_URL}/admin/users`, { headers: authHeaders() });
+  const response = await apiFetch(`${API_URL}/admin/users`, { headers: authHeaders() });
   const users = await response.json();
   if (!response.ok) {
     throw new Error(extractErrorMessage(users, 'Error al obtener los usuarios'));

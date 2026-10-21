@@ -65,8 +65,11 @@ def find_agent(ctx: AgentContext, query: str) -> dict:
             "estado": "sin_coincidencias",
             "consulta": query,
             "mensaje": "No aparece en la lista vigente. Puede deberse a un dato mal capturado, así que no concluyas que la "
-            "persona no es policía. Recomienda: pedirle que se identifique con nombre y número de placa, no entregar "
-            "documentos si no hay boleta, verificar en la SSC y, si hay abuso, denunciar ante Asuntos Internos de la SSC.",
+            "persona no es policía. Recomienda: pedirle que se identifique con nombre y número de placa; los documentos "
+            "(licencia, tarjeta de circulación, póliza) solo se entregan para su revisión y el agente debe devolverlos "
+            "(Reglamento de Tránsito, art. 59, fr. II, incisos e y h), así que no permitir que se los queden; el "
+            "Reglamento prevé que un agente no autorizado pida el apoyo de uno autorizado (art. 59, fr. II, inciso b); "
+            "verificar en la SSC y, si hay abuso, denunciar ante Asuntos Internos de la SSC.",
             "fuente": source,
         }
     return {

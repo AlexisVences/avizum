@@ -61,6 +61,16 @@ def client():
 
 
 @pytest.fixture(autouse=True)
+def fresh_rate_limits():
+    """The limiter is process-wide state; each test starts with empty counters."""
+    from app.core.rate_limit import limiter
+
+    limiter.reset()
+    yield
+    limiter.reset()
+
+
+@pytest.fixture(autouse=True)
 def no_real_llm(monkeypatch):
     """The test environment reads backend/.env, which holds a real OpenAI key. Make it impossible for any test to
     build the real agent through the API: tests that need one install a fake via dependency_overrides."""

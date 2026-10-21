@@ -19,3 +19,12 @@ export const extractErrorMessage = (data, fallback) => {
   }
   return fallback;
 };
+
+// fetch() rejects with the browser's own English text ("Failed to fetch") when the server is unreachable.
+export const apiFetch = async (...args) => {
+  try {
+    return await fetch(...args);
+  } catch (error) {
+    throw new Error('No pudimos conectar con el servidor. Revisa tu conexión e intenta de nuevo.');
+  }
+};

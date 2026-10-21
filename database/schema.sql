@@ -1,13 +1,8 @@
--- Generated from the Alembic migrations with:
---   docker compose exec -T db pg_dump -U avizum -d avizum --schema-only --no-owner --no-privileges
--- Alembic (backend/migrations) is the source of truth; regenerate this file after each migration.
--- Head at generation time: 20261015_08
-
 --
 -- PostgreSQL database dump
 --
 
-\restrict fjtLQbxr6Y9jW8CKtgfMtoQtkRM3neKobie3NZo0GMbd3opMzZxlubyDcQfQzyZ
+\restrict V8b1UegtLxA7EvJca3r9XCP60X8qUCI3u5JomcBXgwHbiEcwSu03gP0T7unWV2b
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -310,6 +305,9 @@ CREATE TABLE public.legal_sanctions (
     reviewed_by character varying(100),
     reviewed_at timestamp with time zone,
     applies_to text,
+    lead_text text,
+    points_mode character varying(30),
+    context_text text,
     CONSTRAINT ck_legal_sanctions_chunk_hash_len CHECK ((char_length((chunk_hash)::text) = 64)),
     CONSTRAINT ck_legal_sanctions_points_license CHECK (((points_license IS NULL) OR (points_license >= 0))),
     CONSTRAINT ck_legal_sanctions_points_plate CHECK (((points_plate IS NULL) OR (points_plate >= 0))),
@@ -456,11 +454,14 @@ CREATE TABLE public.users (
     first_name character varying(100) NOT NULL,
     last_name character varying(100) NOT NULL,
     email character varying(255) NOT NULL,
-    password_hash character varying(255) NOT NULL,
+    password_hash character varying(255),
     role public.user_role DEFAULT 'user'::public.user_role NOT NULL,
     is_active boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    google_sub character varying(64),
+    email_verified_at timestamp with time zone,
+    token_version integer DEFAULT 0 NOT NULL
 );
 
 
@@ -652,6 +653,14 @@ ALTER TABLE ONLY public.official_sources
 
 
 --
+-- Name: users uq_users_google_sub; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT uq_users_google_sub UNIQUE (google_sub);
+
+
+--
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -840,5 +849,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fjtLQbxr6Y9jW8CKtgfMtoQtkRM3neKobie3NZo0GMbd3opMzZxlubyDcQfQzyZ
+\unrestrict V8b1UegtLxA7EvJca3r9XCP60X8qUCI3u5JomcBXgwHbiEcwSu03gP0T7unWV2b
 

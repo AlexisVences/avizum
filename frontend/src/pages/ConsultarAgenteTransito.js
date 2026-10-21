@@ -54,6 +54,7 @@ const ConsultarAgenteTransito = () => {
                                     type="text"
                                     placeholder="Placa o nombre"
                                     aria-label="Placa o nombre del agente"
+                                    maxLength={100}
                                     value={consulta}
                                     onChange={(e) => setConsulta(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleBuscarAgente()}

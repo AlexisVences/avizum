@@ -42,10 +42,10 @@ describe('MessageContent', () => {
     expect(container.querySelector('a[href^="javascript"]')).toBeNull();
   });
 
-  test('an ordinary link opens in a new tab without leaking the opener', () => {
-    render(<MessageContent content="Consulta [la SSC](https://www.ssc.cdmx.gob.mx)." />);
-    const link = screen.getByRole('link', { name: 'la SSC' });
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link.getAttribute('rel')).toContain('noreferrer');
+  test('a link the model writes is shown as plain text, never as a link or an image', () => {
+    const { container } = render(<MessageContent content="Entra a [la SSC](https://phish.example/login) ![x](https://evil.example/p.png)." />);
+    expect(screen.getByText(/la SSC/)).toBeInTheDocument();
+    expect(container.querySelector('a')).toBeNull();
+    expect(container.querySelector('img')).toBeNull();
   });
 });

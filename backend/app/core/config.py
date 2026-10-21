@@ -9,10 +9,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     database_url: str = "postgresql+psycopg://localhost/avizum"
+    environment: str = "development"  # "production" turns the startup checks below into hard failures
     jwt_secret_key: str = "development-only-change-me"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     cors_origins: str = "http://localhost:3000"
+    # Set only behind a reverse proxy you control (it must overwrite X-Forwarded-For); otherwise anyone could forge it.
+    trust_proxy_headers: bool = False
+    google_client_id: str | None = None  # OAuth client ID (public) of the web app; unset disables Google sign-in
     openai_api_key: SecretStr | None = None
     openai_embedding_model: str = "text-embedding-3-small"
     openai_chat_model: str = "gpt-5-mini"
@@ -30,6 +34,14 @@ class Settings(BaseSettings):
     uma_valid_from: date = date(2026, 2, 1)
     uma_valid_until: date = date(2027, 1, 31)
     uma_source: str = "INEGI, publicada en el DOF el 9 de enero de 2026 (https://www.inegi.org.mx/temas/uma/)"
+
+    def production_problems(self) -> list[str]:
+        problems = []
+        if self.jwt_secret_key == "development-only-change-me" or len(self.jwt_secret_key) < 32:
+            problems.append("JWT_SECRET_KEY must be a random value of at least 32 characters")
+        if any("localhost" in origin for origin in self.cors_origin_list):
+            problems.append("CORS_ORIGINS still allows localhost")
+        return problems
 
     @property
     def cors_origin_list(self) -> list[str]:

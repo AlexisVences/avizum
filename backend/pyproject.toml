@@ -6,7 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
   "alembic>=1.14",
   "email-validator>=2.2",
-  "fastapi>=0.115,<0.116",
+  "fastapi>=0.115,<1",
   "psycopg[binary]>=3.2",
   "pydantic-settings>=2.6",
   "PyJWT>=2.10",
@@ -16,6 +16,8 @@ dependencies = [
   "pgvector>=0.5.1",
   "langchain-openai>=1.7.0",
   "langchain>=1.4.4",
+  "google-auth>=2.62.0",
+  "requests>=2.34.2",
 ]
 
 [dependency-groups]

@@ -1,35 +1,26 @@
 """Download official sources listed in data/sources.json and register their current versions.
 
-TLS is always verified against the system/certifi roots. The Consejería server omits its Let's
-Encrypt chain (YR2 → ISRG Root YR), so scripts/certs ships those two public certificates as
-intermediates; partial-chain trust is disabled, so every connection must still end at ISRG Root X1.
+TLS and redirect rules live in app.services.source_http.
 """
 import argparse
 import ssl
 import sys
-import urllib.request
 from pathlib import Path
 
 from app.db.session import SessionLocal
+from app.services.source_http import MAX_PDF_BYTES, http_get, ssl_context
 from app.services.sources import SourceSpec, load_manifest, local_path, register_source, sha256_of
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "data" / "sources.json"
 SOURCES_DIR = REPO_ROOT / "data" / "legal-sources"
-EXTRA_CHAIN = Path(__file__).resolve().parent / "certs" / "lets-encrypt-yr2-chain.pem"
-
-
-def ssl_context() -> ssl.SSLContext:
-    context = ssl.create_default_context()
-    context.verify_flags &= ~ssl.VERIFY_X509_PARTIAL_CHAIN
-    context.load_verify_locations(cafile=str(EXTRA_CHAIN))
-    return context
 
 
 def download(spec: SourceSpec, dest: Path, context: ssl.SSLContext) -> None:
-    request = urllib.request.Request(spec.url, headers={"User-Agent": "Avizum source sync"})
-    with urllib.request.urlopen(request, context=context, timeout=300) as response:
-        data = response.read()
+    try:
+        data = http_get(spec.url, max_bytes=MAX_PDF_BYTES, timeout=300, context=context)
+    except ValueError as exc:
+        raise ValueError(f"{spec.slug}: {exc}") from exc
     if not data.startswith(b"%PDF"):
         raise ValueError(f"{spec.slug}: la respuesta no es un PDF")
     tmp = dest.with_suffix(".part")

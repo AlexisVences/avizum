@@ -26,9 +26,16 @@ class User(Timestamped, Base):
     first_name: Mapped[str] = mapped_column(String(100))
     last_name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    password_hash: Mapped[str] = mapped_column(String(255))
+    password_hash: Mapped[str | None] = mapped_column(String(255))  # None: the account only signs in with Google
+    google_sub: Mapped[str | None] = mapped_column(String(64), unique=True)
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    token_version: Mapped[int] = mapped_column(default=0, server_default="0", nullable=False)  # bump to revoke every issued token
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role", values_callable=lambda e: [m.value for m in e]), default=UserRole.USER, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+
+    @property
+    def email_verified(self) -> bool:
+        return self.email_verified_at is not None
 
 
 class AuthorizationType(str, enum.Enum):

@@ -7,8 +7,8 @@ import SloganAnimado from '../components/SloganAnimado';
 import infraccionimage from '../assets/infraccion.png';
 import { buscarAgentes } from '../services/agentesService';
 import ResultadoBusquedaAgentes from '../components/agentes/ResultadoBusquedaAgentes';
+import marcoJuridico from '../content/guia/articulos/marco-juridico.json';
 
-const AGENTES_OFICIAL_URL = 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/Acuerdo%2030-26.pdf';
 
 const OFRECEMOS = [
     {
@@ -33,13 +33,8 @@ const OFRECEMOS = [
     },
 ];
 
-const DOCUMENTOS = [
-    { label: 'Reglamento de Tránsito de la CDMX', href: 'https://www.ssc.cdmx.gob.mx/storage/app/media/Transito/Actualizaciones/reglamento-de-transito-cdmx.pdf' },
-    { label: 'Ley de Movilidad de la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_MOVILIDAD_DE_LA_CDMX_3.2.pdf' },
-    { label: 'Ley de cultura cívica en la CDMX', href: 'https://www.congresocdmx.gob.mx/media/documentos/49a0a80ee030f12d0f797c671da2918e508f30cb.pdf' },
-    { label: 'Ley de procedimiento administrativo en la CDMX', href: 'https://data.consejeria.cdmx.gob.mx/images/leyes/leyes/LEY_DE_PROCEDIMIENTO_ADMINISTRATIVO_DE_LA_CDMX_1.1.pdf' },
-    { label: 'Acuerdo 30/2026: personal autorizado para infraccionar en la CDMX (Gaceta Oficial, 10-jun-2026)', href: AGENTES_OFICIAL_URL },
-];
+// Same list as the Marco jurídico guide page, so the landing page and the assistant's sources never drift apart.
+const DOCUMENTOS = marcoJuridico.documentos.map((doc) => ({ label: doc.titulo, href: doc.url }));
 
 const Home = () => {
     const [placa, setPlaca] = useState('');
@@ -94,6 +89,7 @@ const Home = () => {
                                     type="text"
                                     placeholder="Placa o nombre"
                                     aria-label="Placa o nombre del agente"
+                                    maxLength={100}
                                     value={placa}
                                     onChange={(e) => setPlaca(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && verificarAgente()}

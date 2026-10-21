@@ -1,0 +1,76 @@
+name: Vigilar fuentes oficiales
+
+# Una vez al día (07:00 de la Ciudad de México = 13:00 UTC) y a demanda desde la pestaña Actions.
+# Si una fuente cambió, abre un Issue por cambio (GitHub te avisa por correo y en la app).
+# Si la vigilancia misma falla (el índice cambió de formato, no hay red), el job falla y GitHub avisa también.
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: watch-sources
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+
+      - name: Instalar dependencias
+        run: uv sync --frozen
+
+      - name: Revisar las fuentes
+        id: check
+        run: |
+          set +e
+          uv run python -m scripts.sources check --report-file "$RUNNER_TEMP/report.md" --findings-file "$RUNNER_TEMP/findings.json"
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          # 0 = sin cambios, 2 = hay cambios (se reportan abajo), cualquier otro valor = falló la vigilancia
+          if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then exit "$code"; fi
+
+      - name: Abrir un Issue por cada cambio nuevo
+        if: steps.check.outputs.code == '2'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create fuentes --description "Cambio en una fuente oficial" --color B60205 2>/dev/null || true
+          jq -c '.[]' "$RUNNER_TEMP/findings.json" | while read -r finding; do
+            slug=$(jq -r '.slug' <<<"$finding")
+            kind=$(jq -r '.kind' <<<"$finding")
+            detail=$(jq -r '.detail' <<<"$finding")
+            url=$(jq -r '.new_url // empty' <<<"$finding")
+            fp=$(jq -r '.fingerprint' <<<"$finding")
+            # El mismo cambio no genera un Issue nuevo cada día mientras siga sin atenderse.
+            if [ -n "$(gh issue list --label fuentes --state all --search "Huella $fp in:body" --json number --jq '.[0].number')" ]; then
+              echo "Ya existe un Issue para $slug ($fp)"
+              continue
+            fi
+            {
+              echo "**$slug** · \`$kind\`"
+              echo
+              echo "$detail"
+              if [ -n "$url" ]; then echo; echo "Nueva versión: $url"; fi
+              echo
+              echo "**Qué hacer**"
+              echo "1. Revisa el cambio en la fuente oficial."
+              echo "2. \`cd backend && uv run python -m scripts.fetch_sources --only $slug --refresh\` y luego \`uv run python -m scripts.ingest_sources --only $slug\`."
+              echo "3. Revisa las sanciones que queden \`stale\` (\`scripts.sanctions\`) y los artículos de la guía que citen este documento."
+              echo "4. \`uv run python -m scripts.sources accept $slug\`, y haz commit de \`data/sources.json\` y \`data/watch-state.json\`."
+              echo
+              echo "Huella $fp"
+            } > "$RUNNER_TEMP/body.md"
+            gh issue create --label fuentes --title "[Fuente] $slug: $kind" --body-file "$RUNNER_TEMP/body.md"
+          done

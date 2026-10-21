@@ -50,11 +50,9 @@ export default function MessageContent({ content, citations = [], streaming = fa
             </sup>
           );
         }
-        return (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="tw-text-azul tw-underline">
-            {children}
-          </a>
-        );
+        // The only links an answer may have are citations (built by the backend from the official documents).
+        // Any other link the model writes is shown as plain text, so an answer cannot send anyone elsewhere.
+        return <span>{children}</span>;
       },
     };
   }, [citations]);

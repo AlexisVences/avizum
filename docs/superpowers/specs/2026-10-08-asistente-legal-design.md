@@ -405,3 +405,13 @@ Problemas preexistentes detectados y **no** corregidos (no son de la Fase 0):
 - Autorizar Context7 (OAuth) para consultar la documentación de LangChain v1, OpenAI SDK y pgvector en las Fases 1 y 2.
 
 **Forma de trabajo acordada:** responder en español; postura crítica de ingeniero senior; ejecución en línea (`superpowers:executing-plans`) con TDD y una revisión final independiente por fase.
+
+### Fase 5 — paso 2: límites y abuso (2026-10-20)
+
+- `app/core/rate_limit.py`: ventana deslizante en memoria (un solo proceso; con varios procesos habría que mover los contadores a la base o a Redis detrás de la misma interfaz). Login: 10/min por dirección y 10 por 15 min por cuenta; registro: 5/hora por dirección; `GET /agents/search`: 30/min por dirección. Responde 429 con `Retry-After`. `X-Forwarded-For` solo se confía con `TRUST_PROXY_HEADERS=true`.
+- `ENVIRONMENT=production` hace que la app no arranque con el secreto JWT de desarrollo (o de menos de 32 caracteres) ni con CORS a localhost.
+- Pendientes de la Fase 0: (1) límite de consultas: hecho. (3) `agent_lookups.agent_id` solo se guarda con coincidencia exacta por placa: hecho. (4) error crudo del navegador: `apiFetch` lo traduce a español: hecho. (6) `fetch_sources`: solo https (también en redirecciones), tope de 100 MB y docstring corregido: hecho. (7) `maxLength={100}` en los buscadores de agente: hecho. (2) índice trigram y (5) líneas de continuación del parser: se dejan, sin impacto con el tamaño y el PDF actuales.
+
+### Fase 5 — inicio de sesión con Google (2026-10-20)
+
+`POST /auth/google {credential}`: el navegador obtiene un ID token firmado de Google Identity Services y el backend lo verifica con `google-auth` (firma, emisor, audiencia = `GOOGLE_CLIENT_ID`, vigencia) y exige `email_verified`. Cuentas: por `google_sub`; si no existe pero el correo sí, se vincula; si ese correo estaba registrado con contraseña **sin verificar**, la contraseña se borra (evita que quien registró primero un correo ajeno conserve acceso). Cuentas nuevas nacen verificadas y sin contraseña (`password_hash` nullable, migración `20261020_11`). Cambiar el correo en el perfil borra la verificación. Sin `GOOGLE_CLIENT_ID` el endpoint responde 503 y el botón no se muestra. Pendiente: exigir correo verificado para usar el chat (requiere verificación por correo para las cuentas con contraseña).
