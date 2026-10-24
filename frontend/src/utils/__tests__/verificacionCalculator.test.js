@@ -1,9 +1,9 @@
 import { obtenerPeriodoVerificacion } from '../verificacionCalculator';
 
 const calendarioFixture = [
-    { digitos: [0, 1], periodo: 'Noviembre-Diciembre', color: 'Verde' },
-    { digitos: [5, 6], periodo: 'Enero-Febrero', color: 'Amarillo' },
-    { digitos: [7, 8], periodo: 'Marzo-Abril', color: 'Rosa' },
+    { digitos: [0, 1], color: 'Verde', periodos: ['Abril-Mayo', 'Octubre-Noviembre'] },
+    { digitos: [5, 6], color: 'Amarillo', periodos: ['Enero-Febrero', 'Julio-Agosto'] },
+    { digitos: [7, 8], color: 'Rosa', periodos: ['Febrero-Marzo', 'Agosto-Septiembre'] },
 ];
 
 describe('obtenerPeriodoVerificacion', () => {

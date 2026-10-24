@@ -169,6 +169,54 @@ def parse_sections(pages: list[str], doc_title: str, first_page: int = 1) -> lis
     return sections
 
 
+CHAPTER_TITLE_RE = re.compile(r"^(\d{1,2})\.\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ0-9 ,;:()“”\"'/.\-–]*)$")  # "5. CALENDARIO PARA…"; "5.1.9." or "1. Haber…" are not
+
+
+def parse_chapters(pages: list[str], doc_title: str, first_page: int = 1) -> list[ParsedArticle]:
+    """Like `parse_articles` for programs organised in numbered chapters ("5. CALENDARIO…") with numerals inside.
+
+    The chapter is the unit, so its inner numerals (5.1.9.) stay in the text for the answer to cite; the chunker splits
+    long chapters by size. A chapter is an uppercase title with a number above the previous one, so "1. Haber obtenido…" list
+    items and cross-references stay part of the text. A title printed over two lines is joined.
+    """
+    running_headers = _running_headers(pages)
+    last_number = 0
+    collecting_title = False
+    current: dict | None = None
+    chapters: list[ParsedArticle] = []
+
+    def close() -> None:
+        if current:
+            chapters.append(ParsedArticle(current["id"], current["path"], tuple(current["lines"]), tuple(current["pages"])))
+
+    for page_number, page in enumerate(pages, start=first_page):
+        for line in (raw.strip() for raw in page.splitlines()):
+            if not line or line in running_headers or line.isdigit():
+                continue
+            if TRANSITORIOS_RE.match(line):
+                close()
+                return chapters
+            heading = CHAPTER_TITLE_RE.match(line)
+            if heading and int(heading.group(1)) > last_number:
+                close()
+                last_number = int(heading.group(1))
+                current = {"id": heading.group(1), "title": [heading.group(2)], "lines": [line], "pages": [page_number]}
+                current["path"] = f"{doc_title} › {last_number} {_sentence_case(heading.group(2))}"
+                collecting_title = True
+                continue
+            if not current:
+                continue
+            if collecting_title and line.isupper() and not re.match(r"^\d", line):
+                current["title"].append(line)  # the title wraps onto this line
+                current["path"] = f"{doc_title} › {last_number} {_sentence_case(' '.join(current['title']))}"
+            else:
+                collecting_title = False
+            current["lines"].append(line)
+            current["pages"].append(page_number)
+    close()
+    return chapters
+
+
 def parse_pdf(path: Path, doc_title: str, layout: str = "articles", pages: tuple[int, int] | None = None) -> list[ParsedArticle]:
     """`pages` is an inclusive 1-based range (e.g. to skip a table of contents); page numbers stay absolute."""
     import pymupdf
@@ -176,5 +224,5 @@ def parse_pdf(path: Path, doc_title: str, layout: str = "articles", pages: tuple
     with pymupdf.open(path) as doc:
         first, last = pages or (1, doc.page_count)
         texts = [doc[i].get_text() for i in range(first - 1, last)]
-    parse = parse_sections if layout == "sections" else parse_articles
+    parse = {"sections": parse_sections, "chapters": parse_chapters}.get(layout, parse_articles)
     return parse(texts, doc_title, first_page=first)

@@ -42,14 +42,6 @@ export function getHerramientas(herramientas = herramientasData) {
     return herramientas.filter((herramienta) => herramienta.published);
 }
 
-export function getHerramientaPorSlug(slug, herramientas = herramientasData) {
-    // Unlike articles, a tool is safe to reach directly even while unpublished:
-    // the UI always falls back to a "sin datos oficiales todavía" state (see
-    // UmaCalculadora/VerificacionCalculadora in Task 6) — it never shows a
-    // fabricated number, so there's no fabrication risk in exposing the route.
-    return herramientas.find((herramienta) => herramienta.slug === slug) || null;
-}
-
 export function buscarEnGuia(query, categorias = categoriasData, articulos = cargarArticulos()) {
     const normalizada = normalizar(query);
     const categoriasPublicadas = getCategoriasPublicadas(categorias);

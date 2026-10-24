@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Avisolegal from "./pages/AvisoLegal"
 import AcercaDe from "./pages/AcercaDe";
@@ -16,7 +16,6 @@ import Estadisticas from "./pages/Estadisticas"
 import ConsultarAgenteTransito from "./pages/ConsultarAgenteTransito"
 import GuiaArticulo from "./pages/GuiaArticulo"
 import GuiaCategoria from "./pages/GuiaCategoria"
-import GuiaCalculadora from "./pages/GuiaCalculadora"
 import RutaProtegida from "./services/rutaProtegida";
 
 function App() {
@@ -39,7 +38,8 @@ function App() {
             <Route path="/AdministrarUsuario" element={<RutaProtegida> <AdministrarUsuario /> </RutaProtegida>} />
             <Route path="/Estadisticas" element={ <Estadisticas /> } />
             <Route path="/ConsultarAgenteTransito" element={<ConsultarAgenteTransito />} />
-            <Route path="/guia/calculadoras/:herramientaSlug" element={<RutaProtegida> <GuiaCalculadora /> </RutaProtegida>} />
+            <Route path="/guia/calculadoras" element={<Navigate to="/Bienvenida#calculadoras" replace />} />
+            <Route path="/guia/calculadoras/:herramientaSlug" element={<Navigate to="/Bienvenida#calculadoras" replace />} />
             <Route path="/guia/:categoriaSlug/:articuloSlug" element={<RutaProtegida> <GuiaArticulo /> </RutaProtegida>} />
             <Route path="/guia/:categoriaSlug" element={<RutaProtegida> <GuiaCategoria /> </RutaProtegida>} />
           </Routes>

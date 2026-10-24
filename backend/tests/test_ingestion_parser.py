@@ -100,3 +100,38 @@ def test_sections_are_numbered_headings_with_chapter_context_and_pages():
 def test_a_line_that_starts_with_an_earlier_section_number_is_a_reference_not_a_heading():
     sections = parse_sections(PROTOCOL + FILLER, "Protocolo")
     assert "4.4 de este protocolo no aplica aquí." in sections[1].lines
+
+
+from app.services.ingestion.parser import parse_chapters
+
+PROGRAMA = [
+    "GACETA OFICIAL DE LA CIUDAD DE MÉXICO\n1. OBJETIVOS DEL PROGRAMA\nEstablecer el calendario.\n"
+    "5. CALENDARIO PARA REALIZAR LA VERIFICACIÓN\n5.1. Cada semestre se verifica.\n",
+    "GACETA OFICIAL DE LA CIUDAD DE MÉXICO\n18\n5.1.9. Se podrá ampliar el período por 15 días en estos supuestos:\n"
+    "1. Haber obtenido un rechazo en los últimos siete días.\n2. Que el portal no refleje un pago.\n"
+    "10. VERIFICACIÓN EXTEMPORÁNEA\nPagar 20 veces la UMA.\n",
+    "GACETA OFICIAL DE LA CIUDAD DE MÉXICO\n19. TRÁMITES Y SERVICIOS RELACIONADOS CON LA\nOPERACIÓN DEL PROGRAMA\n"
+    "Trámites digitales.\nTRANSITORIO\nPRIMERO.- Publíquese.\n",
+]
+PROGRAMA_FILLER = ["GACETA OFICIAL DE LA CIUDAD DE MÉXICO\nRelleno\n"] * 9
+
+
+def test_chapters_are_uppercase_numbered_headings_and_keep_the_numerals_inside_them():
+    chapters = parse_chapters(PROGRAMA + PROGRAMA_FILLER, "Programa")
+    assert [c.article for c in chapters] == ["1", "5", "10", "19"]
+    calendario = chapters[1]
+    assert calendario.heading_path == "Programa › 5 Calendario para realizar la verificación"
+    assert (calendario.page_start, calendario.page_end) == (1, 2)
+    assert "5.1.9. Se podrá ampliar el período por 15 días en estos supuestos:" in calendario.lines
+    assert "GACETA OFICIAL" not in calendario.text
+
+
+def test_a_numbered_list_item_is_not_a_chapter_and_a_wrapped_title_is_joined():
+    chapters = parse_chapters(PROGRAMA + PROGRAMA_FILLER, "Programa")
+    assert "1. Haber obtenido un rechazo en los últimos siete días." in chapters[1].lines
+    assert chapters[3].heading_path == "Programa › 19 Trámites y servicios relacionados con la operación del programa"
+
+
+def test_chapters_stop_at_the_transitorio():
+    chapters = parse_chapters(PROGRAMA + PROGRAMA_FILLER, "Programa")
+    assert "Publíquese" not in chapters[-1].text and "TRANSITORIO" not in chapters[-1].text

@@ -101,3 +101,9 @@ def test_reverting_to_previous_file_reactivates_that_version(client):
         assert back.id == old.id
         currents = db.scalars(select(OfficialSource).where(OfficialSource.is_current)).all()
         assert [s.sha256 for s in currents] == ["a" * 64]
+
+
+def test_load_manifest_accepts_programs_laid_out_in_chapters(tmp_path):
+    [spec] = load_manifest(write_manifest(tmp_path, [entry(slug="programa-verificacion-vehicular", kind="programa",
+                                                           layout="chapters", articles=["5", "10"])]))
+    assert (spec.kind, spec.layout, spec.articles) == ("programa", "chapters", ("5", "10"))
