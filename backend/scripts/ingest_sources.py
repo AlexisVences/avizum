@@ -17,7 +17,7 @@ from app.services.ingestion.pipeline import ingest_articles
 from app.services.sources import load_manifest, local_path, sha256_of
 from scripts.fetch_sources import MANIFEST, SOURCES_DIR
 
-INGESTIBLE_KINDS = {"ley", "reglamento", "codigo", "protocolo"}  # acuerdos feed the agents registry, not the RAG
+INGESTIBLE_KINDS = {"ley", "reglamento", "codigo", "protocolo", "programa"}  # acuerdos feed the agents registry, not the RAG
 SANCTION_SLUGS = {"reglamento-transito"}  # sources with structured sanctions (plan 2026-10-15-sanciones-estructuradas)
 
 

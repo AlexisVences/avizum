@@ -11,8 +11,8 @@ from sqlalchemy.orm import Session
 
 from app.models.domain import OfficialSource
 
-KINDS = {"ley", "reglamento", "codigo", "acuerdo", "decreto", "guia", "protocolo"}
-LAYOUTS = {"articles", "sections"}
+KINDS = {"ley", "reglamento", "codigo", "acuerdo", "decreto", "guia", "protocolo", "programa"}
+LAYOUTS = {"articles", "sections", "chapters"}
 SLUG_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 
 
@@ -27,7 +27,7 @@ class SourceSpec:
     expected_counts: dict[str, int] | None = None
     pages: tuple[int, int] | None = None
     articles: tuple[str, ...] | None = None  # index only these articles/sections (e.g. the fee articles of a huge code)
-    layout: str = "articles"  # "sections" for documents numbered 4.5, 4.6… instead of "Artículo N"
+    layout: str = "articles"  # "sections" for documents numbered 4.5, 4.6…, "chapters" for "5. TÍTULO" programs, instead of "Artículo N"
 
 
 def _parse_entry(raw: dict) -> SourceSpec:

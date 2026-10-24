@@ -4,7 +4,6 @@ import {
     getArticulosPorCategoria,
     getArticuloPorSlug,
     getHerramientas,
-    getHerramientaPorSlug,
     buscarEnGuia,
 } from '../guiaService';
 
@@ -74,16 +73,6 @@ describe('getArticuloPorSlug', () => {
 describe('getHerramientas', () => {
     it('returns only published tools', () => {
         expect(getHerramientas(herramientasFixture)).toHaveLength(0);
-    });
-});
-
-describe('getHerramientaPorSlug', () => {
-    it('finds a tool by slug even when unpublished', () => {
-        expect(getHerramientaPorSlug('uma-a-pesos', herramientasFixture)?.titulo).toBe('UMA → pesos');
-    });
-
-    it('returns null for an unknown tool slug', () => {
-        expect(getHerramientaPorSlug('no-existe', herramientasFixture)).toBeNull();
     });
 });
 

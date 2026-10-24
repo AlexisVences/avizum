@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import NavBar2 from '../components/NavBar2';
 import Footer from '../components/Footer';
-import { getCategoriaPorSlug, getArticulosPorCategoria, getHerramientas } from '../services/guiaService';
+import { getCategoriaPorSlug, getArticulosPorCategoria } from '../services/guiaService';
 import ArticuloContenido from '../components/guia/ArticuloContenido';
 
 const GuiaCategoria = () => {
@@ -29,14 +29,12 @@ const GuiaCategoria = () => {
         );
     }
 
-    const esCalculadoras = categoria.slug === 'calculadoras';
-    const items = esCalculadoras ? getHerramientas() : getArticulosPorCategoria(categoriaSlug);
+    const items = getArticulosPorCategoria(categoriaSlug);
 
     // Con un solo artículo, listar-para-hacer-clic-en-lo-único-que-hay es un
     // salto innecesario: se muestra el contenido aquí mismo. Con 2+ artículos
-    // (o en la categoría de calculadoras, que no son artículos) sí hace falta
-    // la lista de abajo.
-    if (!esCalculadoras && items.length === 1) {
+    // sí hace falta la lista de abajo.
+    if (items.length === 1) {
         return (
             <>
                 <NavBar2 />
@@ -70,15 +68,15 @@ const GuiaCategoria = () => {
                         {items.map((item) => (
                             <li key={item.slug}>
                                 <Link
-                                    to={esCalculadoras ? `/guia/calculadoras/${item.slug}` : `/guia/${categoriaSlug}/${item.slug}`}
+                                    to={`/guia/${categoriaSlug}/${item.slug}`}
                                     className="tw-block tw-border tw-border-rule tw-rounded tw-px-4 tw-py-3.5 tw-no-underline tw-text-inherit hover:tw-bg-paper tw-transition-colors"
                                 >
                                     <span className="tw-block tw-text-ink tw-font-semibold tw-text-sm">
                                         {item.titulo}
                                     </span>
-                                    {(item.resumen || item.descripcion) && (
+                                    {item.resumen && (
                                         <span className="tw-block tw-text-ink-soft tw-text-sm tw-mt-1">
-                                            {item.resumen || item.descripcion}
+                                            {item.resumen}
                                         </span>
                                     )}
                                 </Link>

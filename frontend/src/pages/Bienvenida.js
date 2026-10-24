@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import NavBar2 from "../components/NavBar2";
 import Footer from "../components/Footer";
 import authService from "../services/authService";
@@ -6,6 +6,7 @@ import { buscarEnGuia } from "../services/guiaService";
 import BuscadorGuia from "../components/guia/BuscadorGuia";
 import FiltroChips from "../components/guia/FiltroChips";
 import CategoriaCard from "../components/guia/CategoriaCard";
+import HerramientasRapidas from "../components/guia/HerramientasRapidas";
 import HeroBienvenida from "../components/bienvenida/HeroBienvenida";
 import AccionCard from "../components/bienvenida/AccionCard";
 import Revelar from "../components/bienvenida/Revelar";
@@ -23,12 +24,25 @@ const nombreDeSesion = () => {
 
 const Bienvenida = () => {
     const guiaRef = useRef(null);
+    const calculadorasRef = useRef(null);
     const [busqueda, setBusqueda] = useState('');
     const [bloqueActivo, setBloqueActivo] = useState('Todo');
 
     const categoriasVisibles = buscarEnGuia(busqueda).filter(
         (categoria) => bloqueActivo === 'Todo' || categoria.bloque === bloqueActivo
     );
+
+    const irACalculadoras = () => {
+        if (calculadorasRef.current) calculadorasRef.current.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // Llegar con #calculadoras (p. ej. desde un enlace de la guía) desliza a la
+    // sección; el timeout deja que ScrollTop termine de reiniciar el scroll.
+    useEffect(() => {
+        if (window.location.hash !== '#calculadoras') return undefined;
+        const temporizador = setTimeout(irACalculadoras, 50);
+        return () => clearTimeout(temporizador);
+    }, []);
 
     return (
         <>
@@ -97,12 +111,30 @@ const Bienvenida = () => {
                             <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 md:tw-grid-cols-3 tw-gap-4">
                                 {categoriasVisibles.map((categoria, indice) => (
                                     <Revelar key={categoria.slug} retraso={Math.min(indice, 5) * 0.06}>
-                                        <CategoriaCard categoria={categoria} />
+                                        <CategoriaCard
+                                            categoria={categoria}
+                                            onSeleccionar={categoria.slug === 'calculadoras' ? irACalculadoras : undefined}
+                                        />
                                     </Revelar>
                                 ))}
                             </div>
                         )}
                     </div>
+                </section>
+
+                {/* Herramientas de acceso rápido */}
+                <section id="calculadoras" ref={calculadorasRef} className="tw-bg-gris tw-px-6 tw-py-16 tw-scroll-mt-16">
+                    <Revelar>
+                        <div className="tw-max-w-3xl tw-mx-auto tw-text-center tw-mb-8">
+                            <span className="tw-block tw-font-mono tw-text-[11px] tw-font-bold tw-uppercase tw-tracking-widest tw-text-magenta tw-mb-3">
+                                CÁLCULO · ACCESO RÁPIDO
+                            </span>
+                            <h2 className="tw-font-display tw-text-3xl tw-font-semibold tw-text-ink">
+                                Calculadoras
+                            </h2>
+                        </div>
+                    </Revelar>
+                    <HerramientasRapidas />
                 </section>
             </main>
             <Footer className="tw-pt-0" />
