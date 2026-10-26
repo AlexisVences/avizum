@@ -8,10 +8,10 @@ const SUGGESTIONS = [
   { label: 'Plazo para impugnar una multa', question: '¿Cuánto tiempo tengo para impugnar una multa y ante quién?' },
 ];
 
-// One focus: the question box. The glow (styles/AsesoriaIA.css) sits behind it.
+// One focus: the question box. The CDMX map (CdmxMapBackground) sits behind it.
 export default function EmptyState({ onSend, canSend, draft }) {
   return (
-    <div className="asesoria-glow tw-flex tw-min-h-0 tw-flex-1 tw-flex-col tw-items-center tw-overflow-y-auto">
+    <div className="tw-flex tw-min-h-0 tw-flex-1 tw-flex-col tw-items-center tw-overflow-y-auto">
       <div className="tw-flex tw-w-full tw-flex-1 tw-flex-col tw-items-center tw-justify-center tw-gap-9 tw-px-4 tw-pb-[72px] tw-pt-16 sm:tw-px-6">
         <h1 className="tw-m-0 tw-text-center tw-font-display tw-text-[40px] tw-font-normal tw-leading-[1.05] tw-tracking-[-0.02em] tw-text-ink sm:tw-text-[56px]">
           ¿En qué te <em className="tw-italic">ayudo</em>?

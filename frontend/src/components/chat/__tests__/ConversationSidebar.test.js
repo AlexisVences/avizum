@@ -57,3 +57,11 @@ test('while an answer is generating the list cannot be switched', () => {
   setup({ busy: true });
   expect(screen.getByRole('button', { name: 'Placas en banqueta' })).toBeDisabled();
 });
+
+test('the profile circle is always the brand magenta, whatever the person\'s initial', () => {
+  localStorage.setItem('user', JSON.stringify({ nombre: 'Alexis', apellido: 'Vences' }));
+  render(<ConversationSidebar conversations={[]} activeId={null} busy={false} open onClose={jest.fn()} onSelect={jest.fn()} onNew={jest.fn()} onRename={jest.fn()} onDelete={jest.fn()} />);
+  const circle = screen.getByText('A');
+  expect(circle).toHaveClass('tw-bg-magenta');
+  expect(circle).not.toHaveClass('tw-bg-azul');
+});

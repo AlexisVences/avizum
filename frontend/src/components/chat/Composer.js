@@ -27,7 +27,7 @@ export default function Composer({ onSend, canSend, draft = '', maxChars = 2000,
 
   return (
     <form
-      className={hero ? 'tw-w-full' : 'tw-shrink-0 tw-bg-paper tw-px-4 tw-pb-3 tw-pt-2 sm:tw-px-6'}
+      className={hero ? 'tw-w-full' : 'tw-shrink-0 tw-px-4 tw-pb-3 tw-pt-2 sm:tw-px-6'}
       onSubmit={(event) => {
         event.preventDefault();
         submit();

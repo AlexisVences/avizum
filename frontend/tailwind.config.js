@@ -29,6 +29,10 @@ module.exports = {
           "0%, 100%": { transform: "translate(0, 0) scale(1)" },
           "50%": { transform: "translate(-28px, 20px) scale(1.04)" },
         },
+        "dot-bounce": {
+          "0%, 80%, 100%": { transform: "translateY(0)", opacity: "0.4" },
+          "40%": { transform: "translateY(-6px)", opacity: "1" },
+        },
         "fade-in-up": {
           "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
@@ -36,6 +40,7 @@ module.exports = {
       },
       animation: {
         deriva: "deriva 40s ease-in-out infinite",
+        "dot-bounce": "dot-bounce 1.2s ease-in-out infinite",
         "fade-in-up": "fade-in-up 0.35s ease-out",
       },
     },
