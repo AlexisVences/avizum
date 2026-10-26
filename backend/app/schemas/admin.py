@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, EmailStr
@@ -45,3 +46,35 @@ class AuditRow(BaseModel):
     action: str
     target_user_id: int | None
     detail: dict[str, str | int | bool | None]
+
+
+class AttentionItem(BaseModel):
+    kind: str
+    label: str
+    count: int
+    href: str
+
+
+class DayPoint(BaseModel):
+    date: date
+    questions: int
+
+
+class Overview(BaseModel):
+    days: int
+    since: datetime
+    questions: int
+    active_users: int
+    new_users: int
+    answers_with_error: int
+    error_rate: float | None
+    feedback_up: int
+    feedback_down: int
+    feedback_rate: float | None
+    feedback_rated: int
+    tokens_input: int
+    tokens_output: int
+    cost_usd: Decimal  # serialized as a string so the client never receives a float
+    agent_lookups: int
+    series: list[DayPoint]
+    attention: list[AttentionItem]

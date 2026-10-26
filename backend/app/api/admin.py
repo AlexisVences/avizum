@@ -4,9 +4,12 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.deps import AdminUser, DbSession
 from app.models.domain import User, UserRole
-from app.schemas.admin import AdminUserDelete, AdminUserRow, AdminUserUpdate, AuditRow, Page
+from app.schemas.admin import (
+    AdminUserDelete, AdminUserRow, AdminUserUpdate, AuditRow, Overview, Page,
+)
 from app.schemas.api import UserPublic
 from app.services.admin.audit import AuditAction, list_audit
+from app.services.admin.overview import build_overview
 from app.services.admin.users import AdminRuleError, delete_user, list_users, update_user
 
 router = APIRouter(prefix="/admin")
@@ -73,3 +76,10 @@ def admin_list_audit(
 ) -> Page[AuditRow]:
     items, total = list_audit(db, actor_id=actor_id, action=action, page=page, page_size=page_size)
     return Page[AuditRow](items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/overview", response_model=Overview)
+def admin_overview(
+    _: AdminUser, db: DbSession, days: Literal[7, 30, 90] = 30
+) -> Overview:
+    return build_overview(db, days=days)
