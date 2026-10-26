@@ -35,12 +35,13 @@ def list_users(
     questions = func.coalesce(stats.c.questions_count, 0)
 
     conditions = []
-    if q and q.strip():
-        term = f"%{q.strip()}%"
+    for token in (q or "").split():
+        escaped = token.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = func.immutable_unaccent(f"%{escaped}%")
         conditions.append(
             or_(
                 *(
-                    func.immutable_unaccent(column).ilike(func.immutable_unaccent(term))
+                    func.immutable_unaccent(column).ilike(pattern, escape="\\")
                     for column in (User.first_name, User.last_name, User.email)
                 )
             )
@@ -50,7 +51,8 @@ def list_users(
     if active is not None:
         conditions.append(User.is_active == active)
     if verified is not None:
-        conditions.append(User.email_verified_at.is_not(None) if verified else User.email_verified_at.is_(None))
+        has_verified = User.email_verified_at.is_not(None)
+        conditions.append(has_verified if verified else User.email_verified_at.is_(None))
 
     total = db.scalar(select(func.count()).select_from(User).where(*conditions)) or 0
 

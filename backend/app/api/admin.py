@@ -20,7 +20,7 @@ def admin_list_users(
     verified: bool | None = None,
     sort: Literal["name", "created", "activity", "questions"] = "created",
     descending: bool = True,
-    page: Annotated[int, Query(ge=1)] = 1,
+    page: Annotated[int, Query(ge=1, le=1_000_000)] = 1,
     page_size: Annotated[int, Query(ge=1, le=50)] = 20,
 ) -> Page[AdminUserRow]:
     items, total = list_users(

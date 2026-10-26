@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from app.models.domain import Conversation, Message, MessageRole, User, UserRole
 from tests.admin_support import make_user
@@ -25,10 +25,12 @@ def _messages(factory, user_id, users=0, assistant=0, when=None):
         conv = Conversation(user_id=user_id, title="t")
         db.add(conv)
         db.flush()
-        for i in range(users):
-            db.add(Message(conversation_id=conv.id, role=MessageRole.USER, content="q", created_at=when))
-        for i in range(assistant):
-            db.add(Message(conversation_id=conv.id, role=MessageRole.ASSISTANT, content="a", created_at=when))
+        for _ in range(users):
+            db.add(Message(conversation_id=conv.id, role=MessageRole.USER, content="q",
+                           created_at=when))
+        for _ in range(assistant):
+            db.add(Message(conversation_id=conv.id, role=MessageRole.ASSISTANT, content="a",
+                           created_at=when))
         db.commit()
 
 
@@ -104,13 +106,15 @@ def test_persona_sin_mensajes_tiene_actividad_nula_y_aparece_al_ordenar(client):
     _messages(factory, busy, users=2, assistant=2)
     for sort in ("activity", "questions"):
         for direction in ("true", "false"):
-            data = http.get(URL, params={"sort": sort, "descending": direction}, headers=headers).json()
+            params = {"sort": sort, "descending": direction}
+            data = http.get(URL, params=params, headers=headers).json()
             assert data["total"] == 3
             row = next(r for r in data["items"] if r["id"] == quiet)
             assert row["last_activity_at"] is None
             assert row["questions_count"] == 0
     for direction in ("true", "false"):
-        items = http.get(URL, params={"sort": "activity", "descending": direction}, headers=headers).json()["items"]
+        params = {"sort": "activity", "descending": direction}
+        items = http.get(URL, params=params, headers=headers).json()["items"]
         assert items[0]["id"] == busy
         assert items[-1]["last_activity_at"] is None
 
@@ -122,7 +126,36 @@ def test_ordena_por_preguntas_descendente(client):
     b = _person(factory, "b@example.com")
     _messages(factory, a, users=1, assistant=5)
     _messages(factory, b, users=3)
-    items = http.get(URL, params={"sort": "questions", "descending": "true"}, headers=headers).json()["items"]
+    params = {"sort": "questions", "descending": "true"}
+    items = http.get(URL, params=params, headers=headers).json()["items"]
     assert [r["id"] for r in items][:2] == [b, a]
     assert items[0]["questions_count"] == 3
     assert items[1]["questions_count"] == 1
+
+
+def test_q_trata_porcentaje_y_guion_bajo_como_texto_literal(client):
+    http, factory = client
+    headers = _admin(factory)
+    _person(factory, "plain@example.com")
+    _person(factory, "pct@example.com", first="100%")
+    _person(factory, "und@example.com", last="a_b")
+    items = http.get(URL, params={"q": "%"}, headers=headers).json()["items"]
+    assert [r["email"] for r in items] == ["pct@example.com"]
+    assert http.get(URL, params={"q": "_"}, headers=headers).json()["total"] == 1
+    assert http.get(URL, params={"q": "zzz%"}, headers=headers).json()["total"] == 0
+
+
+def test_page_por_encima_del_tope_responde_422(client):
+    http, factory = client
+    headers = _admin(factory)
+    assert http.get(URL, params={"page": 1_000_001}, headers=headers).status_code == 422
+
+
+def test_q_con_nombre_completo_exige_todas_las_palabras(client):
+    http, factory = client
+    headers = _admin(factory)
+    _person(factory, "maria@example.com", first="María", last="López")
+    _person(factory, "mario@example.com", first="Mario", last="López")
+    data = http.get(URL, params={"q": "maria lopez"}, headers=headers).json()
+    assert [r["email"] for r in data["items"]] == ["maria@example.com"]
+    assert http.get(URL, params={"q": "  maria  zzz "}, headers=headers).json()["total"] == 0
