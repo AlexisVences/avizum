@@ -36,3 +36,12 @@ class AdminUserUpdate(BaseModel):
 
 class AdminUserDelete(BaseModel):
     confirm_email: str
+
+
+class AuditRow(BaseModel):
+    id: int
+    created_at: datetime
+    actor_name: str | None
+    action: str
+    target_user_id: int | None
+    detail: dict

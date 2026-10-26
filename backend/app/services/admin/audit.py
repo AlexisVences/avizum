@@ -1,8 +1,10 @@
 import enum
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models.domain import AdminAuditLog
+from app.models.domain import AdminAuditLog, User
+from app.schemas.admin import AuditRow
 
 FORBIDDEN_DETAIL_KEYS = frozenset({"password", "token", "email", "question", "answer", "content"})
 
@@ -37,3 +39,40 @@ def record_audit(
     db.add(row)
     db.flush()
     return row
+
+
+def list_audit(
+    db: Session,
+    *,
+    actor_id: int | None,
+    action: AuditAction | None,
+    page: int = 1,
+    page_size: int = 20,
+) -> tuple[list[AuditRow], int]:
+    """Audit rows, most recent first (id as tiebreaker); actor_name is null if the actor is gone."""
+    filters = []
+    if actor_id is not None:
+        filters.append(AdminAuditLog.actor_id == actor_id)
+    if action is not None:
+        filters.append(AdminAuditLog.action == action.value)
+    total = db.scalar(select(func.count()).select_from(AdminAuditLog).where(*filters)) or 0
+    stmt = (
+        select(AdminAuditLog, User.first_name, User.last_name)
+        .outerjoin(User, User.id == AdminAuditLog.actor_id)
+        .where(*filters)
+        .order_by(AdminAuditLog.created_at.desc(), AdminAuditLog.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    items = [
+        AuditRow(
+            id=row.id,
+            created_at=row.created_at,
+            actor_name=f"{first} {last}" if first is not None else None,
+            action=row.action,
+            target_user_id=row.target_user_id,
+            detail=row.detail,
+        )
+        for row, first, last in db.execute(stmt)
+    ]
+    return items, total

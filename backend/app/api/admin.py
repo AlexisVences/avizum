@@ -4,8 +4,9 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.deps import AdminUser, DbSession
 from app.models.domain import User, UserRole
-from app.schemas.admin import AdminUserDelete, AdminUserRow, AdminUserUpdate, Page
+from app.schemas.admin import AdminUserDelete, AdminUserRow, AdminUserUpdate, AuditRow, Page
 from app.schemas.api import UserPublic
+from app.services.admin.audit import AuditAction, list_audit
 from app.services.admin.users import AdminRuleError, delete_user, list_users, update_user
 
 router = APIRouter(prefix="/admin")
@@ -59,3 +60,16 @@ def admin_delete_user(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found") from None
     except AdminRuleError as exc:
         raise _rule_conflict(exc) from exc
+
+
+@router.get("/audit", response_model=Page[AuditRow])
+def admin_list_audit(
+    _: AdminUser,
+    db: DbSession,
+    actor_id: int | None = None,
+    action: AuditAction | None = None,
+    page: Annotated[int, Query(ge=1, le=1_000_000)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=50)] = 20,
+) -> Page[AuditRow]:
+    items, total = list_audit(db, actor_id=actor_id, action=action, page=page, page_size=page_size)
+    return Page[AuditRow](items=items, total=total, page=page, page_size=page_size)
