@@ -357,3 +357,28 @@ def test_a_range_has_two_ends_and_no_invented_middle_or_discount(client):
         # the three-level shape still carries the Reglamento rules
         full = calculate_fine(context(db), 10, 15, 20)
         assert set(full["montos"]) == {"minima", "media", "maxima"} and "con_descuento_50" in full and "regla_sancion" in full
+
+
+import pytest
+
+
+@pytest.mark.parametrize("query", ["placa", "nombre del agente", "policía de tránsito", "Karla", "agente"])
+def test_a_word_that_is_not_a_full_name_is_invalid_and_never_searched(client, query):
+    """The model once searched the literal word «placa» and the fuzzy match against a surname made it «verify» an agent."""
+    _, factory = client
+    with factory() as db:
+        add_agent(db, add_agents_source(db), "100", "PLACIDO ZAVALA KARLA")
+        db.commit()
+        result = find_agent(context(db), query)
+        assert result["estado"] == "consulta_invalida"
+        assert "nombre completo" in result["mensaje"]
+        assert db.scalars(select(AgentLookup)).all() == []  # an invalid query leaves no lookup behind
+
+
+def test_a_full_name_and_a_plate_are_still_searched(client):
+    _, factory = client
+    with factory() as db:
+        add_agent(db, add_agents_source(db), "100", "ZAVALA TOBAR KARLA")
+        db.commit()
+        assert find_agent(context(db), "karla zavala")["estado"] == "ok"
+        assert find_agent(context(db), "100")["estado"] == "ok"

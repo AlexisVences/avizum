@@ -39,10 +39,12 @@ class CitationRegistry:
         existing = self._by_chunk.get(hit.chunk_id)
         if existing:
             return existing
-        url = f"{hit.source_url}#page={hit.page_start}" if hit.source_url.startswith("http") else hit.source_url
+        # Only a PDF has pages; a ficha (a transcribed web page) opens the page itself.
+        is_pdf = hit.source_url.startswith("http") and hit.source_url.lower().endswith(".pdf") and hit.page_start > 0
+        url = f"{hit.source_url}#page={hit.page_start}" if is_pdf else hit.source_url
         citation = Citation(
             n=len(self._by_chunk) + 1, chunk_id=hit.chunk_id, source_slug=hit.source_slug, source_title=hit.source_title,
-            article=hit.article, fraction=hit.fraction, page=hit.page_start, url=url,
+            article=hit.article, fraction=hit.fraction, page=hit.page_start or None, url=url,
         )
         self._by_chunk[hit.chunk_id] = citation
         return citation

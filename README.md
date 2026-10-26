@@ -27,7 +27,7 @@ Avizum puts it in one place, in plain Spanish, and never invents an answer. If t
 
 | Feature | Description |
 |---|---|
-| **Legal assistant** | Chat agent over 13 official sources (3,299 indexed passages). Every claim carries a citation that opens the official PDF at the right page. Streams its answer and shows which sources it is consulting. |
+| **Legal assistant** | Chat agent over 32 official sources (3,426 indexed passages). Every claim carries a citation that opens the official PDF at the right page. Streams its answer and shows which sources it is consulting. |
 | **Officer verification** | Look up a badge number or name against the registry of officers authorized to issue fines (Acuerdo 30/2026: 717 street-patrol and 570 camera-system entries, counts validated against the decree). |
 | **Driver's guide** | Ten searchable categories (fines, impound, vehicle procedures, emissions and *Hoy No Circula*, accidents, myths vs. reality), each article citing its source and last update. |
 | **Calculators** | UMA → pesos for fines, and a verification-period finder by license plate. |

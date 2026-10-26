@@ -52,3 +52,19 @@ def test_replace_rebuilds_the_chunks_of_that_source_only(client):
         db.commit()
         assert sorted(c.article for c in db.scalars(select(LegalChunk).where(LegalChunk.source_id == src.id))) == ["5", "6"]
         assert count(db, other) == 1
+
+
+def test_a_smaller_chunk_size_cuts_a_fee_table_into_one_chunk_per_fraction(client):
+    _, factory = client
+    table = ParsedArticle(
+        article="219", heading_path="Tarifas › Art. 219",
+        lines=("Art. 219", "Por los servicios de control vehicular:", "IV. Por reposición de tarjeta $433.00",
+               "V. Por cambio de propietario $433.00", "VI. Por baja de vehículo $590.00"),
+        line_pages=(1, 1, 1, 1, 1),
+    )
+    with factory() as db:
+        src = source(db)
+        assert ingest_articles(db, src, [table], RecordingEmbeddings(), words, max_tokens=12) == 3
+        db.commit()
+        fractions = sorted(c.fraction for c in db.scalars(select(LegalChunk).where(LegalChunk.source_id == src.id)))
+        assert fractions == ["IV", "V", "VI"]

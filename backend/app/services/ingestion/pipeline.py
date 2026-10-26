@@ -16,13 +16,14 @@ def ingest_articles(
     embeddings: Embeddings,
     count_tokens: TokenCounter | None = None,
     replace: bool = False,
+    max_tokens: int | None = None,
 ) -> int:
     """Returns the number of chunks written; 0 when the source already has chunks and `replace` is false."""
     existing = db.scalar(select(func.count()).select_from(LegalChunk).where(LegalChunk.source_id == source.id))
     if existing and not replace:
         return 0
     db.execute(delete(LegalChunk).where(LegalChunk.source_id == source.id))
-    drafts = [draft for article in articles for draft in chunk_article(article, count_tokens=count_tokens)]
+    drafts = [draft for article in articles for draft in chunk_article(article, count_tokens=count_tokens, **({"max_tokens": max_tokens} if max_tokens else {}))]
     vectors = embed_chunks(drafts, embeddings)  # all vectors are computed before inserting anything
     db.add_all(
         LegalChunk(

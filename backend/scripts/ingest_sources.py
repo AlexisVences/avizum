@@ -12,12 +12,12 @@ from app.db.session import SessionLocal
 from app.models.domain import OfficialSource
 from app.services.ingestion.chunker import openai_token_counter
 from app.services.ingestion.embedder import build_embeddings
-from app.services.ingestion.parser import parse_pdf
+from app.services.ingestion.parser import parse_ficha, parse_pdf
 from app.services.ingestion.pipeline import ingest_articles
 from app.services.sources import load_manifest, local_path, sha256_of
 from scripts.fetch_sources import MANIFEST, SOURCES_DIR
 
-INGESTIBLE_KINDS = {"ley", "reglamento", "codigo", "protocolo", "programa"}  # acuerdos feed the agents registry, not the RAG
+INGESTIBLE_KINDS = {"ley", "reglamento", "codigo", "protocolo", "programa", "tarifas", "decreto", "ficha"}  # acuerdos feed the agents registry, not the RAG
 SANCTION_SLUGS = {"reglamento-transito"}  # sources with structured sanctions (plan 2026-10-15-sanciones-estructuradas)
 
 
@@ -38,14 +38,14 @@ def main() -> None:
             path = local_path(spec, SOURCES_DIR)
             if source is None or not path.exists() or source.sha256 != sha256_of(path):
                 raise SystemExit(f"{spec.slug}: el PDF no está registrado o cambió; corre primero scripts.fetch_sources")
-            articles = parse_pdf(path, spec.title, layout=spec.layout, pages=spec.pages)
+            articles = parse_ficha(path.read_text(encoding="utf-8"), spec.title) if spec.layout == "ficha" else parse_pdf(path, spec.title, layout=spec.layout, pages=spec.pages)
             if spec.articles:
                 found = {a.article: a for a in articles}
                 missing = [n for n in spec.articles if n not in found]
                 if missing:
                     raise SystemExit(f"{spec.slug}: no se encontraron los artículos {missing}")
                 articles = [found[n] for n in spec.articles]
-            written = ingest_articles(db, source, articles, embeddings, count_tokens, replace=args.force)
+            written = ingest_articles(db, source, articles, embeddings, count_tokens, replace=args.force, max_tokens=spec.max_chunk_tokens)
             db.commit()
             print(f"{spec.slug}: {len(articles)} artículos -> {written} chunks" if written else f"{spec.slug}: ya indexado (usa --force)")
             if spec.slug in SANCTION_SLUGS:

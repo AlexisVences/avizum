@@ -55,3 +55,14 @@ def test_a_refusal_with_no_tool_results_is_not_an_anomaly():
 def test_any_marker_in_an_answer_with_no_fragments_is_invalid():
     resolved = resolve_citations("Es así [1].", CitationRegistry())
     assert resolved.text == "Es así." and resolved.anomalies == [{"tipo": "marca_invalida", "n": 1}]
+
+
+def test_a_citation_of_a_web_ficha_opens_the_page_without_a_pdf_page_anchor():
+    registry = CitationRegistry()
+    registry.register(SearchHit(
+        1, "semovi-cambio-propietario", "SEMOVI — Cambio de propietario (ficha oficial)", "Requisitos", None,
+        "h", "t", 0, 0, 0.0, 0.5, source_url="https://www.semovi.cdmx.gob.mx/tramites/cambio-de-propietario",
+    ))
+    resolved = resolve_citations("Lleva identificación oficial [1].", registry)
+    assert resolved.citations[0]["url"] == "https://www.semovi.cdmx.gob.mx/tramites/cambio-de-propietario"
+    assert resolved.citations[0]["page"] is None

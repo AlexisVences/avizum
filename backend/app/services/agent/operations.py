@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.models.domain import AgentLookup, LegalChunk, OfficialSource
 from app.services.agent.context import AgentContext
-from app.services.agents_registry import EmptyAgentQuery, search_agents
+from app.services.agents_registry import PLATE_PATTERN, EmptyAgentQuery, normalize_name, normalize_plate, search_agents
 from app.services.retrieval import SearchHit, get_article, search_many
 from app.services.sanctions_lookup import verified_by_chunk
 
@@ -35,7 +35,23 @@ LIST_LABELS = {
 }
 
 
+# Words the model has searched as if they were a name ("placa", "agente"); the fuzzy match against a real surname turned
+# one of them into a «verified» agent.
+GENERIC_AGENT_WORDS = {"placa", "placas", "nombre", "agente", "agentes", "policia", "oficial", "transito", "numero", "del", "de", "la", "el", "un", "una"}
+
+
+def _is_full_name(query: str) -> bool:
+    """A person has at least a first name and a surname; one word, or only generic words, is not a name."""
+    return len([w for w in normalize_name(query).split() if w not in GENERIC_AGENT_WORDS and len(w) > 1]) >= 2
+
+
 def find_agent(ctx: AgentContext, query: str) -> dict:
+    if not PLATE_PATTERN.fullmatch(normalize_plate(query)) and normalize_name(query) and not _is_full_name(query):
+        return {
+            "estado": "consulta_invalida",
+            "mensaje": "No tengo un nombre completo ni una placa para buscar. Pide al usuario la placa (solo números) o el "
+            "nombre completo del agente; no busques con una palabra suelta ni inventes el dato.",
+        }
     try:
         search = search_agents(ctx.db, query)
     except EmptyAgentQuery:
@@ -122,7 +138,7 @@ def _clip(text: str, chars: int) -> str:
 def _fragment(ctx: AgentContext, hit: SearchHit, chars: int) -> dict:
     citation = ctx.citations.register(hit)
     ctx.fragment_texts.append(" ".join(hit.text.split()))
-    pages = str(hit.page_start) if hit.page_start == hit.page_end else f"{hit.page_start}-{hit.page_end}"
+    pages = "" if hit.page_start == 0 else str(hit.page_start) if hit.page_start == hit.page_end else f"{hit.page_start}-{hit.page_end}"
     return {
         "cita": citation.n,
         "ley": hit.source_slug,
