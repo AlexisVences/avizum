@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Generic, Literal, TypeVar
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.domain import UserRole
 
@@ -80,6 +80,26 @@ class Overview(BaseModel):
     attention: list[AttentionItem]
 
 
+class ReviewCitation(BaseModel):
+    """Only the fields the agent stores in a citation; any other stored key is dropped."""
+    source_slug: str | None = None
+    source_title: str | None = None
+    article: str | None = None
+    fraction: str | None = None
+    page: int | None = None
+    url: str | None = None
+
+
+class ReviewMarkBody(BaseModel):
+    note: str | None = Field(default=None, max_length=500)
+
+
+class ReviewMark(BaseModel):
+    message_id: int
+    reviewed: bool
+    note: str | None
+
+
 class ReviewItem(BaseModel):
     """One answer in the quality queue. Nothing here identifies the person who asked."""
     message_id: int
@@ -87,7 +107,7 @@ class ReviewItem(BaseModel):
     reasons: list[Literal["negative", "error", "uncited"]]
     question: str
     answer: str
-    citations: list[dict]
+    citations: list[ReviewCitation]
     tools: list[str]
     reviewed: bool
     note: str | None

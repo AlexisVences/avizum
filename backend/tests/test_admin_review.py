@@ -2,8 +2,8 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.models.domain import (
-    Conversation, Message, MessageFeedback, MessageReview, MessageRole, MessageStatus, User,
-    UserRole,
+    AdminAuditLog, Conversation, Message, MessageFeedback, MessageReview, MessageRole,
+    MessageStatus, User, UserRole,
 )
 from tests.admin_support import make_user
 
@@ -260,3 +260,138 @@ def test_la_cola_exige_administrador(client):
     _, user_headers = make_user(factory, email="u@example.com")
     assert http.get(URL).status_code == 401
     assert http.get(URL, headers=user_headers).status_code == 403
+
+
+def _post(http, headers, message_id, **body):
+    return http.post(f"{URL}/{message_id}/review", headers=headers, json=body)
+
+
+def _queued(factory, **kwargs):
+    person, _ = make_user(factory, email=f"p{kwargs.pop('n', 0)}@example.com")
+    return _turn(factory, person.id, **kwargs)[0]
+
+
+def test_marcar_dos_veces_no_duplica_ni_falla(client):
+    http, factory = client
+    headers = _admin(factory)
+    mid = _queued(factory, status=MessageStatus.ERROR)
+    assert _post(http, headers, mid, note="primera").status_code == 200
+    second = _post(http, headers, mid, note="segunda")
+    assert second.status_code == 200
+    assert second.json() == {"message_id": mid, "reviewed": True, "note": "segunda"}
+    with factory() as db:
+        assert db.query(MessageReview).count() == 1
+        assert db.query(MessageReview).one().note == "segunda"
+        assert db.query(AdminAuditLog).filter_by(action="review.marked").count() == 1
+
+
+def test_la_revision_guarda_la_nota_y_quien(client):
+    http, factory = client
+    admin, headers = make_user(factory, email="admin@example.com", role=UserRole.ADMIN)
+    mid = _queued(factory, status=MessageStatus.ERROR)
+    assert _post(http, headers, mid, note="falta el artículo").status_code == 200
+    with factory() as db:
+        review = db.query(MessageReview).one()
+        assert (review.message_id, review.reviewer_id, review.note) == (
+            mid, admin.id, "falta el artículo",
+        )
+    item = _queue(http, headers, reviewed="true")["items"][0]
+    assert item["reviewed"] is True and item["note"] == "falta el artículo"
+    assert _post(http, headers, mid).json()["note"] is None
+
+
+def test_queda_en_la_auditoria(client):
+    http, factory = client
+    admin, headers = make_user(factory, email="admin@example.com", role=UserRole.ADMIN)
+    mid = _queued(factory, status=MessageStatus.ERROR)
+    _post(http, headers, mid, note="texto de la nota")
+    with factory() as db:
+        row = db.query(AdminAuditLog).one()
+        assert row.action == "review.marked"
+        assert row.actor_id == admin.id
+        assert row.detail == {"message_id": mid}
+
+
+def test_la_nota_de_mas_de_500_caracteres_da_422(client):
+    http, factory = client
+    headers = _admin(factory)
+    mid = _queued(factory, status=MessageStatus.ERROR)
+    assert _post(http, headers, mid, note="x" * 501).status_code == 422
+    assert _post(http, headers, mid, note="x" * 500).status_code == 200
+
+
+def test_eval_case_devuelve_verified_false_y_expected_desde_las_citas(client):
+    http, factory = client
+    headers = _admin(factory)
+    other = {**CITATION, "source_slug": "ley", "article": "5"}
+    no_slug = {**CITATION, "source_slug": None, "article": "9"}
+    mid = _queued(
+        factory, question="¿cuánto es la multa?", status=MessageStatus.ERROR,
+        citations=[CITATION, other, CITATION, no_slug], tool_calls=SEARCH, thumbs=-1,
+    )
+    response = http.get(f"{URL}/{mid}/eval-case", headers=headers)
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": f"p{mid}",
+        "question": "¿cuánto es la multa?",
+        "coverage": "full",
+        "expected": [
+            {"source": "reglamento", "article": "10"}, {"source": "ley", "article": "5"},
+        ],
+        "notes": "Exportado de producción; etiquetas por verificar",
+        "verified": False,
+    }
+    assert "p@example" not in response.text
+
+
+def test_un_mensaje_que_no_esta_en_la_cola_da_404(client):
+    http, factory = client
+    headers = _admin(factory)
+    person, _ = make_user(factory, email="p@example.com")
+    fine, conv = _turn(factory, person.id, citations=[CITATION], tool_calls=SEARCH, thumbs=1)
+    with factory() as db:
+        user_msg = db.query(Message).filter_by(role=MessageRole.USER).one().id
+    for missing in (fine, user_msg, 99999):
+        assert _post(http, headers, missing).status_code == 404
+        assert http.get(f"{URL}/{missing}/eval-case", headers=headers).status_code == 404
+    with factory() as db:
+        assert db.query(MessageReview).count() == 0
+
+
+def test_los_endpoints_de_revision_exigen_administrador(client):
+    http, factory = client
+    _, user_headers = make_user(factory, email="u@example.com")
+    mid = _queued(factory, status=MessageStatus.ERROR)
+    for call in (
+        lambda h: http.post(f"{URL}/{mid}/review", headers=h, json={}),
+        lambda h: http.get(f"{URL}/{mid}/eval-case", headers=h),
+    ):
+        assert call({}).status_code == 401
+        assert call(user_headers).status_code == 403
+
+
+def test_una_clave_extra_en_una_cita_guardada_no_llega_a_la_respuesta(client):
+    http, factory = client
+    headers = _admin(factory)
+    _queued(factory, status=MessageStatus.ERROR, citations=[{**CITATION, "internal_note": "x"}])
+    item = _queue(http, headers)["items"][0]
+    assert item["citations"] == [CITATION]
+    assert "internal_note" not in str(item)
+
+
+def test_la_seleccion_sql_y_las_razones_coinciden(client):
+    http, factory = client
+    headers = _admin(factory)
+    person, _ = make_user(factory, email="p@example.com")
+    bad_tools = [{"args": {}}, "texto", {"name": 3}]
+    _turn(factory, person.id, citations=[CITATION], tool_calls=SEARCH, thumbs=-1)
+    _turn(factory, person.id, status=MessageStatus.ERROR)
+    _turn(factory, person.id, citations=[], tool_calls=SEARCH)
+    _turn(factory, person.id, citations=None, tool_calls=None)  # rechazo sin herramientas
+    _turn(factory, person.id, citations=[], tool_calls=bad_tools)
+    _turn(factory, person.id, citations={"a": 1}, tool_calls=SEARCH)
+    body = _queue(http, headers)
+    assert body["total"] == 5
+    assert all(item["reasons"] for item in body["items"])
+    by_reason = sorted(tuple(item["reasons"]) for item in body["items"])
+    assert by_reason == [("error",), ("negative",)] + [("uncited",)] * 3

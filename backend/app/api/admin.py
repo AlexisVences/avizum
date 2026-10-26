@@ -6,11 +6,14 @@ from app.api.deps import AdminUser, DbSession
 from app.models.domain import User, UserRole
 from app.schemas.admin import (
     AdminUserDelete, AdminUserRow, AdminUserUpdate, AuditRow, Overview, Page, ReviewItem,
+    ReviewMark, ReviewMarkBody,
 )
 from app.schemas.api import UserPublic
 from app.services.admin.audit import AuditAction, list_audit
 from app.services.admin.overview import build_overview
-from app.services.admin.review import ReviewReason, list_review_queue
+from app.services.admin.review import (
+    NotInQueueError, ReviewReason, eval_case_for, list_review_queue, mark_reviewed,
+)
 from app.services.admin.users import AdminRuleError, delete_user, list_users, update_user
 
 router = APIRouter(prefix="/admin")
@@ -99,3 +102,25 @@ def admin_review_queue(
         db, reason=reason, reviewed=reviewed, page=page, page_size=page_size
     )
     return Page[ReviewItem](items=items, total=total, page=page, page_size=page_size)
+
+
+_NOT_IN_QUEUE = HTTPException(status.HTTP_404_NOT_FOUND, "Respuesta no encontrada en la cola")
+
+
+@router.post("/review-queue/{message_id}/review", response_model=ReviewMark)
+def admin_mark_reviewed(
+    message_id: int, body: ReviewMarkBody, admin: AdminUser, db: DbSession
+) -> ReviewMark:
+    try:
+        review = mark_reviewed(db, actor=admin, message_id=message_id, note=body.note)
+    except NotInQueueError:
+        raise _NOT_IN_QUEUE from None
+    return ReviewMark(message_id=message_id, reviewed=True, note=review.note)
+
+
+@router.get("/review-queue/{message_id}/eval-case")
+def admin_eval_case(message_id: int, _: AdminUser, db: DbSession) -> dict:
+    try:
+        return eval_case_for(db, message_id)
+    except NotInQueueError:
+        raise _NOT_IN_QUEUE from None
