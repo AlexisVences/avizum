@@ -2,7 +2,10 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.models.domain import AdminAuditLog, Conversation, Message, MessageRole, User, UserRole
+from app.models.domain import (
+    AdminAuditLog, AgentLookup, Conversation, Message, MessageFeedback, MessageRole, User,
+    UserRole,
+)
 from tests.admin_support import make_user
 
 URL = "/api/v1/admin/users"
@@ -276,3 +279,97 @@ def test_cambiar_rol_exige_administrador(client):
     _, headers = make_user(factory, email="u@example.com")
     assert http.patch(f"{URL}/1", json={"role": "admin"}, headers=headers).status_code == 403
     assert http.patch(f"{URL}/1", json={"role": "admin"}).status_code == 401
+
+
+# --- Task 1.4: delete account ---
+
+def _delete(http, user_id, headers, confirm):
+    return http.request("DELETE", f"{URL}/{user_id}", json={"confirm_email": confirm},
+                        headers=headers)
+
+
+def test_sin_la_confirmacion_correcta_responde_409_y_no_borra(client):
+    http, factory = client
+    _, headers = _me(factory)
+    target = _person(factory, "t@example.com")
+    res = _delete(http, target, headers, "otro@example.com")
+    assert res.status_code == 409
+    assert res.json()["detail"]["code"] == "confirmation_mismatch"
+    with factory() as db:
+        assert db.get(User, target) is not None
+        assert db.query(AdminAuditLog).count() == 0
+
+
+def test_borra_a_la_persona_con_sus_conversaciones_mensajes_y_calificaciones(client):
+    http, factory = client
+    _, headers = _me(factory)
+    target = _person(factory, "t@example.com")
+    _messages(factory, target, users=1, assistant=1)
+    with factory() as db:
+        answer = db.query(Message).filter_by(role=MessageRole.ASSISTANT).one()
+        db.add(MessageFeedback(message_id=answer.id, user_id=target, value=1))
+        db.commit()
+    assert _delete(http, target, headers, "T@Example.COM").status_code == 204
+    with factory() as db:
+        assert db.get(User, target) is None
+        assert db.query(Conversation).count() == 0
+        assert db.query(Message).count() == 0
+        assert db.query(MessageFeedback).count() == 0
+
+
+def test_las_consultas_de_agentes_de_esa_persona_se_conservan_sin_usuario(client):
+    http, factory = client
+    _, headers = _me(factory)
+    target = _person(factory, "t@example.com")
+    with factory() as db:
+        db.add(AgentLookup(user_id=target, agent_id=None))
+        db.commit()
+    assert _delete(http, target, headers, "t@example.com").status_code == 204
+    with factory() as db:
+        lookups = db.query(AgentLookup).all()
+        assert len(lookups) == 1
+        assert lookups[0].user_id is None
+
+
+def test_el_registro_de_auditoria_sobrevive_con_target_user_id_y_sin_correo(client):
+    http, factory = client
+    me, headers = _me(factory)
+    target = _person(factory, "t@example.com")
+    assert _delete(http, target, headers, "t@example.com").status_code == 204
+    with factory() as db:
+        row = db.query(AdminAuditLog).one()
+        assert row.action == "user.deleted"
+        assert row.actor_id == me
+        assert row.target_user_id == target
+        assert row.detail == {"role": "user"}
+        assert "t@example.com" not in str(row.detail)
+
+
+def test_no_puede_eliminarse_a_si_mismo_ni_al_ultimo_administrador(client):
+    from app.services.admin.users import AdminRuleError, delete_user
+
+    http, factory = client
+    me, headers = _me(factory)
+    res = _delete(http, me, headers, "admin@example.com")
+    assert res.status_code == 409
+    assert res.json()["detail"]["code"] == "cannot_modify_self"
+    target = _person(factory, "t@example.com", role=UserRole.ADMIN)
+    with factory() as db:
+        db.get(User, me).is_active = False
+        db.commit()
+    with factory() as db:
+        with pytest.raises(AdminRuleError) as raised:
+            delete_user(db, actor=db.get(User, me), target_id=target, confirm_email="t@example.com")
+        assert raised.value.code == "last_admin"
+    with factory() as db:
+        assert db.get(User, target) is not None
+
+
+def test_eliminar_exige_administrador_y_existencia(client):
+    http, factory = client
+    _, user_headers = make_user(factory, email="u@example.com")
+    assert _delete(http, 1, user_headers, "x@example.com").status_code == 403
+    assert http.request("DELETE", f"{URL}/1", json={"confirm_email": "x@example.com"}
+                        ).status_code == 401
+    _, headers = _me(factory)
+    assert _delete(http, 99999, headers, "x@example.com").status_code == 404

@@ -32,3 +32,7 @@ class AdminUserRow(BaseModel):
 class AdminUserUpdate(BaseModel):
     role: UserRole | None = None
     is_active: bool | None = None
+
+
+class AdminUserDelete(BaseModel):
+    confirm_email: str

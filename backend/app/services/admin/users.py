@@ -165,3 +165,20 @@ def update_user(
     db.commit()
     db.refresh(target)
     return target
+
+
+def delete_user(db: Session, *, actor: User, target_id: int, confirm_email: str) -> None:
+    """Delete an account after the admin retypes its email. The audit row keeps no email."""
+    target = _load_target(db, target_id)
+    _ensure_not_self(actor, target, "No puedes eliminar tu propia cuenta.")
+    if confirm_email.strip().lower() != target.email.lower():
+        raise AdminRuleError(
+            "confirmation_mismatch", "El correo escrito no coincide con el de la cuenta."
+        )
+    _ensure_another_active_admin(db, target)
+    record_audit(
+        db, actor_id=actor.id, action=AuditAction.USER_DELETED, target_user_id=target.id,
+        detail={"role": target.role.value},
+    )
+    db.delete(target)  # conversations, messages and feedback cascade in the database
+    db.commit()
