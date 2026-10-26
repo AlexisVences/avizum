@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 
+from app.api.admin import router as admin_router
 from app.api.conversations import router as conversations_router
 from app.api.deps import AdminUser, CurrentUser, DbSession, OptionalUser
 from app.core.config import get_settings
@@ -19,6 +20,7 @@ MEXICO_CITY = ZoneInfo("America/Mexico_City")  # the product's calendar: "today"
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(conversations_router)
+router.include_router(admin_router)
 
 
 @router.get("/health")
@@ -95,11 +97,6 @@ def update_profile(payload: ProfileUpdate, user: CurrentUser, db: DbSession) -> 
     db.commit()
     db.refresh(user)
     return user
-
-
-@router.get("/admin/users", response_model=list[UserPublic])
-def list_users(_: AdminUser, db: DbSession) -> list[User]:
-    return list(db.scalars(select(User).order_by(User.id)))
 
 
 @router.patch("/admin/users/{user_id}", response_model=UserPublic)
