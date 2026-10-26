@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from app.api.admin import router as admin_router
 from app.api.conversations import router as conversations_router
-from app.api.deps import AdminUser, CurrentUser, DbSession, OptionalUser
+from app.api.deps import CurrentUser, DbSession, OptionalUser
 from app.core.config import get_settings
 from app.core.rate_limit import limiter, rate_limit, too_many
 from app.core.security import create_access_token, hash_password, verify_password

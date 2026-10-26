@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict mqTYAp5EahNkEAHoiJpfGLvrS1VK5cJvdABmnwlVEfd8St7LLhpdehU5NecPWFh
+\restrict eUM5kbfcPN6rWtVNjcRw1eNzxJWnuXKfYVCf1EzFX8UPtwbUwuoPsA7gk6o1rE9
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -404,6 +404,39 @@ ALTER SEQUENCE public.message_feedback_id_seq OWNED BY public.message_feedback.i
 
 
 --
+-- Name: message_reviews; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.message_reviews (
+    id integer NOT NULL,
+    message_id integer NOT NULL,
+    reviewer_id integer,
+    note character varying(500),
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: message_reviews_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.message_reviews_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: message_reviews_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.message_reviews_id_seq OWNED BY public.message_reviews.id;
+
+
+--
 -- Name: messages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -569,6 +602,13 @@ ALTER TABLE ONLY public.message_feedback ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: message_reviews id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews ALTER COLUMN id SET DEFAULT nextval('public.message_reviews_id_seq'::regclass);
+
+
+--
 -- Name: messages id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -651,6 +691,22 @@ ALTER TABLE ONLY public.legal_sanctions
 
 ALTER TABLE ONLY public.message_feedback
     ADD CONSTRAINT message_feedback_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: message_reviews message_reviews_message_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews
+    ADD CONSTRAINT message_reviews_message_id_key UNIQUE (message_id);
+
+
+--
+-- Name: message_reviews message_reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews
+    ADD CONSTRAINT message_reviews_pkey PRIMARY KEY (id);
 
 
 --
@@ -902,6 +958,22 @@ ALTER TABLE ONLY public.message_feedback
 
 
 --
+-- Name: message_reviews message_reviews_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews
+    ADD CONSTRAINT message_reviews_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.messages(id) ON DELETE CASCADE;
+
+
+--
+-- Name: message_reviews message_reviews_reviewer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews
+    ADD CONSTRAINT message_reviews_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: messages messages_conversation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -913,5 +985,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
-\unrestrict mqTYAp5EahNkEAHoiJpfGLvrS1VK5cJvdABmnwlVEfd8St7LLhpdehU5NecPWFh
+\unrestrict eUM5kbfcPN6rWtVNjcRw1eNzxJWnuXKfYVCf1EzFX8UPtwbUwuoPsA7gk6o1rE9
 
