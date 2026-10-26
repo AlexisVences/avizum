@@ -128,3 +128,27 @@ describe('Pagination', () => {
         expect(screen.getByText('Sin resultados')).toBeInTheDocument();
     });
 });
+
+describe('Pagination fuera de rango', () => {
+    test('una página mayor que la última muestra el último rango real', () => {
+        render(<Pagination page={5} pageSize={20} total={45} onChange={() => {}} />);
+        expect(screen.getByText('Mostrando 41–45 de 45')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Siguiente' })).toBeDisabled();
+    });
+});
+
+describe('ConfirmDialog ids', () => {
+    test('dos diálogos tienen ids de título distintos', () => {
+        render(
+            <>
+                <ConfirmDialog open={false} title="Uno" body="a" confirmLabel="Sí" onConfirm={() => {}} onCancel={() => {}} />
+                <ConfirmDialog open={false} title="Dos" body="b" confirmLabel="Sí" onConfirm={() => {}} onCancel={() => {}} />
+            </>
+        );
+        const ids = screen.getAllByRole('heading', { level: 2, hidden: true }).map((h) => h.id);
+        expect(ids[0]).toBeTruthy();
+        expect(new Set(ids).size).toBe(2);
+        const labelled = Array.from(document.querySelectorAll('dialog')).map((d) => d.getAttribute('aria-labelledby'));
+        expect(labelled).toEqual(ids);
+    });
+});

@@ -76,4 +76,23 @@ describe('AdminLayout', () => {
         userEvent.click(screen.getByRole('button', { name: 'Cerrar menú' }));
         expect(aside).toHaveClass('-tw-translate-x-full');
     });
+
+    test('con el cajón cerrado queda invisible (fuera del orden de tabulación) salvo en escritorio', () => {
+        renderLayout();
+        const aside = screen.getByTestId('admin-sidebar');
+        expect(aside).toHaveClass('tw-invisible');
+        // En escritorio la barra siempre es visible; jsdom no carga el CSS, así que se comprueban las clases.
+        expect(aside).toHaveClass('md:tw-visible');
+    });
+
+    test('al abrir el cajón el foco entra en él y Escape lo cierra', () => {
+        renderLayout();
+        const aside = screen.getByTestId('admin-sidebar');
+        userEvent.click(screen.getByRole('button', { name: 'Abrir menú' }));
+        expect(aside).not.toHaveClass('tw-invisible');
+        expect(aside).toContainElement(document.activeElement);
+        userEvent.keyboard('{Escape}');
+        expect(aside).toHaveClass('-tw-translate-x-full');
+        expect(aside).toHaveClass('tw-invisible');
+    });
 });

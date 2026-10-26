@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import logo from '../assets/logo.png';
@@ -24,6 +24,8 @@ const AdminLayout = () => {
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
+    const closeRef = useRef(null);
+    const openerRef = useRef(null);
     const user = authService.getCurrentUser() || {};
     const name = [user.nombre, user.apellido].filter(Boolean).join(' ') || 'Administrador';
     const initial = (user.nombre || user.correo || 'A').trim().charAt(0).toUpperCase();
@@ -31,6 +33,20 @@ const AdminLayout = () => {
     useEffect(() => {
         setOpen(false);
     }, [pathname]);
+
+    useEffect(() => {
+        if (!open) return undefined;
+        closeRef.current?.focus();
+        const opener = openerRef.current;
+        const onKey = (e) => {
+            if (e.key === 'Escape') {
+                setOpen(false);
+                opener?.focus();
+            }
+        };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [open]);
 
     const logout = () => {
         authService.logout();
@@ -52,7 +68,7 @@ const AdminLayout = () => {
                 data-testid="admin-sidebar"
                 aria-label="Panel de administración"
                 className={`tw-fixed tw-inset-y-0 tw-left-0 tw-z-40 tw-flex tw-w-[272px] tw-shrink-0 tw-flex-col tw-bg-gris motion-safe:tw-transition-transform md:tw-sticky md:tw-top-0 md:tw-z-auto md:tw-h-screen md:tw-translate-x-0 ${
-                    open ? 'tw-translate-x-0' : '-tw-translate-x-full'
+                    open ? 'tw-translate-x-0' : '-tw-translate-x-full tw-invisible md:tw-visible'
                 }`}
             >
                 <div className="tw-flex tw-items-center tw-justify-between tw-px-5 tw-pb-4 tw-pt-5">
@@ -62,6 +78,7 @@ const AdminLayout = () => {
                     </Link>
                     <button
                         type="button"
+                        ref={closeRef}
                         aria-label="Cerrar menú"
                         onClick={() => setOpen(false)}
                         className={`tw-h-11 tw-w-11 tw-rounded-full tw-border-0 tw-bg-transparent tw-text-ink-soft hover:tw-text-ink md:tw-hidden ${focusRing}`}
@@ -111,6 +128,7 @@ const AdminLayout = () => {
                 <div className="tw-flex tw-h-14 tw-items-center tw-px-4 md:tw-hidden">
                     <button
                         type="button"
+                        ref={openerRef}
                         aria-label="Abrir menú"
                         aria-expanded={open}
                         onClick={() => setOpen(true)}

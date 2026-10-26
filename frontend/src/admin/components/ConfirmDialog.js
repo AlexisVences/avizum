@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 
 const ConfirmDialog = ({
     open,
@@ -11,6 +11,7 @@ const ConfirmDialog = ({
     onCancel,
 }) => {
     const ref = useRef(null);
+    const titleId = useId();
     const [texto, setTexto] = useState('');
 
     useEffect(() => {
@@ -40,14 +41,14 @@ const ConfirmDialog = ({
     return (
         <dialog
             ref={ref}
-            aria-labelledby="confirm-dialog-title"
+            aria-labelledby={titleId}
             onCancel={cancelar}
             onKeyDown={(e) => {
                 if (e.key === 'Escape') cancelar(e);
             }}
             className="tw-w-full tw-max-w-md tw-rounded-lg tw-border tw-border-rule tw-bg-paper-raised tw-p-6 tw-text-ink backdrop:tw-bg-black/40"
         >
-            <h2 id="confirm-dialog-title" className="tw-font-display tw-text-xl">
+            <h2 id={titleId} className="tw-font-display tw-text-xl">
                 {title}
             </h2>
             <p className="tw-mt-2 tw-text-ink-soft">{body}</p>
