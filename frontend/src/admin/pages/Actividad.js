@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import Skeleton from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
@@ -31,7 +31,7 @@ const SENTENCES = {
     'user.deactivated': (d, person) => `desactivó la cuenta de ${person}`,
     'user.reactivated': (d, person) => `reactivó la cuenta de ${person}`,
     'user.deleted': (d, person) => `eliminó la cuenta de ${person} (era ${roleLabel(d.role)})`,
-    'review.marked': (d) => `marcó como revisada la respuesta ${d.messageId}`,
+    'review.marked': (d) => `marcó como revisada ${d.messageId == null ? 'una respuesta' : `la respuesta ${d.messageId}`}`,
 };
 
 export const describeEntry = ({ actorName, action, targetUserId, detail }) => {
@@ -51,7 +51,7 @@ const timeFormat = new Intl.DateTimeFormat('es-MX', {
     timeZone: TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
+    hourCycle: 'h23',
 });
 
 const Actividad = () => {
@@ -64,11 +64,27 @@ const Actividad = () => {
     const items = data?.items || [];
     const total = data?.total || 0;
 
+    // Si la página quedó fuera de rango, vuelve a la última real.
+    useEffect(() => {
+        if (data && data.items.length === 0 && data.total > 0 && page > 1) {
+            setPage(Math.ceil(data.total / PAGE_SIZE));
+        }
+    }, [data, page]);
+
     let content;
     if (error) {
         content = <ErrorState message={error} onRetry={reload} />;
     } else if (!data) {
         content = <Skeleton lines={6} />;
+    } else if (items.length === 0 && total > 0) {
+        content = (
+            <>
+                <p className="tw-text-ink-soft">No hay registros en esta página.</p>
+                <div className="tw-mt-4">
+                    <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} />
+                </div>
+            </>
+        );
     } else if (items.length === 0) {
         content = action ? (
             <EmptyState

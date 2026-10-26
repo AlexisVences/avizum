@@ -31,7 +31,7 @@ const DailyChart = ({ points }) => (
                     <Line
                         type="linear"
                         dataKey="questions"
-                        stroke="#C4005F"
+                        stroke="#1C3F94"
                         strokeWidth={2}
                         dot={false}
                         activeDot={{ r: 4 }}

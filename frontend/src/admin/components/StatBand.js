@@ -8,7 +8,7 @@ const Stat = ({ label, value, hint }) => {
             <p className="tw-mt-1 tw-font-display tw-text-3xl tw-font-semibold tw-leading-tight tw-text-ink [font-variant-numeric:tabular-nums]">
                 {value}
             </p>
-            {hint && <p className="tw-mt-1 tw-text-sm tw-text-ink-soft">{' '}{hint}</p>}
+            {hint && <p className="tw-mt-1 tw-text-sm tw-text-ink-soft">{hint}</p>}
         </div>
     );
 };

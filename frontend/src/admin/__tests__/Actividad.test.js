@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Actividad from '../pages/Actividad';
 import * as adminService from '../../services/adminService';
@@ -52,6 +52,45 @@ describe('Actividad', () => {
         // 18:30 UTC = 12:30 en Ciudad de México (México ya no usa horario de verano).
         expect(screen.getAllByText(/20 oct 2026/).length).toBeGreaterThan(0);
         expect(screen.getAllByText(/12:30/).length).toBeGreaterThan(0);
+    });
+
+    test('un detalle nulo o sin messageId no imprime undefined', async () => {
+        adminService.listAudit.mockResolvedValue(
+            page([
+                row(1, { action: 'review.marked', targetUserId: null, detail: {} }),
+                row(2, { action: 'review.marked', targetUserId: null, detail: null }),
+                row(3, { action: 'user.role_changed', detail: null }),
+            ])
+        );
+        const { container } = render(<Actividad />);
+        expect((await screen.findAllByText('Alexis Vences marcó como revisada una respuesta')).length).toBeGreaterThan(0);
+        expect(container.textContent).not.toMatch(/undefined|null/);
+    });
+
+    test('la hora usa ciclo de 24 horas sin «24:xx»', async () => {
+        // 06:05 UTC = 00:05 en Ciudad de México.
+        adminService.listAudit.mockResolvedValue(page([row(1, { createdAt: '2026-10-20T06:05:00Z' })]));
+        render(<Actividad />);
+        await screen.findAllByText(/cambió el rol/);
+        expect(screen.getAllByText(/00:05/).length).toBeGreaterThan(0);
+        expect(screen.queryByText(/24:05/)).not.toBeInTheDocument();
+    });
+
+    test('si la página queda fuera de rango muestra la paginación y vuelve a la última', async () => {
+        adminService.listAudit
+            .mockResolvedValueOnce(page([row(1)], 45))
+            .mockResolvedValueOnce(page([], 45))
+            .mockResolvedValue(page([row(9)], 45));
+        render(<Actividad />);
+        await screen.findAllByText(/cambió el rol/);
+        await act(async () => {
+            await userEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+        });
+        expect(screen.getByRole('navigation', { name: 'Paginación' })).toBeInTheDocument();
+        expect(screen.queryByText('Todavía no hay actividad')).not.toBeInTheDocument();
+        await waitFor(() =>
+            expect(adminService.listAudit).toHaveBeenLastCalledWith(expect.objectContaining({ page: 3 }))
+        );
     });
 
     test('filtra por acción', async () => {

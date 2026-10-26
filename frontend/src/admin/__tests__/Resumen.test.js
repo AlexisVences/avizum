@@ -2,7 +2,7 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Resumen from '../pages/Resumen';
+import Resumen, { formatCost, formatPercent } from '../pages/Resumen';
 import * as adminService from '../../services/adminService';
 
 jest.mock('react-router-dom', () => ({
@@ -68,8 +68,9 @@ describe('Resumen', () => {
         adminService.getOverview.mockResolvedValue(overview());
         render(<Resumen />);
         const satisfaccion = await screen.findByRole('group', { name: 'Satisfacción' });
-        expect(satisfaccion).toHaveTextContent('89 % de 45 calificaciones');
-        expect(screen.getByText('$2.25')).toBeInTheDocument();
+        expect(within(satisfaccion).getByText('89 %')).toBeInTheDocument();
+        expect(within(satisfaccion).getByText('de 45 calificaciones')).toBeInTheDocument();
+        expect(screen.getByText('US$ 2.25')).toBeInTheDocument();
         expect(screen.getByText('Calculado con los precios de lista del modelo')).toBeInTheDocument();
         expect(screen.getByText('1,240')).toBeInTheDocument();
     });
@@ -88,12 +89,33 @@ describe('Resumen', () => {
         expect(await screen.findByRole('group', { name: 'Satisfacción' })).toBeInTheDocument();
     });
 
+    test('al cambiar de periodo conserva los datos anteriores atenuados en vez de un Skeleton', async () => {
+        adminService.getOverview.mockResolvedValueOnce(overview());
+        let resolveSecond;
+        adminService.getOverview.mockReturnValueOnce(new Promise((resolve) => { resolveSecond = resolve; }));
+        const { container } = render(<Resumen />);
+        await screen.findByRole('group', { name: 'Satisfacción' });
+        await act(async () => {
+            await userEvent.click(screen.getByRole('radio', { name: '7 días' }));
+        });
+        expect(screen.getByRole('group', { name: 'Preguntas' })).toHaveTextContent('1,240');
+        const busy = container.querySelector('[aria-busy="true"]');
+        expect(busy).not.toBeNull();
+        expect(busy).toHaveClass('tw-opacity-60');
+        await act(async () => {
+            resolveSecond(overview({ questions: 77 }));
+        });
+        expect(await screen.findByText('77')).toBeInTheDocument();
+        expect(container.querySelector('[aria-busy="true"]')).toBeNull();
+    });
+
     test('un error muestra ErrorState y no cifras en cero', async () => {
         adminService.getOverview.mockRejectedValue(new Error('El servidor no responde'));
         render(<Resumen />);
         expect(await screen.findByRole('alert')).toHaveTextContent('El servidor no responde');
         expect(screen.queryByText('Preguntas')).not.toBeInTheDocument();
-        expect(screen.queryByText('0')).not.toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: 'Personas activas' })).not.toBeInTheDocument();
+        expect(screen.queryByText('87')).not.toBeInTheDocument();
         adminService.getOverview.mockResolvedValue(overview());
         await act(async () => {
             await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
@@ -133,5 +155,25 @@ describe('Resumen', () => {
         adminService.getOverview.mockResolvedValue(overview({ errorRate: null, answersWithError: 0 }));
         render(<Resumen />);
         expect(await screen.findByText('Sin respuestas')).toBeInTheDocument();
+    });
+});
+
+describe('formatPercent', () => {
+    test.each([
+        [0, '0 %'],
+        [0.004, '<1 %'],
+        [0.0004, '<1 %'],
+        [0.89, '89 %'],
+        [0.996, '99 %'],
+        [1, '100 %'],
+    ])('%s -> %s', (rate, expected) => {
+        expect(formatPercent(rate)).toBe(expected);
+    });
+});
+
+describe('formatCost', () => {
+    test('lleva el marcador US$ y no usa aritmética flotante', () => {
+        expect(formatCost('2.25')).toBe('US$ 2.25');
+        expect(formatCost('1234.5')).toBe('US$ 1,234.50');
     });
 });

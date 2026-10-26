@@ -13,14 +13,21 @@ const focusRing =
     'focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-azul';
 
 const integer = new Intl.NumberFormat('es-MX');
-const percent = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 1 });
+
+// Porcentaje entero que nunca miente en los extremos: <100 no se redondea a 100 ni un valor distinto de 0 a 0.
+export const formatPercent = (rate) => {
+    const value = rate * 100;
+    if (value > 0 && value < 1) return '<1 %';
+    const rounded = Math.round(value);
+    return `${rounded >= 100 && value < 100 ? 99 : rounded} %`;
+};
 
 // Formatea el costo desde el texto del servidor, sin aritmética de punto flotante.
 export const formatCost = (cost) => {
     const [whole = '0', fraction = ''] = String(cost).split('.');
     const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const extra = fraction.slice(2).replace(/0+$/, '');
-    return `$${grouped}.${fraction.slice(0, 2).padEnd(2, '0')}${extra}`;
+    return `US$ ${grouped}.${fraction.slice(0, 2).padEnd(2, '0')}${extra}`;
 };
 
 const buildItems = (data) => {
@@ -28,7 +35,7 @@ const buildItems = (data) => {
         data.feedbackRate === null
             ? { value: 'Sin calificaciones' }
             : {
-                  value: `${Math.round(data.feedbackRate * 100)} %`,
+                  value: formatPercent(data.feedbackRate),
                   hint: `de ${integer.format(data.feedbackRated)} calificaciones`,
               };
     const errors =
@@ -36,7 +43,7 @@ const buildItems = (data) => {
             ? { value: 'Sin respuestas' }
             : {
                   value: integer.format(data.answersWithError),
-                  hint: `${percent.format(data.errorRate * 100)} % de las respuestas`,
+                  hint: `${formatPercent(data.errorRate)} de las respuestas`,
               };
     return [
         { label: 'Preguntas', value: integer.format(data.questions) },
@@ -102,17 +109,16 @@ const Attention = ({ items }) => (
 const Resumen = () => {
     const [days, setDays] = useState(30);
     const { data, loading, error, reload } = useAdminList(getOverview, { days });
-    const ready = data && !loading;
 
     return (
         <>
             <PageHeader title="Resumen" actions={<PeriodSelector days={days} onChange={setDays} />} />
             {error ? (
                 <ErrorState message={error} onRetry={reload} />
-            ) : !ready ? (
+            ) : !data ? (
                 <Skeleton lines={6} />
             ) : (
-                <>
+                <div className={loading ? 'tw-opacity-60' : undefined} aria-busy={loading}>
                     <StatBand items={buildItems(data)} />
                     <section aria-labelledby="serie" className="tw-mt-8">
                         <h2 id="serie" className="tw-font-display tw-text-xl tw-font-semibold tw-text-ink">
@@ -123,7 +129,7 @@ const Resumen = () => {
                         </div>
                     </section>
                     <Attention items={data.attention} />
-                </>
+                </div>
             )}
         </>
     );
