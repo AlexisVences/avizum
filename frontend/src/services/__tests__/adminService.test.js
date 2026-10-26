@@ -2,6 +2,7 @@ import {
   AdminApiError,
   camelize,
   deleteUser,
+  getOverview,
   listAudit,
   listUsers,
   updateUser,
@@ -121,4 +122,30 @@ test('listAudit pide solo los filtros presentes y cameliza', async () => {
   expect(search.get('actor_id')).toBe('7');
   expect(result.items[0]).toEqual({ id: 1, actorName: 'Root', targetUserId: 4 });
   expect(result.pageSize).toBe(20);
+});
+
+test('getOverview pide el periodo y devuelve claves en camelCase con el costo como texto', async () => {
+  global.fetch.mockResolvedValue(
+    respuesta(200, {
+      days: 7,
+      active_users: 3,
+      error_rate: null,
+      feedback_rate: 0.5,
+      cost_usd: '2.25',
+      series: [{ date: '2026-10-20', questions: 4 }],
+      attention: [],
+    })
+  );
+  const result = await getOverview({ days: 7 });
+  const [url] = global.fetch.mock.calls[0];
+  expect(url).toContain('/admin/overview?days=7');
+  expect(result).toEqual({
+    days: 7,
+    activeUsers: 3,
+    errorRate: null,
+    feedbackRate: 0.5,
+    costUsd: '2.25',
+    series: [{ date: '2026-10-20', questions: 4 }],
+    attention: [],
+  });
 });

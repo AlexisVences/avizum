@@ -95,3 +95,5 @@ export const deleteUser = (id, confirmEmail) =>
 
 export const listAudit = ({ actorId, action, page, pageSize } = {}) =>
   request(`/admin/audit${buildQuery({ actor_id: actorId, action, page, page_size: pageSize })}`);
+
+export const getOverview = ({ days } = {}) => request(`/admin/overview${buildQuery({ days })}`);
