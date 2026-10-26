@@ -2,6 +2,7 @@ import React from 'react';
 import { FaThumbsDown, FaThumbsUp } from 'react-icons/fa';
 import CitationChips from './CitationChips';
 import MessageContent from './MessageContent';
+import TypingDots from './TypingDots';
 
 const Vote = ({ active, label, onClick, children }) => (
   <button
@@ -22,7 +23,7 @@ export default function MessageBubble({ message, onVote }) {
   if (isUser) {
     return (
       <div className="tw-flex tw-justify-end">
-        <p className="tw-max-w-[85%] tw-whitespace-pre-wrap tw-rounded-2xl tw-bg-azul tw-px-4 tw-py-2.5 tw-text-white">
+        <p className="tw-max-w-[85%] tw-whitespace-pre-wrap tw-rounded-2xl tw-bg-azul/[.09] tw-px-4 tw-py-2.5 tw-text-ink">
           {message.content}
         </p>
       </div>
@@ -35,13 +36,13 @@ export default function MessageBubble({ message, onVote }) {
   return (
     <div className="tw-flex tw-justify-start">
       <article
-        className={`tw-max-w-[92%] tw-rounded-2xl tw-border tw-px-4 tw-py-3 ${
-          failed ? 'tw-border-danger/40 tw-bg-danger/5 tw-text-danger' : 'tw-border-rule tw-bg-paper-raised tw-text-ink'
+        className={`tw-max-w-[92%] ${
+          failed ? 'tw-rounded-2xl tw-border tw-border-danger/40 tw-bg-danger/5 tw-px-4 tw-py-3 tw-text-danger' : 'tw-px-1 tw-py-1 tw-text-ink'
         }`}
         aria-busy={streaming}
       >
         {streaming && !message.content ? (
-          <span className="tw-text-ink-soft" aria-label="Escribiendo">…</span>
+          <TypingDots />
         ) : (
           <MessageContent content={message.content} citations={message.citations} streaming={streaming} />
         )}

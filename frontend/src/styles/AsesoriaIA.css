@@ -1,11 +1,9 @@
-/* Empty state of the legal assistant: a diffuse aura behind the greeting and the question box, plus a faint
-   touch along the bottom edge. Only the project's own brand colors (azul, magenta, paper) are used. */
+/* Empty state of the legal assistant: a diffuse blue aura behind the greeting and the question box, plus a faint
+   magenta touch along the bottom edge. It sits under the CDMX map (CdmxMapBackground), on the page's paper color. */
 .asesoria-glow {
   --brand-glow: #1C3F94;   /* azul */
   --brand-accent: #C4005F; /* magenta (logo) */
-  --bg-base: #F7F6F3;      /* paper */
   background:
     radial-gradient(ellipse 58% 48% at 50% 56%, color-mix(in srgb, var(--brand-glow) 13%, transparent) 0%, color-mix(in srgb, var(--brand-glow) 7%, transparent) 42%, transparent 74%),
-    radial-gradient(ellipse 46% 26% at 50% 104%, color-mix(in srgb, var(--brand-accent) 9%, transparent) 0%, transparent 72%),
-    var(--bg-base);
+    radial-gradient(ellipse 46% 26% at 50% 104%, color-mix(in srgb, var(--brand-accent) 9%, transparent) 0%, transparent 72%);
 }

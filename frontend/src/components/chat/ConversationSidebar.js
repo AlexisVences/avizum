@@ -99,7 +99,7 @@ function Account() {
         onClick={() => setOpen((v) => !v)}
         className="tw-flex tw-h-12 tw-w-full tw-items-center tw-gap-3 tw-rounded-3xl tw-border-0 tw-bg-transparent tw-px-2 tw-text-left tw-transition-colors hover:tw-bg-ink/[.05]"
       >
-        <span aria-hidden="true" className="tw-flex tw-h-8 tw-w-8 tw-shrink-0 tw-items-center tw-justify-center tw-rounded-full tw-bg-azul tw-text-sm tw-font-semibold tw-text-white">
+        <span aria-hidden="true" className="tw-flex tw-h-8 tw-w-8 tw-shrink-0 tw-items-center tw-justify-center tw-rounded-full tw-bg-magenta tw-text-sm tw-font-semibold tw-text-white">
           {initial}
         </span>
         <span className="tw-min-w-0 tw-flex-1 tw-truncate tw-text-sm tw-text-ink">{name}</span>

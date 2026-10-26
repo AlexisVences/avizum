@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FaBars } from 'react-icons/fa';
+import CdmxMapBackground from '../components/chat/CdmxMapBackground';
 import Composer from '../components/chat/Composer';
 import ConversationSidebar from '../components/chat/ConversationSidebar';
 import EmptyState from '../components/chat/EmptyState';
 import MessageList from '../components/chat/MessageList';
 import useChat from '../hooks/useChat';
-import '../styles/AsesoriaIA.css';
 
 const ErrorBanner = ({ error, onDismiss, onNewChat }) => {
   if (!error) return null;
@@ -52,7 +52,8 @@ const AsesoriaIA = () => {
           onRename={chat.renameConversation}
           onDelete={chat.removeConversation}
         />
-        <main className="tw-relative tw-flex tw-min-w-0 tw-flex-1 tw-flex-col">
+        <main className="tw-relative tw-isolate tw-flex tw-min-w-0 tw-flex-1 tw-flex-col">
+          <CdmxMapBackground names={empty} glow={empty} />
           <button
             type="button"
             aria-label="Abrir historial"

@@ -42,3 +42,16 @@ test('the user question is plain text, never interpreted as Markdown or HTML', (
   render(<MessageBubble message={{ key: 'm-1', id: 1, role: 'user', content: '**no negrita** <b>no html</b>', status: 'complete', citations: [] }} />);
   expect(screen.getByText('**no negrita** <b>no html</b>')).toBeInTheDocument();
 });
+
+test('an answer is plain text on the background, not a white box; a question keeps its soft blue bubble', () => {
+  const { container, rerender } = render(<MessageBubble message={answer()} onVote={jest.fn()} />);
+  const article = container.querySelector('article');
+  expect(article.className).not.toMatch(/tw-bg-paper-raised|tw-border /);
+  rerender(<MessageBubble message={{ key: 'q', id: 1, role: 'user', content: 'Mi pregunta', status: 'complete' }} />);
+  expect(screen.getByText('Mi pregunta').className).toMatch(/tw-bg-azul\/\[\.09\]/);
+});
+
+test('while the answer has not started, the moving dots are shown instead of a still ellipsis', () => {
+  const { container } = render(<MessageBubble message={answer({ id: null, status: 'streaming', content: '', citations: [] })} />);
+  expect(container.querySelectorAll('[data-dot]')).toHaveLength(3);
+});
