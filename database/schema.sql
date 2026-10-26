@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict V8b1UegtLxA7EvJca3r9XCP60X8qUCI3u5JomcBXgwHbiEcwSu03gP0T7unWV2b
+\restrict mqTYAp5EahNkEAHoiJpfGLvrS1VK5cJvdABmnwlVEfd8St7LLhpdehU5NecPWFh
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -125,6 +125,40 @@ CREATE FUNCTION public.immutable_unaccent(text) RETURNS text
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: admin_audit_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.admin_audit_log (
+    id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    actor_id integer,
+    action character varying(40) NOT NULL,
+    target_user_id integer,
+    detail jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+
+--
+-- Name: admin_audit_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.admin_audit_log_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: admin_audit_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.admin_audit_log_id_seq OWNED BY public.admin_audit_log.id;
+
 
 --
 -- Name: agent_lookups; Type: TABLE; Schema: public; Owner: -
@@ -486,6 +520,13 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: admin_audit_log id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.admin_audit_log ALTER COLUMN id SET DEFAULT nextval('public.admin_audit_log_id_seq'::regclass);
+
+
+--
 -- Name: agent_lookups id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -546,6 +587,14 @@ ALTER TABLE ONLY public.official_sources ALTER COLUMN id SET DEFAULT nextval('pu
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: admin_audit_log admin_audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.admin_audit_log
+    ADD CONSTRAINT admin_audit_log_pkey PRIMARY KEY (id);
 
 
 --
@@ -669,6 +718,13 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: ix_admin_audit_log_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_admin_audit_log_created_at ON public.admin_audit_log USING btree (created_at DESC);
+
+
+--
 -- Name: ix_agent_lookups_agent_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -774,6 +830,14 @@ CREATE UNIQUE INDEX uq_official_sources_current_slug ON public.official_sources 
 
 
 --
+-- Name: admin_audit_log admin_audit_log_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.admin_audit_log
+    ADD CONSTRAINT admin_audit_log_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: agent_lookups agent_lookups_agent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -849,5 +913,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
-\unrestrict V8b1UegtLxA7EvJca3r9XCP60X8qUCI3u5JomcBXgwHbiEcwSu03gP0T7unWV2b
+\unrestrict mqTYAp5EahNkEAHoiJpfGLvrS1VK5cJvdABmnwlVEfd8St7LLhpdehU5NecPWFh
 

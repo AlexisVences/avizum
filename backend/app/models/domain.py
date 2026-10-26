@@ -246,3 +246,17 @@ class LegalSanction(Timestamped, Base):
     )
     reviewed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AdminAuditLog(Base):
+    """Who did what to whom in the admin console. Holds identifiers and state values only: never passwords,
+    tokens, emails or the text of questions and answers. target_user_id has no foreign key on purpose, so the
+    record outlives the deletion of the person it is about."""
+    __tablename__ = "admin_audit_log"
+    __table_args__ = (Index("ix_admin_audit_log_created_at", text("created_at DESC")),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    action: Mapped[str] = mapped_column(String(40))
+    target_user_id: Mapped[int | None] = mapped_column(nullable=True)
+    detail: Mapped[dict] = mapped_column(JSONB, default=dict, server_default=text("'{}'::jsonb"), nullable=False)
