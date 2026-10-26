@@ -44,4 +44,4 @@ class AuditRow(BaseModel):
     actor_name: str | None
     action: str
     target_user_id: int | None
-    detail: dict
+    detail: dict[str, str | int | bool | None]

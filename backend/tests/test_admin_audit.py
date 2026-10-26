@@ -133,3 +133,44 @@ def test_audit_forbidden_for_normal_user_and_anonymous(client):
     _, headers = make_user(factory, email="u@example.com")
     assert http.get("/api/v1/admin/audit", headers=headers).status_code == 403
     assert http.get("/api/v1/admin/audit").status_code == 401
+
+
+@pytest.mark.parametrize("value", [{"a": 1}, ["x", "y"]])
+def test_record_audit_rechaza_valores_anidados(client, value):
+    _, factory = client
+    admin, _ = make_user(factory, email="a@example.com", role=UserRole.ADMIN)
+    with factory() as db:
+        with pytest.raises(ValueError):
+            record_audit(
+                db, actor_id=admin.id, action=AuditAction.REVIEW_MARKED, detail={"x": value}
+            )
+
+
+def test_record_audit_rechaza_una_clave_prohibida_dentro_de_un_valor_anidado(client):
+    _, factory = client
+    admin, _ = make_user(factory, email="a@example.com", role=UserRole.ADMIN)
+    with factory() as db:
+        with pytest.raises(ValueError):
+            record_audit(
+                db,
+                actor_id=admin.id,
+                action=AuditAction.REVIEW_MARKED,
+                detail={"x": {"Email": "a@b.mx"}},
+            )
+
+
+def test_la_lectura_omite_valores_no_escalares_de_una_fila_antigua(client):
+    http, factory = client
+    admin, headers = make_user(factory, email="a@example.com", role=UserRole.ADMIN)
+    with factory() as db:
+        db.add(
+            AdminAuditLog(
+                actor_id=admin.id,
+                action="review.marked",
+                target_user_id=None,
+                detail={"ok": 1, "bad": {"a": 1}},
+            )
+        )
+        db.commit()
+    body = http.get("/api/v1/admin/audit", headers=headers).json()
+    assert body["items"][0]["detail"] == {"ok": 1}

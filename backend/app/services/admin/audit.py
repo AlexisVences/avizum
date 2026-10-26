@@ -17,6 +17,10 @@ class AuditAction(str, enum.Enum):
     REVIEW_MARKED = "review.marked"
 
 
+def _is_scalar(value: object) -> bool:
+    return value is None or isinstance(value, (str, int, bool))
+
+
 def record_audit(
     db: Session,
     *,
@@ -33,6 +37,9 @@ def record_audit(
     }
     if forbidden:
         raise ValueError(f"audit detail cannot include: {', '.join(sorted(forbidden))}")
+    nested = sorted(key for key, value in detail.items() if not _is_scalar(value))
+    if nested:
+        raise ValueError(f"audit detail values must be scalars: {', '.join(nested)}")
     row = AdminAuditLog(
         actor_id=actor_id, action=action.value, target_user_id=target_user_id, detail=detail
     )
@@ -71,7 +78,7 @@ def list_audit(
             actor_name=f"{first} {last}" if first is not None else None,
             action=row.action,
             target_user_id=row.target_user_id,
-            detail=row.detail,
+            detail={k: v for k, v in (row.detail or {}).items() if _is_scalar(v)},
         )
         for row, first, last in db.execute(stmt)
     ]
