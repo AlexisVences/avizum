@@ -28,29 +28,3 @@ export const updateUser = async (viejoUsuario,userData) => {
   });
   return await response.json();
 };
-
-export const deleteUser = async (userId) => {
-  throw new Error('La eliminación de cuentas aún no está disponible en la nueva API.');
-};
-
-export const updateUserRole = async (userId, updates) => {
-  const response = await apiFetch(`${API_URL}/admin/users/${userId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify(updates),
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(extractErrorMessage(data, 'Error al actualizar el usuario'));
-  }
-  return data;
-};
-
-export const getAllUsers = async () => {
-  const response = await apiFetch(`${API_URL}/admin/users`, { headers: authHeaders() });
-  const users = await response.json();
-  if (!response.ok) {
-    throw new Error(extractErrorMessage(users, 'Error al obtener los usuarios'));
-  }
-  return { clientes: users.map((user) => ({ ...user, nombre: user.first_name, apellido: user.last_name, rol: user.role })) };
-};
