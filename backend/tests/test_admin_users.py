@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 
-from app.models.domain import Conversation, Message, MessageRole, User, UserRole
+import pytest
+
+from app.models.domain import AdminAuditLog, Conversation, Message, MessageRole, User, UserRole
 from tests.admin_support import make_user
 
 URL = "/api/v1/admin/users"
@@ -159,3 +161,118 @@ def test_q_con_nombre_completo_exige_todas_las_palabras(client):
     data = http.get(URL, params={"q": "maria lopez"}, headers=headers).json()
     assert [r["email"] for r in data["items"]] == ["maria@example.com"]
     assert http.get(URL, params={"q": "  maria  zzz "}, headers=headers).json()["total"] == 0
+
+
+# --- Task 1.3: role and active changes ---
+
+def _me(factory, email="admin@example.com"):
+    user, headers = make_user(factory, email=email, role=UserRole.ADMIN)
+    return user.id, headers
+
+
+def test_un_administrador_no_puede_cambiar_su_propio_rol_ni_desactivarse(client):
+    http, factory = client
+    me, headers = _me(factory)
+    _me(factory, "otro@example.com")
+    for body in ({"role": "user"}, {"is_active": False}):
+        res = http.patch(f"{URL}/{me}", json=body, headers=headers)
+        assert res.status_code == 409
+        assert res.json()["detail"]["code"] == "cannot_modify_self"
+        assert res.json()["detail"]["message"]
+
+
+def test_no_se_puede_quitar_el_rol_ni_desactivar_al_ultimo_administrador_activo(client):
+    http, factory = client
+    actor_id, _ = _me(factory)
+    target = _person(factory, "t@example.com", role=UserRole.ADMIN)
+    # Over HTTP the actor is always a second active admin, so the guard is only reachable by
+    # calling the service with an actor who no longer counts as an active admin.
+    from app.services.admin.users import AdminRuleError, update_user
+
+    with factory() as db:
+        db.get(User, actor_id).is_active = False
+        db.commit()
+    with factory() as db:
+        actor = db.get(User, actor_id)
+        for kwargs in ({"role": UserRole.USER}, {"is_active": False}):
+            with pytest.raises(AdminRuleError) as raised:
+                update_user(db, actor=actor, target_id=target, role=kwargs.get("role"),
+                            is_active=kwargs.get("is_active"))
+            assert raised.value.code == "last_admin"
+            db.rollback()
+
+
+def test_con_dos_administradores_si_se_puede_degradar_a_otro(client):
+    http, factory = client
+    _, headers = _me(factory)
+    other = _person(factory, "t@example.com", role=UserRole.ADMIN)
+    res = http.patch(f"{URL}/{other}", json={"role": "user"}, headers=headers)
+    assert res.status_code == 200
+    assert res.json()["role"] == "user"
+
+
+def test_desactivar_invalida_su_sesion(client):
+    http, factory = client
+    _, headers = _me(factory)
+    target, target_headers = make_user(factory, email="t@example.com")
+    assert http.get("/api/v1/users/me", headers=target_headers).status_code == 200
+    res = http.patch(f"{URL}/{target.id}", json={"is_active": False}, headers=headers)
+    assert res.status_code == 200
+    assert http.get("/api/v1/users/me", headers=target_headers).status_code == 401
+    with factory() as db:
+        assert db.get(User, target.id).token_version == target.token_version + 1
+
+
+def test_reactivar_permite_iniciar_sesion(client):
+    http, factory = client
+    _, headers = _me(factory)
+    http.post("/api/v1/auth/register", json={
+        "first_name": "Ana", "last_name": "L", "email": "ana@example.com",
+        "password": "a secure password"})
+    with factory() as db:
+        target = db.query(User).filter_by(email="ana@example.com").one().id
+    login = {"email": "ana@example.com", "password": "a secure password"}
+    http.patch(f"{URL}/{target}", json={"is_active": False}, headers=headers)
+    assert http.post("/api/v1/auth/login", json=login).status_code == 401
+    assert http.patch(f"{URL}/{target}", json={"is_active": True},
+                      headers=headers).status_code == 200
+    assert http.post("/api/v1/auth/login", json=login).status_code == 200
+
+
+def test_cada_cambio_queda_en_admin_audit_log_con_actor_y_objetivo(client):
+    http, factory = client
+    me, headers = _me(factory)
+    target = _person(factory, "t@example.com")
+    http.patch(f"{URL}/{target}", json={"role": "admin"}, headers=headers)
+    http.patch(f"{URL}/{target}", json={"is_active": False}, headers=headers)
+    http.patch(f"{URL}/{target}", json={"is_active": True}, headers=headers)
+    with factory() as db:
+        rows = db.query(AdminAuditLog).order_by(AdminAuditLog.id).all()
+        assert [r.action for r in rows] == [
+            "user.role_changed", "user.deactivated", "user.reactivated"]
+        assert all(r.actor_id == me and r.target_user_id == target for r in rows)
+        assert rows[0].detail == {"from": "user", "to": "admin"}
+
+
+def test_repetir_el_mismo_valor_no_crea_registro(client):
+    http, factory = client
+    _, headers = _me(factory)
+    target = _person(factory, "t@example.com")
+    res = http.patch(f"{URL}/{target}", json={"role": "user", "is_active": True}, headers=headers)
+    assert res.status_code == 200
+    with factory() as db:
+        assert db.query(AdminAuditLog).count() == 0
+        assert db.get(User, target).token_version == 0
+
+
+def test_un_usuario_inexistente_da_404(client):
+    http, factory = client
+    _, headers = _me(factory)
+    assert http.patch(f"{URL}/99999", json={"role": "user"}, headers=headers).status_code == 404
+
+
+def test_cambiar_rol_exige_administrador(client):
+    http, factory = client
+    _, headers = make_user(factory, email="u@example.com")
+    assert http.patch(f"{URL}/1", json={"role": "admin"}, headers=headers).status_code == 403
+    assert http.patch(f"{URL}/1", json={"role": "admin"}).status_code == 401

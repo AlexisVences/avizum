@@ -47,11 +47,6 @@ class ProfileUpdate(BaseModel):
     password: str | None = Field(default=None, min_length=8, max_length=128)
 
 
-class AdminUserUpdate(BaseModel):
-    role: UserRole | None = None
-    is_active: bool | None = None
-
-
 class OfficialSourcePublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     title: str

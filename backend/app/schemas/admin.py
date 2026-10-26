@@ -27,3 +27,8 @@ class AdminUserRow(BaseModel):
     created_at: datetime
     last_activity_at: datetime | None
     questions_count: int
+
+
+class AdminUserUpdate(BaseModel):
+    role: UserRole | None = None
+    is_active: bool | None = None

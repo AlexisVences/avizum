@@ -23,13 +23,17 @@ def record_audit(
     target_user_id: int | None = None,
     detail: dict[str, str | int | bool | None] | None = None,
 ) -> AdminAuditLog:
-    """Add an audit row in the caller's transaction (flush, no commit). Detail carries identifiers and state
-    values only; keys that could hold personal data or secrets are rejected."""
+    """Add an audit row in the caller's transaction (flush, no commit). Detail carries identifiers
+    and state values only; keys that equal or contain a forbidden word (any case) are rejected."""
     detail = detail or {}
-    forbidden = FORBIDDEN_DETAIL_KEYS & set(detail)
+    forbidden = {
+        key for key in detail if any(word in key.lower() for word in FORBIDDEN_DETAIL_KEYS)
+    }
     if forbidden:
         raise ValueError(f"audit detail cannot include: {', '.join(sorted(forbidden))}")
-    row = AdminAuditLog(actor_id=actor_id, action=action.value, target_user_id=target_user_id, detail=detail)
+    row = AdminAuditLog(
+        actor_id=actor_id, action=action.value, target_user_id=target_user_id, detail=detail
+    )
     db.add(row)
     db.flush()
     return row

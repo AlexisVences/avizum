@@ -23,7 +23,13 @@ def test_record_audit_saves_who_what_and_to_whom(client):
         assert saved.created_at is not None
 
 
-@pytest.mark.parametrize("key", ["password", "token", "email", "question", "answer", "content"])
+@pytest.mark.parametrize(
+    "key",
+    [
+        "password", "token", "email", "question", "answer", "content",
+        "Email", "EMAIL", "user_email", "new_password", "access_token", "Question_text",
+    ],
+)
 def test_rejects_forbidden_keys_in_detail(client, key):
     _, factory = client
     admin, _ = make_user(factory, email="a@example.com", role=UserRole.ADMIN)

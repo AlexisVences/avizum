@@ -12,7 +12,7 @@ from app.core.config import get_settings
 from app.core.rate_limit import limiter, rate_limit, too_many
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.domain import AgentLookup, Conversation, Message, MessageFeedback, MessageRole, User
-from app.schemas.api import (AdminUserUpdate, AgentPublic, AgentSearchResponse, OfficialSourcePublic, GoogleLoginRequest, LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserPublic)
+from app.schemas.api import (AgentPublic, AgentSearchResponse, OfficialSourcePublic, GoogleLoginRequest, LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserPublic)
 from app.services.agents_registry import EmptyAgentQuery, search_agents
 from app.services.google_auth import InvalidGoogleToken, sign_in_with_google, verify_google_credential
 
@@ -97,18 +97,6 @@ def update_profile(payload: ProfileUpdate, user: CurrentUser, db: DbSession) -> 
     db.commit()
     db.refresh(user)
     return user
-
-
-@router.patch("/admin/users/{user_id}", response_model=UserPublic)
-def manage_user(user_id: int, payload: AdminUserUpdate, _: AdminUser, db: DbSession) -> User:
-    target = db.get(User, user_id)
-    if target is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(target, field, value)
-    db.commit()
-    db.refresh(target)
-    return target
 
 
 @router.get("/agents/search", response_model=AgentSearchResponse, dependencies=[Depends(rate_limit("agents-search", 30, 60))])
