@@ -5,11 +5,12 @@ from fastapi import APIRouter, HTTPException, Query, status
 from app.api.deps import AdminUser, DbSession
 from app.models.domain import User, UserRole
 from app.schemas.admin import (
-    AdminUserDelete, AdminUserRow, AdminUserUpdate, AuditRow, Overview, Page,
+    AdminUserDelete, AdminUserRow, AdminUserUpdate, AuditRow, Overview, Page, ReviewItem,
 )
 from app.schemas.api import UserPublic
 from app.services.admin.audit import AuditAction, list_audit
 from app.services.admin.overview import build_overview
+from app.services.admin.review import ReviewReason, list_review_queue
 from app.services.admin.users import AdminRuleError, delete_user, list_users, update_user
 
 router = APIRouter(prefix="/admin")
@@ -83,3 +84,18 @@ def admin_overview(
     _: AdminUser, db: DbSession, days: Literal[7, 30, 90] = 30
 ) -> Overview:
     return build_overview(db, days=days)
+
+
+@router.get("/review-queue", response_model=Page[ReviewItem])
+def admin_review_queue(
+    _: AdminUser,
+    db: DbSession,
+    reason: ReviewReason | None = None,
+    reviewed: bool | None = None,
+    page: Annotated[int, Query(ge=1, le=1_000_000)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=50)] = 20,
+) -> Page[ReviewItem]:
+    items, total = list_review_queue(
+        db, reason=reason, reviewed=reviewed, page=page, page_size=page_size
+    )
+    return Page[ReviewItem](items=items, total=total, page=page, page_size=page_size)

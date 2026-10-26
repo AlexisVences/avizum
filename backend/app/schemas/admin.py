@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
@@ -78,3 +78,16 @@ class Overview(BaseModel):
     agent_lookups: int
     series: list[DayPoint]
     attention: list[AttentionItem]
+
+
+class ReviewItem(BaseModel):
+    """One answer in the quality queue. Nothing here identifies the person who asked."""
+    message_id: int
+    asked_at: datetime
+    reasons: list[Literal["negative", "error", "uncited"]]
+    question: str
+    answer: str
+    citations: list[dict]
+    tools: list[str]
+    reviewed: bool
+    note: str | None
