@@ -46,7 +46,6 @@ function App() {
               <Route path="actividad" element={<Actividad />} />
             </Route>
             <Route path="/BienvenidaAdmin" element={<Navigate to="/admin" replace />} />
-            <Route path="/AdministrarUsuario" element={<Navigate to="/admin" replace />} />
             <Route path="/Estadisticas" element={<Navigate to="/admin" replace />} />
             <Route path="/ConsultarAgenteTransito" element={<ConsultarAgenteTransito />} />
             <Route path="/guia/calculadoras" element={<Navigate to="/Bienvenida#calculadoras" replace />} />
