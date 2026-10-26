@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     chat_max_message_chars: int = 2000
     chat_in_flight_seconds: int = 120  # an unanswered question this young means a reply is still being generated
     chat_max_messages_per_conversation: int = 200  # user + assistant; the UI then proposes a new conversation
+    # List prices in USD per million tokens, used only for the cost estimate in the admin overview.
+    llm_price_input_per_million: Decimal = Decimal("0.25")
+    llm_price_output_per_million: Decimal = Decimal("2.00")
     # UMA (Unidad de Medida y Actualización): fines are expressed as "N veces la UMA". INEGI publishes the value each
     # January in the DOF and it applies from 1 February to 31 January. The tool warns when this window has passed.
     uma_value: Decimal = Decimal("117.31")
