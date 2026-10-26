@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 
 from app.models.domain import OfficialSource
-from app.services.sources import SourceSpec, load_manifest, register_source, sha256_of
+from app.services.sources import SourceSpec, load_manifest, local_path, register_source, sha256_of
 
 SPEC = SourceSpec(
     slug="ley-movilidad", title="Ley de Movilidad", kind="ley",
@@ -107,3 +107,39 @@ def test_load_manifest_accepts_programs_laid_out_in_chapters(tmp_path):
     [spec] = load_manifest(write_manifest(tmp_path, [entry(slug="programa-verificacion-vehicular", kind="programa",
                                                            layout="chapters", articles=["5", "10"])]))
     assert (spec.kind, spec.layout, spec.articles) == ("programa", "chapters", ("5", "10"))
+
+
+def test_load_manifest_accepts_official_fee_schedules(tmp_path):
+    [spec] = load_manifest(write_manifest(tmp_path, [entry(slug="tesoreria-control-vehicular-2026", kind="tarifas",
+                                                           layout="tarifas", articles=["219"])]))
+    assert (spec.kind, spec.layout, spec.articles) == ("tarifas", "tarifas", ("219",))
+
+
+def test_load_manifest_reads_an_optional_chunk_size(tmp_path):
+    [small, normal] = load_manifest(write_manifest(tmp_path, [
+        entry(slug="tarifas-uno", kind="tarifas", max_chunk_tokens=120), entry(slug="ley-dos")]))
+    assert (small.max_chunk_tokens, normal.max_chunk_tokens) == (120, None)
+
+
+def test_load_manifest_rejects_a_non_positive_chunk_size(tmp_path):
+    with pytest.raises(ValueError):
+        load_manifest(write_manifest(tmp_path, [entry(max_chunk_tokens=0)]))
+
+
+def test_load_manifest_accepts_decrees_laid_out_in_roman_chapters(tmp_path):
+    [spec] = load_manifest(write_manifest(tmp_path, [entry(slug="programa-hoy-no-circula", kind="decreto", layout="decreto",
+                                                           articles=["IV.3", "IV.4", "X"])]))
+    assert (spec.kind, spec.layout, spec.articles) == ("decreto", "decreto", ("IV.3", "IV.4", "X"))
+
+
+def test_load_manifest_reads_whether_a_source_is_watched(tmp_path):
+    [kept, skipped] = load_manifest(write_manifest(tmp_path, [entry(slug="ley-uno"), entry(slug="programa-dos", watch=False)]))
+    assert (kept.watch, skipped.watch) == (True, False)
+
+
+def test_a_ficha_lives_in_a_markdown_file_and_is_manual(tmp_path):
+    [spec] = load_manifest(write_manifest(tmp_path, [entry(slug="semovi-cambio-propietario", kind="ficha", layout="ficha",
+                                                           manual=True, last_reform_date=None)]))
+    assert (spec.kind, spec.layout, spec.manual) == ("ficha", "ficha", True)
+    assert local_path(spec, tmp_path) == tmp_path / "semovi-cambio-propietario.md"
+    assert local_path(replace(spec, layout="articles", kind="ley"), tmp_path) == tmp_path / "semovi-cambio-propietario.pdf"

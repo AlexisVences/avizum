@@ -135,3 +135,99 @@ def test_a_numbered_list_item_is_not_a_chapter_and_a_wrapped_title_is_joined():
 def test_chapters_stop_at_the_transitorio():
     chapters = parse_chapters(PROGRAMA + PROGRAMA_FILLER, "Programa")
     assert "Publíquese" not in chapters[-1].text and "TRANSITORIO" not in chapters[-1].text
+
+
+TARIFAS = [
+    "SECRETARÍA DE ADMINISTRACIÓN Y FINANZAS\nCONTROL VEHICULAR 2026\nDERECHOS POR SERVICIOS DE CONTROL VEHICULAR:\n"
+    "Art. 219\nPor los servicios de control vehicular respecto a vehículos particulares:\n"
+    "IV. Por reposición o refrendo de tarjeta de circulación\n$433.00\n",
+    "V. Por cambio de propietario, carrocería, motor, domicilio\n$433.00\nArt. 220\nPor los servicios del servicio público:\n$100.00\n"
+    "conforme al Art. 219 de este documento\n",
+]
+
+
+def test_tarifas_layout_reads_short_article_headings_alone_on_their_line():
+    articles = parse_articles(TARIFAS, "Tarifas", short_headings=True)
+    assert [a.article for a in articles] == ["219", "220"]
+    assert "V. Por cambio de propietario, carrocería, motor, domicilio $433.00" in articles[0].lines
+    assert "conforme al Art. 219 de este documento" in articles[1].lines  # a reference is text, not a heading
+    assert articles[0].heading_path == "Tarifas › Art. 219"
+
+
+def test_short_article_headings_are_ignored_unless_the_layout_asks_for_them():
+    assert parse_articles(TARIFAS, "Tarifas") == []
+
+
+def test_tarifas_layout_keeps_each_amount_on_the_line_of_its_fraction():
+    [article, _] = parse_articles(TARIFAS, "Tarifas", short_headings=True)
+    assert "IV. Por reposición o refrendo de tarjeta de circulación $433.00" in article.lines
+    assert "V. Por cambio de propietario, carrocería, motor, domicilio $433.00" in article.lines
+    assert not any(line.startswith("$") for line in article.lines)
+
+
+from app.services.ingestion.parser import parse_decree
+
+DECRETO = [
+    "GACETA OFICIAL DEL DISTRITO FEDERAL\nI.- OBJETIVO DEL PROGRAMA\nEstablecer medidas.\n"
+    "II.- ÁMBITO DE APLICACIÓN\nRige en todo el territorio.\nI.- Días.\nII.- Horarios.\n"
+    "IV.- REGLAS APLICABLES A LA CIRCULACION CON BASE EN HOLOGRAMAS\nLos hologramas son los del programa.\n"
+    "IV.1. “EXENTO”\nQuedan exentos.\n",
+    "GACETA OFICIAL DEL DISTRITO FEDERAL\n9\nIV.3. HOLOGRAMA “1”\nSe limita un día entre semana.\nAmarillo\n5 ó 6\nLunes\n"
+    "IV.4. HOLOGRAMA “2”\nSe limita un día y todos los sábados.\nAmarillo\n5 ó 6\nLunes\n"
+    "V.- VEHÍCULOS MATRICULADOS FUERA DEL DISTRITO FEDERAL Y\nEN EL EXTRANJERO (FORÁNEOS)\nSe limita su circulación.\n"
+    "VI. 1. Los foráneos podrán verificar voluntariamente.\n",
+    "GACETA OFICIAL DEL DISTRITO FEDERAL\nX.- CRITERIOS DE APLICACIÓN PARA PLACAS\nSe aplica el último dígito.\nTRANSTORIOS\nPRIMERO.- Publíquese.\n",
+]
+
+
+def test_decree_units_are_roman_chapters_and_their_numbered_subsections():
+    units = parse_decree(DECRETO + PROGRAMA_FILLER, "Decreto HNC")
+    assert [u.article for u in units] == ["I", "II", "IV", "IV.1", "IV.3", "IV.4", "V", "X"]
+    holograma_2 = next(u for u in units if u.article == "IV.4")
+    assert holograma_2.heading_path == "Decreto HNC › IV Reglas aplicables a la circulacion con base en hologramas › IV.4 Holograma “2”"
+    assert "Lunes" in holograma_2.lines and "V.- VEHÍCULOS" not in holograma_2.text
+    assert (holograma_2.page_start, holograma_2.page_end) == (2, 2)
+
+
+def test_decree_keeps_inner_roman_lists_and_unnumbered_chapters_inside_their_unit_and_joins_wrapped_titles():
+    units = {u.article: u for u in parse_decree(DECRETO + PROGRAMA_FILLER, "Decreto HNC")}
+    assert "I.- Días." in units["II"].lines  # a sentence-case roman item is a list item, not a chapter
+    assert units["V"].heading_path == "Decreto HNC › V Vehículos matriculados fuera del distrito federal y en el extranjero (foráneos)"
+    assert "VI. 1. Los foráneos podrán verificar voluntariamente." in units["V"].lines
+    assert "Publíquese" not in units["X"].text
+
+
+from app.services.ingestion.parser import parse_ficha
+
+FICHA = """# SEMOVI — Cambio de propietario
+Fuente: https://www.semovi.cdmx.gob.mx/x
+Consultada: 2026-10-24
+
+Los nuevos propietarios tendrán 15 días hábiles.
+
+## Requisitos
+- Identificación oficial vigente.
+- Línea de captura pagada.
+
+## Costo
+$433.00 (clave 36-7).
+"""
+
+
+def test_a_ficha_is_split_by_its_second_level_headings_and_drops_its_metadata_lines():
+    units = parse_ficha(FICHA, "SEMOVI — Cambio de propietario")
+    assert [u.article for u in units] == ["Resumen", "Requisitos", "Costo"]
+    assert units[0].lines == ("Los nuevos propietarios tendrán 15 días hábiles.",)
+    assert units[1].lines == ("Requisitos", "- Identificación oficial vigente.", "- Línea de captura pagada.")
+    assert units[2].heading_path == "SEMOVI — Cambio de propietario › Costo"
+
+
+def test_a_ficha_has_no_page_because_it_is_a_web_page():
+    assert all(u.page_start == 0 and u.page_end == 0 for u in parse_ficha(FICHA, "Ficha"))
+
+
+def test_a_ficha_heading_longer_than_the_article_column_is_cut_for_the_id_but_kept_in_the_path():
+    long_heading = "SSC — Dirección General de Asuntos Internos (denuncias contra policías por abusos en la vía pública)"
+    [unit] = parse_ficha(f"## {long_heading}\nTeléfono: 55 5208 9898", "Ficha")
+    assert len(unit.article) <= 50 and unit.article.endswith("…")
+    assert unit.heading_path == f"Ficha › {long_heading}"

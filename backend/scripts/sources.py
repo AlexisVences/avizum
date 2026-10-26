@@ -53,7 +53,7 @@ def main() -> int:
     cli.add_argument("--findings-file")
     args = cli.parse_args()
 
-    specs = load_manifest(MANIFEST)
+    specs = [spec for spec in load_manifest(MANIFEST) if spec.watch]  # «watch»: false = revisado a mano una vez al año
     try:
         entries, hashes, errors = read_world(specs)
     except IndexStructureError as exc:
