@@ -24,7 +24,7 @@ const SignUp = () => {
         setError('');
         try {
             await authService.loginWithGoogle(credential);
-            navigate(authService.getCurrentUser()?.rol === 'admin' ? '/BienvenidaAdmin' : '/Bienvenida');
+            navigate(authService.getCurrentUser()?.rol === 'admin' ? '/admin' : '/Bienvenida');
         } catch (err) {
             setError(err.message);
         }

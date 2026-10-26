@@ -10,13 +10,17 @@ import Bienvenida from "./pages/Bienvenida"
 import GestionarPeril from "./pages/GestionarPerfil"
 import AsesoriaIA from "./pages/AsesoriaIA";
 import ScrollTop from "./components/ScrollTop"
-import BienvenidaAdmin from "./pages/BienvenidaAdmin"
-import AdministrarUsuario from "./pages/AdministrarUsuarios"
-import Estadisticas from "./pages/Estadisticas"
 import ConsultarAgenteTransito from "./pages/ConsultarAgenteTransito"
 import GuiaArticulo from "./pages/GuiaArticulo"
 import GuiaCategoria from "./pages/GuiaCategoria"
 import RutaProtegida from "./services/rutaProtegida";
+import RutaAdmin from "./admin/RutaAdmin";
+import AdminLayout from "./admin/AdminLayout";
+import Resumen from "./admin/pages/Resumen";
+import Calidad from "./admin/pages/Calidad";
+import Usuarios from "./admin/pages/Usuarios";
+import Fuentes from "./admin/pages/Fuentes";
+import Actividad from "./admin/pages/Actividad";
 
 function App() {
   return (
@@ -34,9 +38,16 @@ function App() {
             <Route path="/Bienvenida" element={<RutaProtegida> <Bienvenida/> </RutaProtegida>} />
             <Route path="/Gestionar-perfil" element={<RutaProtegida> <GestionarPeril/> </RutaProtegida>} />
             <Route path="/asesoria-ia" element={<RutaProtegida> <AsesoriaIA /> </RutaProtegida>} />
-            <Route path="/BienvenidaAdmin" element={<RutaProtegida> <BienvenidaAdmin /> </RutaProtegida>} />
-            <Route path="/AdministrarUsuario" element={<RutaProtegida> <AdministrarUsuario /> </RutaProtegida>} />
-            <Route path="/Estadisticas" element={ <Estadisticas /> } />
+            <Route path="/admin" element={<RutaProtegida> <RutaAdmin> <AdminLayout /> </RutaAdmin> </RutaProtegida>}>
+              <Route index element={<Resumen />} />
+              <Route path="calidad" element={<Calidad />} />
+              <Route path="usuarios" element={<Usuarios />} />
+              <Route path="fuentes" element={<Fuentes />} />
+              <Route path="actividad" element={<Actividad />} />
+            </Route>
+            <Route path="/BienvenidaAdmin" element={<Navigate to="/admin" replace />} />
+            <Route path="/AdministrarUsuario" element={<Navigate to="/admin" replace />} />
+            <Route path="/Estadisticas" element={<Navigate to="/admin" replace />} />
             <Route path="/ConsultarAgenteTransito" element={<ConsultarAgenteTransito />} />
             <Route path="/guia/calculadoras" element={<Navigate to="/Bienvenida#calculadoras" replace />} />
             <Route path="/guia/calculadoras/:herramientaSlug" element={<Navigate to="/Bienvenida#calculadoras" replace />} />
