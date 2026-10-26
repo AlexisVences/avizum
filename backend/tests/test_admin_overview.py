@@ -178,3 +178,45 @@ def test_los_precios_tienen_un_valor_por_defecto_positivo():
     settings = Settings()
     assert settings.llm_price_input_per_million > 0
     assert settings.llm_price_output_per_million > 0
+
+
+def _errored_answers(factory, count: int) -> list[int]:
+    ids = []
+    with factory() as db:
+        person = make_user(factory, email="asker@example.com")[0]
+        conv = Conversation(user_id=person.id, title="t")
+        db.add(conv)
+        db.flush()
+        for _ in range(count):
+            msg = Message(
+                conversation_id=conv.id, role=MessageRole.ASSISTANT, content="r",
+                status=MessageStatus.ERROR,
+            )
+            db.add(msg)
+            db.flush()
+            ids.append(msg.id)
+        db.commit()
+    return ids
+
+
+def test_el_aviso_de_revision_aparece_con_3_sin_revisar(client):
+    http, factory = client
+    headers = _admin(factory)
+    _errored_answers(factory, 3)
+    assert http.get(URL, headers=headers).json()["attention"] == [
+        {"kind": "review", "label": "respuestas por revisar", "count": 3,
+         "href": "/admin/calidad"}
+    ]
+
+
+def test_el_aviso_de_revision_desaparece_al_marcarlas(client):
+    http, factory = client
+    headers = _admin(factory)
+    ids = _errored_answers(factory, 3)
+    for message_id in ids[:2]:
+        http.post(f"{URL.replace('overview', 'review-queue')}/{message_id}/review",
+                  headers=headers, json={})
+    assert http.get(URL, headers=headers).json()["attention"][0]["count"] == 1
+    http.post(f"{URL.replace('overview', 'review-queue')}/{ids[2]}/review",
+              headers=headers, json={})
+    assert http.get(URL, headers=headers).json()["attention"] == []
