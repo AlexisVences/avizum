@@ -56,6 +56,7 @@ const Bienvenida = () => {
                         <AccionCard
                             folio="01 · ASESORÍA"
                             titulo="Asesoría legal"
+                            descripcion="Pregunta con tus palabras y recibe una respuesta con el artículo y la página oficial en que se apoya."
                             to="/asesoria-ia"
                             cta="Entrar"
                             retraso={0}
@@ -71,6 +72,7 @@ const Bienvenida = () => {
                         <AccionCard
                             folio="03 · AGENTES"
                             titulo="Consultar agentes facultados"
+                            descripcion="Busca por placa o nombre si un agente de tránsito aparece en la lista oficial de personal autorizado para multar."
                             to="/ConsultarAgenteTransito"
                             cta="Verificar"
                             retraso={0.24}
