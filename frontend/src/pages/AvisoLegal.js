@@ -53,7 +53,7 @@ const AvisoLegal = () => {
                     y proteger los datos conforme a la Ley de Protección de Datos Personales vigente en México.
                     </p>
                     <p>
-                    Las respuestas que reciban una calificación negativa o terminen en error pueden ser revisadas por el equipo
+                    Las respuestas que reciban una calificación negativa, terminen en error o no citen ninguna fuente pueden ser revisadas por el equipo
                     de Avizum, sin nombre ni correo, para mejorar el servicio.
                     </p>
                 </section>

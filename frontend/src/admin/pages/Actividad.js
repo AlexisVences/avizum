@@ -5,14 +5,12 @@ import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import Pagination from '../components/Pagination';
 import useAdminList from '../hooks/useAdminList';
-import { listAudit } from '../../services/adminService';
+import { listAudit, listUsers } from '../../services/adminService';
+import { fieldClasses, focusRing, fullName } from '../format';
 
 const PAGE_SIZE = 20;
 const TIME_ZONE = 'America/Mexico_City';
 
-const focusRing =
-    'focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-azul';
-const fieldClasses = `tw-mt-1 tw-block tw-min-h-[44px] tw-rounded tw-border tw-border-rule tw-bg-white tw-px-3 ${focusRing}`;
 
 const ACTIONS = [
     { value: 'user.role_changed', label: 'Cambios de rol' },
@@ -34,10 +32,12 @@ const SENTENCES = {
     'review.marked': (d) => `marcó como revisada ${d.messageId == null ? 'una respuesta' : `la respuesta ${d.messageId}`}`,
 };
 
-export const describeEntry = ({ actorName, action, targetUserId, detail }) => {
+export const describeEntry = ({ actorName, action, targetUserId, targetName, detail }) => {
     const build = SENTENCES[action];
     if (!build) return action;
-    const person = targetUserId == null ? 'una persona' : `la persona ${targetUserId}`;
+    let person = 'una persona';
+    if (targetName) person = targetName;
+    else if (targetUserId != null) person = `la persona ${targetUserId}`;
     return `${actorName || 'Una cuenta eliminada'} ${build(detail || {}, person)}`;
 };
 
@@ -54,11 +54,34 @@ const timeFormat = new Intl.DateTimeFormat('es-MX', {
     hourCycle: 'h23',
 });
 
+const ADMINS_QUERY = { role: 'admin', pageSize: 50 };
+
 const Actividad = () => {
     const [action, setAction] = useState('');
+    const [actorId, setActorId] = useState('');
+    const [admins, setAdmins] = useState([]);
     const [page, setPage] = useState(1);
 
-    const params = { action: action || undefined, page, pageSize: PAGE_SIZE };
+    // The filter is a convenience: if the list of administrators fails, the log still works.
+    useEffect(() => {
+        let active = true;
+        listUsers(ADMINS_QUERY)
+            .then((result) => {
+                if (active) setAdmins(result?.items || []);
+            })
+            .catch(() => {});
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    const filtered = Boolean(action || actorId);
+    const params = {
+        action: action || undefined,
+        actorId: actorId ? Number(actorId) : undefined,
+        page,
+        pageSize: PAGE_SIZE,
+    };
     const { data, loading, error, reload } = useAdminList(listAudit, params);
 
     const items = data?.items || [];
@@ -86,20 +109,21 @@ const Actividad = () => {
             </>
         );
     } else if (items.length === 0) {
-        content = action ? (
+        content = filtered ? (
             <EmptyState
-                title="No hay actividad de este tipo"
-                hint="Prueba con otra acción o quita el filtro."
+                title="No hay actividad con estos filtros"
+                hint="Prueba con otra acción o persona, o quita los filtros."
                 action={
                     <button
                         type="button"
                         onClick={() => {
                             setAction('');
+                            setActorId('');
                             setPage(1);
                         }}
                         className={`tw-rounded tw-bg-magenta tw-px-4 tw-py-2 tw-text-white ${focusRing}`}
                     >
-                        Quitar filtro
+                        Quitar filtros
                     </button>
                 }
             />
@@ -158,8 +182,26 @@ const Actividad = () => {
     return (
         <>
             <PageHeader title="Actividad" description="Quién hizo qué en la consola de administración." />
-            <div className="tw-mb-6">
-                <label className="tw-block tw-max-w-xs">
+            <div className="tw-mb-6 tw-flex tw-flex-wrap tw-gap-4">
+                <label className="tw-block tw-w-full tw-max-w-xs">
+                    <span className="tw-text-sm tw-text-ink-soft">Persona</span>
+                    <select
+                        value={actorId}
+                        onChange={(e) => {
+                            setActorId(e.target.value);
+                            setPage(1);
+                        }}
+                        className={`${fieldClasses} tw-w-full`}
+                    >
+                        <option value="">Todas</option>
+                        {admins.map((admin) => (
+                            <option key={admin.id} value={admin.id}>
+                                {fullName(admin.firstName, admin.lastName)}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+                <label className="tw-block tw-w-full tw-max-w-xs">
                     <span className="tw-text-sm tw-text-ink-soft">Acción</span>
                     <select
                         value={action}

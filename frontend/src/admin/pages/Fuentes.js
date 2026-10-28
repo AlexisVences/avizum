@@ -6,6 +6,8 @@ import ErrorState from '../components/ErrorState';
 import StatusBadge from '../components/StatusBadge';
 import useAdminList from '../hooks/useAdminList';
 import { listSources } from '../../services/adminService';
+import { focusRing } from '../format';
+import isWebUrl from '../../utils/isWebUrl';
 
 const TIME_ZONE = 'America/Mexico_City';
 const NO_PARAMS = {};
@@ -28,8 +30,6 @@ const kindTitle = (kind) => {
     return raw.charAt(0).toUpperCase() + raw.slice(1);
 };
 
-const focusRing =
-    'focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-azul';
 
 const dayFormat = { day: 'numeric', month: 'short', year: 'numeric' };
 // Las fechas «yyyy-mm-dd» son de calendario: se leen como UTC para que no se corran de día.
@@ -66,15 +66,6 @@ const groupByKind = (sources) => {
         groups.get(source.kind).push(source);
     });
     return [...groups.entries()];
-};
-
-const isWebUrl = (value) => {
-    try {
-        const { protocol } = new URL(value);
-        return protocol === 'http:' || protocol === 'https:';
-    } catch (err) {
-        return false;
-    }
 };
 
 const SourceRow = ({ source }) => {

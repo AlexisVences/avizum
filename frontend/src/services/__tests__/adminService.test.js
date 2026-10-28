@@ -231,3 +231,33 @@ test('listSources pide /admin/sources y cameliza', async () => {
     pendingSanctions: 20,
   });
 });
+
+describe('sesión y permisos', () => {
+  let assign;
+  beforeEach(() => {
+    assign = jest.fn();
+    Object.defineProperty(window, 'location', { configurable: true, value: { assign } });
+    localStorage.setItem('user', '{"id":1}');
+  });
+
+  test('401 muestra un mensaje en español, cierra la sesión y manda a /Login', async () => {
+    global.fetch.mockResolvedValue(respuesta(401, { detail: 'Invalid or expired token' }));
+    await expect(listUsers()).rejects.toMatchObject({
+      message: 'Tu sesión expiró. Inicia sesión de nuevo.',
+      status: 401,
+    });
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('user')).toBeNull();
+    expect(assign).toHaveBeenCalledWith('/Login');
+  });
+
+  test('403 muestra un mensaje en español y no cierra la sesión', async () => {
+    global.fetch.mockResolvedValue(respuesta(403, { detail: 'Administrator role required' }));
+    await expect(listUsers()).rejects.toMatchObject({
+      message: 'No tienes permiso para esta acción.',
+      status: 403,
+    });
+    expect(localStorage.getItem('token')).toBe('tok');
+    expect(assign).not.toHaveBeenCalled();
+  });
+});

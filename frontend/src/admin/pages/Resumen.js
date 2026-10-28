@@ -7,10 +7,9 @@ import StatBand from '../components/StatBand';
 import DailyChart from '../components/DailyChart';
 import useAdminList from '../hooks/useAdminList';
 import { getOverview } from '../../services/adminService';
+import { focusRing } from '../format';
 
 const PERIODS = [7, 30, 90];
-const focusRing =
-    'focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-azul';
 
 const integer = new Intl.NumberFormat('es-MX');
 

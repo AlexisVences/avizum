@@ -9,6 +9,6 @@ test('la sección «Protección de datos personales» avisa de la revisión de r
   render(<AvisoLegal />);
   const section = screen.getByRole('heading', { name: 'Protección de datos personales' }).closest('section');
   expect(section).toHaveTextContent(
-    'Las respuestas que reciban una calificación negativa o terminen en error pueden ser revisadas por el equipo de Avizum, sin nombre ni correo, para mejorar el servicio'
+    'Las respuestas que reciban una calificación negativa, terminen en error o no citen ninguna fuente pueden ser revisadas por el equipo de Avizum, sin nombre ni correo, para mejorar el servicio'
   );
 });

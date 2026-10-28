@@ -9,14 +9,12 @@ import UserPanel from '../components/UserPanel';
 import useAdminList from '../hooks/useAdminList';
 import { listUsers } from '../../services/adminService';
 import authService from '../../services/authService';
+import { fieldClasses, focusRing, formatDate } from '../format';
 
 const PAGE_SIZE = 20;
 const SEARCH_DELAY_MS = 300;
 const NO_FILTERS = { role: '', active: '', verified: '' };
 
-const focusRing =
-    'focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-azul';
-const fieldClasses = `tw-mt-1 tw-block tw-min-h-[44px] tw-rounded tw-border tw-border-rule tw-bg-white tw-px-3 ${focusRing}`;
 
 const COLUMNS = [
     { key: 'name', label: 'Persona' },
@@ -29,9 +27,6 @@ const COLUMNS = [
 
 // Orden inicial de cada columna al activarla por primera vez.
 const FIRST_DIRECTION = { name: false, created: true, activity: true, questions: true };
-
-const formatDate = (iso) =>
-    iso ? new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 
 const Usuarios = () => {
     const currentUserId = authService.getCurrentUser()?.id;

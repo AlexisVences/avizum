@@ -49,3 +49,10 @@ describe('MessageContent', () => {
     expect(container.querySelector('img')).toBeNull();
   });
 });
+
+test('a citation superscript with a javascript: URL is plain text, not a link', () => {
+  const bad = [{ ...citations[0], url: 'javascript:alert(1)' }];
+  render(<MessageContent content="Debe portarla [23]." citations={bad} />);
+  expect(screen.queryByRole('link')).toBeNull();
+  expect(screen.getByText('1')).toBeInTheDocument();
+});

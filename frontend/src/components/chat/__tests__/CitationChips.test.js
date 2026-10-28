@@ -27,3 +27,9 @@ test('a whole source without an article still reads as the complete document', (
   render(<CitationChips citations={[{ ...law, article: '', fraction: null, page: null }]} />);
   expect(screen.getByText('Reglamento de Tránsito · documento completo')).toBeInTheDocument();
 });
+
+test('a citation whose URL is not http(s) is shown as text, not as a link', () => {
+  render(<CitationChips citations={[{ ...law, url: 'javascript:alert(1)' }]} />);
+  expect(screen.queryByRole('link')).toBeNull();
+  expect(screen.getByText('Reglamento de Tránsito · art. 45, fr. IV · pág. 59')).toBeInTheDocument();
+});

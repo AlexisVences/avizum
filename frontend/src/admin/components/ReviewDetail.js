@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import MessageContent from '../../components/chat/MessageContent';
 import CitationChips from '../../components/chat/CitationChips';
 import { getEvalCase } from '../../services/adminService';
+import { focusRing } from '../format';
 
 export const NOTE_LIMIT = 500;
 
-const focusRing =
-    'focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-azul';
 const primaryButton = `tw-min-h-[44px] tw-rounded tw-bg-magenta tw-px-4 tw-py-2 tw-text-white disabled:tw-opacity-50 ${focusRing}`;
 const secondaryButton = `tw-min-h-[44px] tw-rounded tw-border tw-border-rule tw-bg-paper-raised tw-px-4 tw-py-2 tw-text-ink disabled:tw-opacity-50 ${focusRing}`;
 
-// The queue sends camelCase citations without the chat's markers. The chat components want snake_case keys, `n`
-// (the "[n]" written in the text) and `orden` (position of use). The agent stores citations in order of first
-// appearance, so the k-th distinct marker in the text belongs to the k-th citation.
+// The queue sends camelCase citations. The chat components want snake_case keys, `n` (the "[n]" written in the
+// text) and `orden` (position of use). The agent stores both with every citation; only when they are missing
+// (older data) do we guess: citations are stored in order of first appearance, so the k-th distinct marker in the
+// text belongs to the k-th citation.
 export const toChatCitations = (answer, citations) => {
     const markers = [];
     for (const match of String(answer || '').matchAll(/\[(\d{1,3})\]/g)) {
@@ -20,8 +20,8 @@ export const toChatCitations = (answer, citations) => {
         if (!markers.includes(n)) markers.push(n);
     }
     return (citations || []).map((c, index) => ({
-        n: markers[index] ?? index + 1,
-        orden: index + 1,
+        n: c.n ?? markers[index] ?? index + 1,
+        orden: c.orden ?? index + 1,
         source_slug: c.sourceSlug,
         source_title: c.sourceTitle,
         article: c.article,

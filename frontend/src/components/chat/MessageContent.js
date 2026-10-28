@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import Markdown from 'react-markdown';
 import { isWebPage } from './CitationChips';
+import isWebUrl from '../../utils/isWebUrl';
 
 // Only what an answer needs. Raw HTML is dropped (skipHtml) and everything outside this list is unwrapped to text.
 const ALLOWED = ['p', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'code', 'br', 'blockquote', 'h1', 'h2', 'h3', 'h4'];
@@ -36,6 +37,9 @@ export default function MessageContent({ content, citations = [], streaming = fa
           const citation = byNumber.get(href.slice('#cita-'.length));
           if (!citation) return null;
           const where = `${citation.source_title}${citation.article ? `, ${isWebPage(citation) ? citation.article : `art. ${citation.article}`}` : ''}${citation.fraction ? ` fr. ${citation.fraction}` : ''}`;
+          if (!isWebUrl(citation.url)) {
+            return <sup title={where}>{children}</sup>;
+          }
           return (
             <sup>
               <a

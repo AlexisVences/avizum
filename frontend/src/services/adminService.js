@@ -1,4 +1,5 @@
 import { API_URL, apiFetch, authHeaders, extractErrorMessage } from './api';
+import authService from './authService';
 
 export class AdminApiError extends Error {
   constructor(message, status = 0, code = null) {
@@ -55,6 +56,15 @@ const request = async (path, { method = 'GET', body, raw = false } = {}) => {
     data = await response.json();
   } catch (error) {
     data = null;
+  }
+
+  if (response.status === 401) {
+    authService.logout();
+    window.location.assign('/Login');
+    throw new AdminApiError('Tu sesión expiró. Inicia sesión de nuevo.', 401);
+  }
+  if (response.status === 403) {
+    throw new AdminApiError('No tienes permiso para esta acción.', 403);
   }
 
   if (!response.ok) {

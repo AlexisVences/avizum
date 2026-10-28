@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import logo from '../assets/logo.png';
 import authService from '../services/authService';
+import { focusRing } from './format';
 
 const LINKS = [
     { to: '/admin', label: 'Resumen' },
@@ -12,7 +13,6 @@ const LINKS = [
     { to: '/admin/actividad', label: 'Actividad' },
 ];
 
-const focusRing = 'focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-azul';
 
 const isActive = (pathname, to) => {
     const clean = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import { deleteUser, updateUser } from '../../services/adminService';
+import { focusRing, formatDate, fullName } from '../format';
 import ConfirmDialog from './ConfirmDialog';
 import StatusBadge from './StatusBadge';
 
@@ -12,14 +13,7 @@ const ERROR_TEXT = {
     confirmation_mismatch: 'El correo escrito no coincide con el de la cuenta.',
 };
 
-const focusRing =
-    'focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-azul';
 const actionButton = `tw-min-h-[44px] tw-w-full tw-rounded tw-border tw-border-rule tw-bg-paper-raised tw-px-4 tw-py-2 tw-text-left disabled:tw-opacity-50 ${focusRing}`;
-
-const formatDate = (iso) =>
-    iso ? new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
-
-const fullName = (user) => [user.firstName, user.lastName].filter(Boolean).join(' ');
 
 const UserPanel = ({ user, currentUserId, onChanged, onClose }) => {
     const [role, setRole] = useState(user.role);
@@ -50,7 +44,7 @@ const UserPanel = ({ user, currentUserId, onChanged, onClose }) => {
     };
 
     const activeLabel = user.isActive ? 'Desactivar cuenta' : 'Reactivar cuenta';
-    const name = fullName(user);
+    const name = fullName(user.firstName, user.lastName);
 
     return (
         <>

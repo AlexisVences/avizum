@@ -7,13 +7,11 @@ import Pagination from '../components/Pagination';
 import ReviewDetail from '../components/ReviewDetail';
 import useAdminList from '../hooks/useAdminList';
 import { listReviewQueue, markReviewed } from '../../services/adminService';
+import { fieldClasses, focusRing } from '../format';
 
 const PAGE_SIZE = 20;
 const TIME_ZONE = 'America/Mexico_City';
 
-const focusRing =
-    'focus-visible:tw-outline focus-visible:tw-outline-2 focus-visible:tw-outline-offset-2 focus-visible:tw-outline-azul';
-const fieldClasses = `tw-mt-1 tw-block tw-min-h-[44px] tw-rounded tw-border tw-border-rule tw-bg-white tw-px-3 ${focusRing}`;
 
 const REASONS = [
     { value: 'negative', label: 'Mal calificada' },

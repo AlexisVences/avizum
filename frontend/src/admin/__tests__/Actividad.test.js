@@ -8,6 +8,7 @@ import * as adminService from '../../services/adminService';
 jest.mock('../../services/adminService', () => ({
     ...jest.requireActual('../../services/adminService'),
     listAudit: jest.fn(),
+    listUsers: jest.fn(),
 }));
 
 const row = (id, extra = {}) => ({
@@ -24,9 +25,42 @@ const page = (items, total = items.length) => ({ items, total, page: 1, pageSize
 
 beforeEach(() => {
     jest.clearAllMocks();
+    adminService.listUsers.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
 });
 
 describe('Actividad', () => {
+    test('nombra a la persona afectada y solo cae a «la persona N» sin nombre', async () => {
+        adminService.listAudit.mockResolvedValue(
+            page([row(1, { targetName: 'María López' }), row(2, { targetName: null, action: 'user.deactivated', detail: {} })])
+        );
+        render(<Actividad />);
+        expect(
+            await screen.findAllByText('Alexis Vences cambió el rol de María López: de usuario a administrador')
+        ).not.toHaveLength(0);
+        expect(screen.getAllByText('Alexis Vences desactivó la cuenta de la persona 12')).not.toHaveLength(0);
+    });
+
+    test('el filtro «Persona» lista administradores y envía actorId', async () => {
+        adminService.listUsers.mockResolvedValue({
+            items: [{ id: 3, firstName: 'Alexis', lastName: 'Vences' }, { id: 4, firstName: 'Lucía', lastName: 'Paz' }],
+            total: 2,
+            page: 1,
+            pageSize: 50,
+        });
+        adminService.listAudit.mockResolvedValue(page([row(1)]));
+        render(<Actividad />);
+        await screen.findAllByText(/cambió el rol/);
+        expect(adminService.listUsers).toHaveBeenCalledWith({ role: 'admin', pageSize: 50 });
+        const select = screen.getByLabelText('Persona');
+        await screen.findByRole('option', { name: 'Lucía Paz' });
+        await act(async () => {
+            await userEvent.selectOptions(select, 'Lucía Paz');
+        });
+        await waitFor(() =>
+            expect(adminService.listAudit).toHaveBeenLastCalledWith(expect.objectContaining({ actorId: 4, page: 1 }))
+        );
+    });
+
     test('muestra quién, qué, a quién y cuándo en español', async () => {
         adminService.listAudit.mockResolvedValue(
             page([
@@ -100,7 +134,7 @@ describe('Actividad', () => {
         await act(async () => {
             await userEvent.selectOptions(screen.getByLabelText('Acción'), 'user.deleted');
         });
-        expect(await screen.findByText('No hay actividad de este tipo')).toBeInTheDocument();
+        expect(await screen.findByText('No hay actividad con estos filtros')).toBeInTheDocument();
         expect(adminService.listAudit).toHaveBeenLastCalledWith(
             expect.objectContaining({ action: 'user.deleted', page: 1 })
         );
