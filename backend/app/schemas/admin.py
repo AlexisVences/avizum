@@ -111,3 +111,21 @@ class ReviewItem(BaseModel):
     tools: list[str]
     reviewed: bool
     note: str | None
+
+
+class SourceRow(BaseModel):
+    slug: str
+    title: str
+    kind: str
+    url: str
+    last_reform_date: date | None
+    retrieved_at: datetime
+    chunk_count: int
+    versions: int
+    review_due: bool
+    review_due_since: date | None
+
+
+class SourcesStatus(BaseModel):
+    sources: list[SourceRow]
+    pending_sanctions: int

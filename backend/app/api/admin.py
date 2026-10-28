@@ -6,7 +6,7 @@ from app.api.deps import AdminUser, DbSession
 from app.models.domain import User, UserRole
 from app.schemas.admin import (
     AdminUserDelete, AdminUserRow, AdminUserUpdate, AuditRow, Overview, Page, ReviewItem,
-    ReviewMark, ReviewMarkBody,
+    ReviewMark, ReviewMarkBody, SourcesStatus,
 )
 from app.schemas.api import UserPublic
 from app.services.admin.audit import AuditAction, list_audit
@@ -14,6 +14,7 @@ from app.services.admin.overview import build_overview
 from app.services.admin.review import (
     NotInQueueError, ReviewReason, eval_case_for, list_review_queue, mark_reviewed,
 )
+from app.services.admin.sources import list_sources, pending_sanctions
 from app.services.admin.users import AdminRuleError, delete_user, list_users, update_user
 
 router = APIRouter(prefix="/admin")
@@ -124,3 +125,8 @@ def admin_eval_case(message_id: int, _: AdminUser, db: DbSession) -> dict:
         return eval_case_for(db, message_id)
     except NotInQueueError:
         raise _NOT_IN_QUEUE from None
+
+
+@router.get("/sources", response_model=SourcesStatus)
+def admin_sources(_: AdminUser, db: DbSession) -> SourcesStatus:
+    return SourcesStatus(sources=list_sources(db), pending_sanctions=pending_sanctions(db))
