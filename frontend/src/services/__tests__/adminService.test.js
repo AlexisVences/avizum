@@ -6,6 +6,7 @@ import {
   getOverview,
   listAudit,
   listReviewQueue,
+  listSources,
   listUsers,
   markReviewed,
   updateUser,
@@ -214,4 +215,19 @@ test('getEvalCase devuelve el objeto tal cual, sin cambiar sus claves', async ()
   const result = await getEvalCase(9);
   expect(global.fetch.mock.calls[0][0]).toMatch(/\/admin\/review-queue\/9\/eval-case$/);
   expect(result).toEqual(caso);
+});
+
+test('listSources pide /admin/sources y cameliza', async () => {
+  global.fetch.mockResolvedValue(
+    respuesta(200, {
+      sources: [{ slug: 'ley', chunk_count: 4, review_due: true, review_due_since: '2026-05-03' }],
+      pending_sanctions: 20,
+    })
+  );
+  const result = await listSources();
+  expect(global.fetch.mock.calls[0][0]).toMatch(/\/admin\/sources$/);
+  expect(result).toEqual({
+    sources: [{ slug: 'ley', chunkCount: 4, reviewDue: true, reviewDueSince: '2026-05-03' }],
+    pendingSanctions: 20,
+  });
 });

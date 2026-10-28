@@ -107,3 +107,5 @@ export const markReviewed = (messageId, note) =>
 // The case is a line of the evaluation file: its keys must reach the clipboard exactly as the backend wrote them.
 export const getEvalCase = (messageId) =>
   request(`/admin/review-queue/${messageId}/eval-case`, { raw: true });
+
+export const listSources = () => request('/admin/sources');
