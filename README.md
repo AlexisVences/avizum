@@ -32,6 +32,7 @@ Avizum puts it in one place, in plain Spanish, and never invents an answer. If t
 | **Driver's guide** | Ten searchable categories (fines, impound, vehicle procedures, emissions and *Hoy No Circula*, accidents, myths vs. reality), each article citing its source and last update. |
 | **Calculators** | UMA → pesos for fines, and a verification-period finder by license plate. |
 | **Accounts and roles** | Email + password auth, profile management, role-based admin API with usage statistics. |
+| **Admin console** | `/admin` for administrators: usage overview, answer-quality review queue (no personal data), user management with audit log, and source freshness. |
 
 ## Screenshots
 
