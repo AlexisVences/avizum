@@ -40,6 +40,8 @@ CITATION = {
     "source_slug": "reglamento", "source_title": "Reglamento", "article": "10",
     "fraction": None, "page": 3, "url": "https://example.com/r.pdf",
 }
+STORED = {**CITATION, "n": 2, "orden": 1}
+SHOWN = {**CITATION, "n": 2, "orden": 1}
 SEARCH = [{"name": "buscar_legislacion", "args": {"consulta": "x"}, "estado": "ok"}]
 
 
@@ -87,7 +89,7 @@ def test_una_respuesta_con_pulgar_abajo_entra_con_razon_negative(client):
     assert item["message_id"] == mid
     assert item["reasons"] == ["negative"]
     assert item["tools"] == ["buscar_legislacion"]
-    assert item["citations"] == [CITATION]
+    assert item["citations"] == [{**CITATION, "n": None, "orden": None}]
     assert item["answer"] == "respuesta"
     assert item["reviewed"] is False and item["note"] is None
 
@@ -375,7 +377,7 @@ def test_una_clave_extra_en_una_cita_guardada_no_llega_a_la_respuesta(client):
     headers = _admin(factory)
     _queued(factory, status=MessageStatus.ERROR, citations=[{**CITATION, "internal_note": "x"}])
     item = _queue(http, headers)["items"][0]
-    assert item["citations"] == [CITATION]
+    assert item["citations"] == [{**CITATION, "n": None, "orden": None}]
     assert "internal_note" not in str(item)
 
 
@@ -395,3 +397,21 @@ def test_la_seleccion_sql_y_las_razones_coinciden(client):
     assert all(item["reasons"] for item in body["items"])
     by_reason = sorted(tuple(item["reasons"]) for item in body["items"])
     assert by_reason == [("error",), ("negative",)] + [("uncited",)] * 3
+
+
+def test_la_cita_conserva_n_y_orden_guardados(client):
+    http, factory = client
+    headers = _admin(factory)
+    _queued(factory, status=MessageStatus.ERROR, citations=[STORED])
+    assert _queue(http, headers)["items"][0]["citations"] == [SHOWN]
+
+
+def test_reason_negative_y_uncited_funcionan_por_http(client):
+    http, factory = client
+    headers = _admin(factory)
+    person, _ = make_user(factory, email="p@example.com")
+    _turn(factory, person.id, citations=[CITATION], tool_calls=SEARCH, thumbs=-1)
+    _turn(factory, person.id, citations=None, tool_calls=SEARCH)
+    assert _queue(http, headers, reason="negative")["total"] == 1
+    assert _queue(http, headers, reason="uncited")["total"] == 1
+    assert http.get(URL, headers=headers, params={"reason": "nope"}).status_code == 422

@@ -36,7 +36,7 @@ class AdminUserUpdate(BaseModel):
 
 
 class AdminUserDelete(BaseModel):
-    confirm_email: str
+    confirm_email: str = Field(max_length=320)
 
 
 class AuditRow(BaseModel):
@@ -45,6 +45,7 @@ class AuditRow(BaseModel):
     actor_name: str | None
     action: str
     target_user_id: int | None
+    target_name: str | None
     detail: dict[str, str | int | bool | None]
 
 
@@ -88,6 +89,8 @@ class ReviewCitation(BaseModel):
     fraction: str | None = None
     page: int | None = None
     url: str | None = None
+    n: int | None = None
+    orden: int | None = None
 
 
 class ReviewMarkBody(BaseModel):

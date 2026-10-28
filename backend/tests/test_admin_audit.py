@@ -85,7 +85,10 @@ def test_lists_most_recent_first(client):
     assert first["actor_name"] == "Test User"
     assert first["action"] == "user.deactivated"
     assert first["target_user_id"] == 7
-    assert set(first) == {"id", "created_at", "actor_name", "action", "target_user_id", "detail"}
+    assert set(first) == {
+        "id", "created_at", "actor_name", "action", "target_user_id", "target_name", "detail",
+    }
+    assert first["target_name"] is None
 
 
 def test_filters_by_actor_and_action(client):
@@ -174,3 +177,27 @@ def test_la_lectura_omite_valores_no_escalares_de_una_fila_antigua(client):
         db.commit()
     body = http.get("/api/v1/admin/audit", headers=headers).json()
     assert body["items"][0]["detail"] == {"ok": 1}
+
+
+def test_target_name_is_present_then_null_after_the_person_is_deleted(client):
+    http, factory = client
+    _, headers = make_user(factory, email="a@example.com", role=UserRole.ADMIN)
+    admin = make_user(factory, email="b@example.com", role=UserRole.ADMIN)[0]
+    target, _ = make_user(factory, email="t@example.com")
+    with factory() as db:
+        person = db.get(User, target.id)
+        person.first_name, person.last_name = "María", "López"
+        record_audit(
+            db, actor_id=admin.id, action=AuditAction.USER_DEACTIVATED, target_user_id=target.id
+        )
+        db.commit()
+    url = "/api/v1/admin/audit"
+    row = http.get(url, headers=headers).json()["items"][0]
+    assert row["target_name"] == "María López"
+    assert "t@example.com" not in str(row)
+    with factory() as db:
+        db.delete(db.get(User, target.id))
+        db.commit()
+    row = http.get(url, headers=headers).json()["items"][0]
+    assert row["target_name"] is None
+    assert row["target_user_id"] == target.id

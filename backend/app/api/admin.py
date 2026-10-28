@@ -18,6 +18,7 @@ from app.services.admin.sources import list_sources, pending_sanctions
 from app.services.admin.users import AdminRuleError, delete_user, list_users, update_user
 
 router = APIRouter(prefix="/admin")
+OVERVIEW_PERIODS = (7, 30, 90)
 
 
 def _rule_conflict(exc: AdminRuleError) -> HTTPException:
@@ -85,8 +86,13 @@ def admin_list_audit(
 
 @router.get("/overview", response_model=Overview)
 def admin_overview(
-    _: AdminUser, db: DbSession, days: Literal[7, 30, 90] = 30
+    _: AdminUser, db: DbSession, days: Annotated[int, Query()] = 30
 ) -> Overview:
+    # Not Literal[7, 30, 90]: a query string is not coerced to an int literal (always a 422).
+    if days not in OVERVIEW_PERIODS:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "days must be one of 7, 30 or 90"
+        )
     return build_overview(db, days=days)
 
 

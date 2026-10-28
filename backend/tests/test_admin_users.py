@@ -182,6 +182,10 @@ def test_un_administrador_no_puede_cambiar_su_propio_rol_ni_desactivarse(client)
         assert res.status_code == 409
         assert res.json()["detail"]["code"] == "cannot_modify_self"
         assert res.json()["detail"]["message"]
+    with factory() as db:
+        row = db.get(User, me)
+        assert (row.role, row.is_active) == (UserRole.ADMIN, True)
+        assert db.query(AdminAuditLog).count() == 0
 
 
 def test_no_se_puede_quitar_el_rol_ni_desactivar_al_ultimo_administrador_activo(client):
@@ -203,6 +207,10 @@ def test_no_se_puede_quitar_el_rol_ni_desactivar_al_ultimo_administrador_activo(
                             is_active=kwargs.get("is_active"))
             assert raised.value.code == "last_admin"
             db.rollback()
+    with factory() as db:
+        row = db.get(User, target)
+        assert (row.role, row.is_active) == (UserRole.ADMIN, True)
+        assert db.query(AdminAuditLog).count() == 0
 
 
 def test_con_dos_administradores_si_se_puede_degradar_a_otro(client):
@@ -363,6 +371,8 @@ def test_no_puede_eliminarse_a_si_mismo_ni_al_ultimo_administrador(client):
         assert raised.value.code == "last_admin"
     with factory() as db:
         assert db.get(User, target) is not None
+        assert db.get(User, me) is not None
+        assert db.query(AdminAuditLog).count() == 0
 
 
 def test_eliminar_exige_administrador_y_existencia(client):
@@ -373,3 +383,19 @@ def test_eliminar_exige_administrador_y_existencia(client):
                         ).status_code == 401
     _, headers = _me(factory)
     assert _delete(http, 99999, headers, "x@example.com").status_code == 404
+
+
+def test_ordenar_por_preguntas_funciona_por_http(client):
+    http, factory = client
+    headers = _admin(factory)
+    res = http.get(URL, params={"sort": "questions"}, headers=headers)
+    assert res.status_code == 200
+    assert http.get(URL, params={"sort": "nope"}, headers=headers).status_code == 422
+
+
+def test_confirm_email_de_mas_de_320_caracteres_da_422(client):
+    http, factory = client
+    _, headers = _me(factory)
+    target = _person(factory, "t@example.com")
+    assert _delete(http, target, headers, "x" * 321).status_code == 422
+    assert _delete(http, target, headers, "x" * 320).status_code == 409

@@ -266,3 +266,19 @@ def test_los_avisos_de_fuentes_y_sanciones_no_aparecen_con_cero(client):
     http, factory = client
     headers = make_user(factory, email="admin@example.com", role=UserRole.ADMIN)[1]
     assert http.get(URL, headers=headers).json()["attention"] == []
+
+
+@pytest.mark.parametrize("days", [7, 30, 90])
+def test_overview_over_http_accepts_each_period(client, days):
+    http, factory = client
+    response = http.get(URL, params={"days": days}, headers=_admin(factory))
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["days"] == days
+    assert len(body["series"]) == days
+
+
+@pytest.mark.parametrize("days", ["15", "abc", "0", "-7"])
+def test_overview_over_http_rejects_other_periods(client, days):
+    http, factory = client
+    assert http.get(URL, params={"days": days}, headers=_admin(factory)).status_code == 422

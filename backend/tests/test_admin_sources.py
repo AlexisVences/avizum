@@ -5,6 +5,7 @@ from app.models.domain import (
     EMBEDDING_DIMENSIONS, LegalChunk, LegalSanction, OfficialSource, SanctionStatus, UserRole,
 )
 from app.services.admin.sources import list_sources, pending_sanctions
+from app.services.chat_limits import MEXICO_CITY
 from tests.admin_support import make_user
 
 URL = "/api/v1/admin/sources"
@@ -81,14 +82,15 @@ def test_chunk_count_cuenta_los_fragmentos_de_la_version_vigente(client):
 
 def test_review_due_es_verdadero_a_los_366_dias_y_falso_a_los_365(client):
     _, factory = client
-    retrieved = datetime(2025, 10, 26, 12, 0, tzinfo=timezone.utc)
+    retrieved = datetime(2025, 10, 26, 3, 0, tzinfo=timezone.utc)  # 21:00 on the 25th in CDMX
+    local = retrieved.astimezone(MEXICO_CITY).date()
     with factory() as db:
         _source(db, slug="viejo", retrieved=retrieved, title="A")
         db.commit()
-        due = list_sources(db, today=retrieved.date() + timedelta(days=366))[0]
-        not_due = list_sources(db, today=retrieved.date() + timedelta(days=365))[0]
+        due = list_sources(db, today=local + timedelta(days=366))[0]
+        not_due = list_sources(db, today=local + timedelta(days=365))[0]
     assert due.review_due is True
-    assert due.review_due_since == retrieved.date() + timedelta(days=366)
+    assert due.review_due_since == local + timedelta(days=366)
     assert not_due.review_due is False
     assert not_due.review_due_since is None
 

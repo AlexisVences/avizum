@@ -120,12 +120,15 @@ def _ensure_another_active_admin(db: Session, target: User) -> None:
     """Refuse when `target` is an active admin and no other active admin would remain."""
     if target.role != UserRole.ADMIN or not target.is_active:
         return
-    others = db.scalar(
-        select(func.count()).select_from(User).where(
-            User.role == UserRole.ADMIN, User.is_active.is_(True), User.id != target.id
-        )
-    )
-    if not others:
+    # Lock every active admin (in id order, so concurrent callers cannot deadlock): a second
+    # transaction waits here, then re-reads the committed state and sees the first one's change.
+    admin_ids = db.scalars(
+        select(User.id)
+        .where(User.role == UserRole.ADMIN, User.is_active.is_(True))
+        .order_by(User.id)
+        .with_for_update()
+    ).all()
+    if not any(admin_id != target.id for admin_id in admin_ids):
         raise AdminRuleError(
             "last_admin", "Debe quedar al menos un administrador activo en Avizum."
         )
