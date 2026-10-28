@@ -33,7 +33,7 @@ const buildQuery = (params) => {
   return query ? `?${query}` : '';
 };
 
-const request = async (path, { method = 'GET', body } = {}) => {
+const request = async (path, { method = 'GET', body, raw = false } = {}) => {
   const headers = { ...authHeaders() };
   const options = { method, headers };
   if (body !== undefined) {
@@ -66,7 +66,7 @@ const request = async (path, { method = 'GET', body } = {}) => {
       code
     );
   }
-  return camelize(data);
+  return raw ? data : camelize(data);
 };
 
 export const listUsers = ({ q, role, active, verified, sort, descending, page, pageSize } = {}) =>
@@ -97,3 +97,13 @@ export const listAudit = ({ actorId, action, page, pageSize } = {}) =>
   request(`/admin/audit${buildQuery({ actor_id: actorId, action, page, page_size: pageSize })}`);
 
 export const getOverview = ({ days } = {}) => request(`/admin/overview${buildQuery({ days })}`);
+
+export const listReviewQueue = ({ reason, reviewed, page, pageSize } = {}) =>
+  request(`/admin/review-queue${buildQuery({ reason, reviewed, page, page_size: pageSize })}`);
+
+export const markReviewed = (messageId, note) =>
+  request(`/admin/review-queue/${messageId}/review`, { method: 'POST', body: { note } });
+
+// The case is a line of the evaluation file: its keys must reach the clipboard exactly as the backend wrote them.
+export const getEvalCase = (messageId) =>
+  request(`/admin/review-queue/${messageId}/eval-case`, { raw: true });

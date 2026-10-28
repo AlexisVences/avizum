@@ -2,9 +2,12 @@ import {
   AdminApiError,
   camelize,
   deleteUser,
+  getEvalCase,
   getOverview,
   listAudit,
+  listReviewQueue,
   listUsers,
+  markReviewed,
   updateUser,
 } from '../adminService';
 
@@ -148,4 +151,67 @@ test('getOverview pide el periodo y devuelve claves en camelCase con el costo co
     series: [{ date: '2026-10-20', questions: 4 }],
     attention: [],
   });
+});
+
+test('listReviewQueue pide motivo, revisión y paginación y cameliza', async () => {
+  global.fetch.mockResolvedValue(
+    respuesta(200, {
+      items: [
+        {
+          message_id: 9,
+          asked_at: '2026-10-20T18:30:00Z',
+          reasons: ['negative'],
+          citations: [{ source_title: 'Reglamento', page: 3 }],
+        },
+      ],
+      total: 1,
+      page: 2,
+      page_size: 20,
+    })
+  );
+  const result = await listReviewQueue({ reason: 'negative', reviewed: false, page: 2, pageSize: 20 });
+  const search = new URL(global.fetch.mock.calls[0][0]).searchParams;
+  expect(search.get('reason')).toBe('negative');
+  expect(search.get('reviewed')).toBe('false');
+  expect(search.get('page')).toBe('2');
+  expect(search.get('page_size')).toBe('20');
+  expect(result.items[0].messageId).toBe(9);
+  expect(result.items[0].askedAt).toBe('2026-10-20T18:30:00Z');
+  expect(result.items[0].citations[0].sourceTitle).toBe('Reglamento');
+});
+
+test('listReviewQueue omite el motivo cuando no se filtra', async () => {
+  global.fetch.mockResolvedValue(respuesta(200, { items: [], total: 0, page: 1, page_size: 20 }));
+  await listReviewQueue({ reviewed: true });
+  const search = new URL(global.fetch.mock.calls[0][0]).searchParams;
+  expect(search.has('reason')).toBe(false);
+  expect(search.get('reviewed')).toBe('true');
+});
+
+test('markReviewed envía la nota por POST y devuelve el resultado en camelCase', async () => {
+  global.fetch.mockResolvedValue(respuesta(200, { message_id: 9, reviewed: true, note: 'ok' }));
+  const result = await markReviewed(9, 'ok');
+  const [url, options] = global.fetch.mock.calls[0];
+  expect(url).toMatch(/\/admin\/review-queue\/9\/review$/);
+  expect(options.method).toBe('POST');
+  expect(JSON.parse(options.body)).toEqual({ note: 'ok' });
+  expect(result).toEqual({ messageId: 9, reviewed: true, note: 'ok' });
+});
+
+test('markReviewed propaga el mensaje del 422', async () => {
+  global.fetch.mockResolvedValue(
+    respuesta(422, { detail: [{ msg: 'String should have at most 500 characters' }] })
+  );
+  await expect(markReviewed(9, 'x'.repeat(501))).rejects.toMatchObject({
+    status: 422,
+    message: expect.stringContaining('500'),
+  });
+});
+
+test('getEvalCase devuelve el objeto tal cual, sin cambiar sus claves', async () => {
+  const caso = { id: 'q-9', question: 'p', coverage: 'covered', expected: [{ source_slug: 'reglamento', article: '44' }], notes: '', verified: false };
+  global.fetch.mockResolvedValue(respuesta(200, caso));
+  const result = await getEvalCase(9);
+  expect(global.fetch.mock.calls[0][0]).toMatch(/\/admin\/review-queue\/9\/eval-case$/);
+  expect(result).toEqual(caso);
 });
