@@ -220,3 +220,49 @@ def test_el_aviso_de_revision_desaparece_al_marcarlas(client):
     http.post(f"{URL.replace('overview', 'review-queue')}/{ids[2]}/review",
               headers=headers, json={})
     assert http.get(URL, headers=headers).json()["attention"] == []
+
+
+def _stale_source_and_pending(factory, pending=True):
+    from app.models.domain import (
+        EMBEDDING_DIMENSIONS, LegalChunk, LegalSanction, OfficialSource,
+    )
+    with factory() as db:
+        source = OfficialSource(
+            slug="reglamento", title="R", kind="reglamento", url="https://x.mx/r.pdf",
+            sha256="a" * 64, retrieved_at=datetime.now(timezone.utc) - timedelta(days=400),
+        )
+        db.add(source)
+        db.flush()
+        chunk = LegalChunk(
+            source_id=source.id, article="1", heading_path="Art. 1", text="t", page_start=1,
+            page_end=1, token_count=1, embedding=[0.0] * EMBEDDING_DIMENSIONS,
+        )
+        db.add(chunk)
+        db.flush()
+        if pending:
+            db.add_all([
+                LegalSanction(
+                    chunk_id=chunk.id, ordinal=i, source_slug="reglamento", article="1",
+                    conduct_text="c", clause_text="x", chunk_hash="a" * 64,
+                    extractor_version="t",
+                )
+                for i in range(2)
+            ])
+        db.commit()
+
+
+def test_los_avisos_de_fuentes_y_sanciones_aparecen_con_datos(client):
+    http, factory = client
+    headers = make_user(factory, email="admin@example.com", role=UserRole.ADMIN)[1]
+    _stale_source_and_pending(factory)
+    items = http.get(URL, headers=headers).json()["attention"]
+    assert {"kind": "sources", "label": "fuentes por revisar este año", "count": 1,
+            "href": "/admin/fuentes"} in items
+    assert {"kind": "sanctions", "label": "filas de sanciones sin revisar", "count": 2,
+            "href": "/admin/fuentes"} in items
+
+
+def test_los_avisos_de_fuentes_y_sanciones_no_aparecen_con_cero(client):
+    http, factory = client
+    headers = make_user(factory, email="admin@example.com", role=UserRole.ADMIN)[1]
+    assert http.get(URL, headers=headers).json()["attention"] == []
