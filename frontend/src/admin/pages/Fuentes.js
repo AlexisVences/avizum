@@ -41,8 +41,12 @@ const formatCalendarDate = (value) => {
     return Number.isNaN(date.getTime()) ? null : calendarFormat.format(date);
 };
 
+// Un instante sin zona horaria se toma como UTC, para no depender de la zona del navegador.
+const HAS_ZONE = /(Z|[+-]\d{2}(:?\d{2})?)$/i;
+
 const formatInstant = (value) => {
-    const date = new Date(value);
+    const text = String(value ?? '');
+    const date = new Date(HAS_ZONE.test(text) ? text : `${text}Z`);
     return Number.isNaN(date.getTime()) ? null : instantFormat.format(date);
 };
 
@@ -64,19 +68,32 @@ const groupByKind = (sources) => {
     return [...groups.entries()];
 };
 
+const isWebUrl = (value) => {
+    try {
+        const { protocol } = new URL(value);
+        return protocol === 'http:' || protocol === 'https:';
+    } catch (err) {
+        return false;
+    }
+};
+
 const SourceRow = ({ source }) => {
     const since = source.reviewDueSince ? formatCalendarDate(source.reviewDueSince) : null;
     return (
         <li className="tw-flex tw-flex-col tw-gap-2 tw-rounded-lg tw-border tw-border-rule tw-bg-paper-raised tw-p-4 md:tw-flex-row md:tw-items-center md:tw-gap-6 md:tw-rounded-none md:tw-border-0 md:tw-border-b md:tw-bg-transparent md:tw-px-3 md:tw-py-3">
             <div className="tw-min-w-0 md:tw-flex-1">
-                <a
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`tw-break-words tw-font-semibold tw-text-azul tw-underline ${focusRing}`}
-                >
-                    {source.title}
-                </a>
+                {isWebUrl(source.url) ? (
+                    <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`tw-break-words tw-font-semibold tw-text-azul tw-underline ${focusRing}`}
+                    >
+                        {source.title}
+                    </a>
+                ) : (
+                    <span className="tw-break-words tw-font-semibold tw-text-ink">{source.title}</span>
+                )}
                 <p className="tw-text-sm tw-text-ink-soft">{dateLine(source)}</p>
             </div>
             <p className="tw-text-sm tw-text-ink-soft md:tw-whitespace-nowrap">
@@ -139,7 +156,7 @@ const Fuentes = () => {
                 <div className="tw-mb-6 tw-flex tw-flex-wrap tw-items-center tw-justify-between tw-gap-4">
                     <p className="tw-text-ink-soft">
                         {pending > 0 ? (
-                            <StatusBadge tone="warn">{`${pending} ${pending === 1 ? 'fila' : 'filas'} de sanciones sin revisar`}</StatusBadge>
+                            <StatusBadge tone="warn">{`${pending.toLocaleString('es-MX')} ${pending === 1 ? 'fila' : 'filas'} de sanciones sin revisar`}</StatusBadge>
                         ) : (
                             <StatusBadge tone="ok">Sanciones al día</StatusBadge>
                         )}
