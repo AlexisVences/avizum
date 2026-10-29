@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Fuentes from '../pages/Fuentes';
 import * as adminService from '../../services/adminService';
@@ -168,7 +168,10 @@ describe('Fuentes', () => {
         const alert = await screen.findByRole('alert');
         expect(within(alert).getByText('Servidor caído')).toBeInTheDocument();
         expect(screen.queryByText('No hay fuentes por revisar')).not.toBeInTheDocument();
-        await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+        // The retry resolves right after the click: keep that update inside act.
+        await act(async () => {
+            userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+        });
         expect(await screen.findAllByRole('listitem')).toHaveLength(1);
         expect(adminService.listSources).toHaveBeenCalledTimes(2);
     });

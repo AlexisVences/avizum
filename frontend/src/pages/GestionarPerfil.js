@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { FiEdit2 } from "react-icons/fi";
 import NavBar2 from "../components/NavBar2";
@@ -42,6 +42,10 @@ const Perfil = () => {
             });
         }
     };
+
+    // El aviso de éxito se oculta solo; el temporizador se cancela al salir de la página.
+    const successTimerRef = useRef(null);
+    useEffect(() => () => clearTimeout(successTimerRef.current), []);
 
     useEffect(() => {
         const user = authService.getCurrentUser();
@@ -132,7 +136,8 @@ const Perfil = () => {
             setPasswordNueva("");
             setPasswordActual("");
             setSuccessMessage("Cambios guardados correctamente");
-            setTimeout(() => setSuccessMessage(null), 3000);
+            clearTimeout(successTimerRef.current);
+            successTimerRef.current = setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err) {
             setError(mensajeDeError(err));
             console.error("Update error:", err);
