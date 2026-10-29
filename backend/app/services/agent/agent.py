@@ -1,5 +1,6 @@
 """Builds the LangChain agent and runs one turn of it (non-streaming; the chat service streams, see step 12)."""
 import json
+import re
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 
@@ -20,6 +21,19 @@ LIMIT_ANSWER = (
     "No pude completar la consulta con las fuentes disponibles en este momento. "
     "Intenta reformular tu pregunta de forma más concreta."
 )
+
+
+_CLOSING = " Esta información es orientativa y no sustituye asesoría legal."
+UNSUPPORTED_AMOUNT_ANSWER = (
+    "No pude respaldar con las fuentes oficiales consultadas el monto de esta respuesta, así que prefiero no darte una "
+    "cifra que pueda ser incorrecta. Confirma la multa en el Reglamento de Tránsito de la CDMX o con la autoridad de "
+    "tránsito, o consulta a un abogado para tu caso." + _CLOSING
+)
+UNCITED_ARTICLE_ANSWER = (
+    "No encontré fundamento suficiente en las fuentes oficiales consultadas para responder esto con un artículo "
+    "concreto. Acude a la autoridad de tránsito de la CDMX o consulta a un abogado para tu caso." + _CLOSING
+)
+_ARTICLE_MENTION = re.compile(r"\b(?:art[íi]culos?|arts?\.)\s*\d+", re.IGNORECASE)
 
 
 @dataclass
@@ -139,11 +153,24 @@ def _summarize(new_messages: list, ctx: AgentContext, settings: Settings) -> Age
         guard_anomalies.append({"type": "enlace_externo"})
 
     resolved = resolve_citations(answer, ctx.citations) if not limit_reached else None
+    anomalies = guard_anomalies
+    final_answer, final_citations = answer, []
+    if resolved:
+        amount_anomalies = check_amounts(resolved.text, ctx)
+        anomalies = guard_anomalies + resolved.anomalies + amount_anomalies
+        final_answer, final_citations = resolved.text, resolved.citations
+        # Worst failures are enforced, not just logged: a figure no tool produced, or an article named with no
+        # citation behind it, never reaches the person.
+        if amount_anomalies:
+            final_answer, final_citations = UNSUPPORTED_AMOUNT_ANSWER, []
+        elif not resolved.citations and _ARTICLE_MENTION.search(resolved.text):
+            final_answer, final_citations = UNCITED_ARTICLE_ANSWER, []
+            anomalies = anomalies + [{"tipo": "articulo_sin_cita"}]
     return AgentRun(
-        answer=resolved.text if resolved else answer,
+        answer=final_answer,
         tool_calls=trace,
-        citations=resolved.citations if resolved else [],
-        anomalies=(guard_anomalies + resolved.anomalies + check_amounts(resolved.text, ctx)) if resolved else guard_anomalies,
+        citations=final_citations,
+        anomalies=anomalies,
         input_tokens=sum(u.get("input_tokens", 0) for u in usage),
         output_tokens=sum(u.get("output_tokens", 0) for u in usage),
         cached_input_tokens=sum((u.get("input_token_details") or {}).get("cache_read", 0) for u in usage),
