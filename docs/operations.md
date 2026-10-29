@@ -44,3 +44,14 @@ Chat text, e-mail addresses, passwords, JWTs and verification/reset tokens must 
 If `SENTRY_DSN` is set, Sentry receives error events (stack traces, route, status, release, request id) from this
 service. It must be named as a processor in the privacy notice (aviso de privacidad), including where its data is
 hosted. Leave `SENTRY_DSN` empty to keep everything on your own infrastructure.
+
+## Chat spending limits
+
+Every answer calls OpenAI, so the chat has a durable budget computed from the database (stored token usage times
+`LLM_PRICE_INPUT_PER_MILLION` / `LLM_PRICE_OUTPUT_PER_MILLION`) over a rolling 24 hours, so it holds across workers and
+restarts. `DAILY_USER_COST_USD_LIMIT` (default 0.25, roughly 50 normal questions) caps each account, administrators
+included; `GLOBAL_DAILY_COST_USD_LIMIT` (default 0 = off) is a circuit breaker over all users. When either is reached the
+API answers `429` with a Spanish message and `Retry-After`, stores nothing and does not call the model. Set a limit to 0
+to disable it. With the global breaker on, each chat request runs one sum over the last 24 hours of assistant messages
+(no index on `messages.created_at`); it is fine at the current volume, add an index if the table grows large.
+`REQUIRE_VERIFIED_EMAIL=true` makes the message-sending endpoints answer `403` until the e-mail is verified.

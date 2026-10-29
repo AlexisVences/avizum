@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 
 from sqlalchemy import select
 
@@ -317,3 +318,177 @@ def test_a_failure_while_streaming_ends_with_an_error_event_and_a_stored_error_m
     assert events[-1][0] == "error" and "sk-SECRET" not in _json.dumps(events)
     stored = http.get(f"/api/v1/conversations/{conversation_id}/messages", headers=ana).json()
     assert [(m["role"], m["status"]) for m in stored] == [("user", "complete"), ("assistant", "error")]
+
+
+# ---------- durable budget and verified-email requirement
+
+from app.core.config import get_settings
+
+
+
+def budget_settings(monkeypatch, **values):
+    settings = get_settings()
+    for key, value in values.items():
+        monkeypatch.setattr(settings, key, value)
+
+
+def spend(factory, owner_email: str, conversation_id: int, *, tokens_in=0, tokens_out=0, age=timedelta(0)):
+    seed_message(
+        factory, conversation_id, MessageRole.ASSISTANT, "r",
+        input_tokens=tokens_in, output_tokens=tokens_out, created_at=datetime.now(timezone.utc) - age,
+    )
+
+
+def post(http, headers, conversation_id, text="¿Qué hago?"):
+    return http.post(f"/api/v1/conversations/{conversation_id}/messages", headers=headers, json={"content": text})
+
+
+def count_messages(factory):
+    with factory() as db:
+        return len(db.scalars(select(Message.id)).all())
+
+
+def test_under_the_user_budget_the_answer_is_generated(client, monkeypatch):
+    http, factory = client
+    ana = signup(http, "ana@example.com")
+    install_runtime(http, AIMessage(content="ok"))
+    budget_settings(monkeypatch, daily_user_cost_usd_limit=Decimal("1"))
+    conversation_id = seed_conversation(factory, "ana@example.com")
+    spend(factory, "ana@example.com", conversation_id, tokens_in=1_000_000)  # 0.25 USD of 1
+    assert post(http, ana, conversation_id).status_code == 201
+
+
+def test_over_the_user_budget_is_429_with_retry_after_and_the_model_never_runs(client, monkeypatch):
+    http, factory = client
+    ana = signup(http, "ana@example.com")
+    install_runtime(http, AIMessage(content="no debe salir"))
+    budget_settings(monkeypatch, daily_user_cost_usd_limit=Decimal("0.25"))
+    conversation_id = seed_conversation(factory, "ana@example.com")
+    spend(factory, "ana@example.com", conversation_id, tokens_in=500_000, tokens_out=62_500, age=timedelta(hours=2))  # 0.25
+    before = count_messages(factory)
+
+    response = post(http, ana, conversation_id)
+
+    assert response.status_code == 429
+    assert response.json()["detail"]["code"] == "presupuesto_diario"
+    assert "24 horas" in response.json()["detail"]["message"]
+    retry = int(response.headers["Retry-After"])
+    assert 21 * 3600 < retry <= 22 * 3600  # the 2 h old answer leaves the window in ~22 h
+    assert count_messages(factory) == before  # no question stored, nothing consumed
+    assert post(http, ana, conversation_id).status_code == 429  # and a refusal does not change the outcome
+
+
+def test_usage_older_than_24_hours_does_not_count(client, monkeypatch):
+    http, factory = client
+    ana = signup(http, "ana@example.com")
+    install_runtime(http, AIMessage(content="ok"))
+    budget_settings(monkeypatch, daily_user_cost_usd_limit=Decimal("0.25"))
+    conversation_id = seed_conversation(factory, "ana@example.com")
+    spend(factory, "ana@example.com", conversation_id, tokens_in=10_000_000, age=timedelta(hours=25))
+    assert post(http, ana, conversation_id).status_code == 201
+
+
+def test_one_users_usage_does_not_affect_another(client, monkeypatch):
+    http, factory = client
+    signup(http, "ana@example.com")
+    luis = signup(http, "luis@example.com")
+    install_runtime(http, AIMessage(content="ok"))
+    budget_settings(monkeypatch, daily_user_cost_usd_limit=Decimal("0.25"))
+    spend(factory, "ana@example.com", seed_conversation(factory, "ana@example.com"), tokens_in=10_000_000)
+    assert post(http, luis, seed_conversation(factory, "luis@example.com")).status_code == 201
+
+
+def test_the_user_budget_can_be_disabled_with_zero(client, monkeypatch):
+    http, factory = client
+    ana = signup(http, "ana@example.com")
+    install_runtime(http, AIMessage(content="ok"))
+    budget_settings(monkeypatch, daily_user_cost_usd_limit=Decimal("0"))
+    conversation_id = seed_conversation(factory, "ana@example.com")
+    spend(factory, "ana@example.com", conversation_id, tokens_in=100_000_000)
+    assert post(http, ana, conversation_id).status_code == 201
+
+
+def test_global_breaker_blocks_everyone_when_on_and_does_nothing_when_off(client, monkeypatch):
+    http, factory = client
+    signup(http, "ana@example.com")
+    luis = signup(http, "luis@example.com")
+    install_runtime(http, AIMessage(content="ok"))
+    budget_settings(monkeypatch, daily_user_cost_usd_limit=Decimal("0"))
+    spend(factory, "ana@example.com", seed_conversation(factory, "ana@example.com"), tokens_in=4_000_000)  # 1 USD
+    luis_conversation = seed_conversation(factory, "luis@example.com")
+
+    budget_settings(monkeypatch, global_daily_cost_usd_limit=Decimal("0"))  # off
+    assert post(http, luis, luis_conversation).status_code == 201
+
+    budget_settings(monkeypatch, global_daily_cost_usd_limit=Decimal("1"))  # on, reached
+    before = count_messages(factory)
+    response = post(http, luis, luis_conversation)
+    assert response.status_code == 429 and response.json()["detail"]["code"] == "servicio_saturado"
+    assert int(response.headers["Retry-After"]) >= 60
+    assert count_messages(factory) == before
+
+    budget_settings(monkeypatch, global_daily_cost_usd_limit=Decimal("2"))  # on, not reached
+    install_runtime(http, AIMessage(content="ok"))
+    assert post(http, luis, luis_conversation).status_code == 201
+
+
+def test_streaming_requests_are_refused_by_the_budget_before_any_stream_opens(client, monkeypatch):
+    http, factory = client
+    ana = signup(http, "ana@example.com")
+    install_runtime(http, AIMessage(content="no debe salir"))
+    budget_settings(monkeypatch, daily_user_cost_usd_limit=Decimal("0.25"))
+    conversation_id = seed_conversation(factory, "ana@example.com")
+    spend(factory, "ana@example.com", conversation_id, tokens_in=2_000_000)
+    response = http.post(
+        f"/api/v1/conversations/{conversation_id}/messages", headers={**ana, "Accept": "text/event-stream"},
+        json={"content": "hola"},
+    )
+    assert response.status_code == 429 and "Retry-After" in response.headers
+
+
+def test_the_daily_message_limit_also_sends_retry_after(client, monkeypatch):
+    http, factory = client
+    ana = signup(http, "ana@example.com")
+    install_runtime(http, AIMessage(content="ok"))
+    budget_settings(monkeypatch, chat_daily_message_limit=0)
+    response = post(http, ana, seed_conversation(factory, "ana@example.com"))
+    assert response.status_code == 429 and int(response.headers["Retry-After"]) >= 1
+
+
+def _unverified_user_chat(http, factory, monkeypatch, required: bool, verify: bool = False):
+    ana = signup(http, "ana@example.com")
+    install_runtime(http, AIMessage(content="ok"))
+    budget_settings(monkeypatch, require_verified_email=required)
+    if verify:
+        with factory() as db:
+            user = db.scalar(select(User).where(User.email == "ana@example.com"))
+            user.email_verified_at = datetime.now(timezone.utc)
+            db.commit()
+    conversation_id = seed_conversation(factory, "ana@example.com")
+    return ana, conversation_id
+
+
+def test_verification_off_lets_an_unverified_user_chat(client, monkeypatch):
+    http, factory = client
+    ana, conversation_id = _unverified_user_chat(http, factory, monkeypatch, required=False)
+    assert post(http, ana, conversation_id).status_code == 201
+
+
+def test_verification_on_blocks_an_unverified_user_before_anything_runs(client, monkeypatch):
+    http, factory = client
+    ana, conversation_id = _unverified_user_chat(http, factory, monkeypatch, required=True)
+    response = post(http, ana, conversation_id)
+    assert response.status_code == 403 and response.json()["detail"] == "Verifica tu correo para continuar"
+    assert count_messages(factory) == 0
+    streamed = http.post(
+        f"/api/v1/conversations/{conversation_id}/messages", headers={**ana, "Accept": "text/event-stream"},
+        json={"content": "hola"},
+    )
+    assert streamed.status_code == 403
+    assert http.get("/api/v1/conversations", headers=ana).status_code == 200  # read-only routes stay open
+
+
+def test_verification_on_lets_a_verified_user_chat(client, monkeypatch):
+    http, factory = client
+    ana, conversation_id = _unverified_user_chat(http, factory, monkeypatch, required=True, verify=True)
+    assert post(http, ana, conversation_id).status_code == 201

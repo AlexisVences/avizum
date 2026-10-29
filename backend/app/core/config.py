@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     # List prices in USD per million tokens, used only for the cost estimate in the admin overview.
     llm_price_input_per_million: Decimal = Decimal("0.25")
     llm_price_output_per_million: Decimal = Decimal("2.00")
+    # Durable cost budget over a rolling 24 h window, computed from stored token usage x the prices above.
+    # 0 disables a limit. ~0.005 USD per normal answer, so 0.25 is roughly 50 questions per user.
+    daily_user_cost_usd_limit: Decimal = Decimal("0.25")
+    global_daily_cost_usd_limit: Decimal = Decimal("0")  # circuit breaker over all users; 0 = disabled
     # UMA (Unidad de Medida y Actualización): fines are expressed as "N veces la UMA". INEGI publishes the value each
     # January in the DOF and it applies from 1 February to 31 January. The tool warns when this window has passed.
     uma_value: Decimal = Decimal("117.31")
