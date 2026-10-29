@@ -55,6 +55,7 @@ def client(outbox):
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent"))
         conn.execute(text(IMMUTABLE_UNACCENT_SQL))
+    Base.metadata.drop_all(engine)  # an interrupted earlier run leaves rows (or an old schema) behind
     Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine, expire_on_commit=False)
     app = create_app()
