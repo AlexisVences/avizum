@@ -90,8 +90,13 @@ const LoginPage = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="tw-mb-6"
+                className="tw-mb-2"
               />
+              <p className="tw-text-right tw-text-sm tw-mb-6">
+                <Link to="/olvide-contrasena" className="tw-font-semibold tw-text-azul hover:tw-text-magenta tw-no-underline">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </p>
 
               <Button type="submit" variant="dark" size="lg" disabled={loading} className="tw-w-full">
                 {loading ? 'Cargando...' : 'Iniciar sesión'}

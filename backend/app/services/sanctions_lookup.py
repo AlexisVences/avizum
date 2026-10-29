@@ -30,3 +30,14 @@ def verified_by_chunk(db: Session, chunk_ids: list[int]) -> dict[int, list[Legal
     for row in rows:
         grouped.setdefault(row.chunk_id, []).append(row)
     return grouped
+
+
+def unverified_chunk_ids(db: Session, chunk_ids: list[int]) -> set[int]:
+    """Chunks that have at least one sanction row the agent may NOT serve (pending, rejected, stale, edited text or
+    a source that is no longer current). Their prose still states amounts, but nobody has confirmed which conduct
+    each one belongs to, so the agent must not present them as firm."""
+    if not chunk_ids:
+        return set()
+    servable = {row.id for rows in verified_by_chunk(db, chunk_ids).values() for row in rows}
+    rows = db.execute(select(LegalSanction.id, LegalSanction.chunk_id).where(LegalSanction.chunk_id.in_(chunk_ids))).all()
+    return {chunk_id for row_id, chunk_id in rows if row_id not in servable}

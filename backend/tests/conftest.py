@@ -17,6 +17,7 @@ from app.api.deps import get_db
 from app.db.session import Base, get_session_factory
 import app.db.base  # noqa: F401
 from app.main import create_app
+from app.services.mailer import get_mailer
 
 IMMUTABLE_UNACCENT_SQL = """
 CREATE OR REPLACE FUNCTION immutable_unaccent(text) RETURNS text
@@ -38,7 +39,15 @@ def _ensure_database_exists(url: str) -> None:
 
 
 @pytest.fixture()
-def client():
+def outbox():
+    """Records every mail instead of sending it; the app's mailer dependency is overridden with it."""
+    from app.services.mailer import OutboxMailer
+
+    return OutboxMailer()
+
+
+@pytest.fixture()
+def client(outbox):
     _ensure_database_exists(TEST_DATABASE_URL)
     engine = create_engine(TEST_DATABASE_URL)
     with engine.begin() as conn:
@@ -54,6 +63,7 @@ def client():
             yield db
     app.dependency_overrides[get_db] = override_db
     app.dependency_overrides[get_session_factory] = lambda: factory
+    app.dependency_overrides[get_mailer] = lambda: outbox
     with TestClient(app) as test_client:
         yield test_client, factory
     Base.metadata.drop_all(engine)

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import AsesoriaIA from '../AsesoriaIA';
 import * as chat from '../../services/chatService';
 
@@ -61,7 +61,7 @@ test('a question is answered live: tool indicator, text, citation chip and votes
   expect(await screen.findByText('Buscando en la legislación…')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Enviar pregunta' })).toBeDisabled();
 
-  finish();
+  act(() => { finish(); }); // the stream's dispatches must happen inside act
   expect(await screen.findByText(/Sí, debe portarla/)).toBeInTheDocument();
   expect(screen.queryByText('Buscando en la legislación…')).toBeNull();
   const chip = screen.getByRole('link', { name: /art\. 44, fr\. I · pág\. 56/ });

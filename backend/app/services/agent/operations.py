@@ -12,7 +12,7 @@ from app.models.domain import AgentLookup, LegalChunk, OfficialSource
 from app.services.agent.context import AgentContext
 from app.services.agents_registry import PLATE_PATTERN, EmptyAgentQuery, normalize_name, normalize_plate, search_agents
 from app.services.retrieval import SearchHit, get_article, search_many
-from app.services.sanctions_lookup import verified_by_chunk
+from app.services.sanctions_lookup import unverified_chunk_ids, verified_by_chunk
 
 MIN_SIMILARITY = 0.25  # off-topic queries scored 0.22-0.24; relevant ones were >= 0.30 (see the spec, section 7)
 MAX_FRAGMENTS = 14  # measured: the answer sat at rank 8-13 for natural queries; recall@20 was 0.96 vs 0.88 at 10
@@ -137,7 +137,9 @@ def _clip(text: str, chars: int) -> str:
 
 def _fragment(ctx: AgentContext, hit: SearchHit, chars: int) -> dict:
     citation = ctx.citations.register(hit)
-    ctx.fragment_texts.append(" ".join(hit.text.split()))
+    flat = " ".join(hit.text.split())
+    ctx.fragment_texts.append(flat)
+    ctx.text_by_chunk[hit.chunk_id] = flat
     pages = "" if hit.page_start == 0 else str(hit.page_start) if hit.page_start == hit.page_end else f"{hit.page_start}-{hit.page_end}"
     return {
         "cita": citation.n,
@@ -266,6 +268,26 @@ def _rule_citations(ctx: AgentContext) -> list[dict]:
     return cited
 
 
+UNVERIFIED_NOTE = (
+    "Las sanciones de este fragmento NO están verificadas por una persona: no des un monto como firme, ni en UMA ni en "
+    "pesos, y no uses calcular_multa para esta conducta. Di qué regula el artículo, que no puedes confirmar el monto "
+    "exacto y que lo confirme en el Reglamento o con la autoridad de tránsito."
+)
+
+
+def _flag_unverified(ctx: AgentContext, fragments: list[dict], chunk_of: dict[int, int], unverified: set[int]) -> None:
+    """A fragment whose sanction rows are pending, rejected or stale is marked, and its prose stops counting as support
+    for amounts (agent/amounts.py), so an answer that repeats a figure from it is caught instead of passing as verified.
+    Amounts of the rows that ARE verified stay supported through the `served_*` sets."""
+    for fragment in fragments:
+        chunk_id = chunk_of.get(fragment["cita"])
+        if chunk_id in unverified:
+            fragment["sanciones_sin_verificar"] = UNVERIFIED_NOTE
+            flat = ctx.text_by_chunk.get(chunk_id)
+            if flat is not None:
+                ctx.fragment_texts[:] = [text for text in ctx.fragment_texts if text != flat]
+
+
 def _attach_sanctions(ctx: AgentContext, result: dict) -> None:
     """Put the verified penalty rows next to the fragments they belong to (same tool call, no extra model round).
 
@@ -278,7 +300,9 @@ def _attach_sanctions(ctx: AgentContext, result: dict) -> None:
         citation = ctx.citations.get(fragment["cita"])
         if citation is not None and citation.chunk_id > 0:
             chunk_of[fragment["cita"]] = citation.chunk_id
-    rows_by_chunk = verified_by_chunk(ctx.db, sorted(set(chunk_of.values())))
+    chunk_ids = sorted(set(chunk_of.values()))
+    rows_by_chunk = verified_by_chunk(ctx.db, chunk_ids)
+    _flag_unverified(ctx, fragments, chunk_of, unverified_chunk_ids(ctx.db, chunk_ids))
     attached = 0
     for fragment in fragments:
         rows = rows_by_chunk.get(chunk_of.get(fragment["cita"]), [])

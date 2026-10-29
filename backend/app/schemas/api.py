@@ -1,9 +1,17 @@
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, computed_field
 
 from app.models.domain import AuthorizationType, UserRole
+
+
+def _normalise_email(value):
+    return value.strip().lower() if isinstance(value, str) else value
+
+
+# Addresses are compared case-insensitively, so they are trimmed and lowercased on the way in.
+NormalisedEmail = Annotated[EmailStr, BeforeValidator(_normalise_email)]
 
 
 class UserPublic(BaseModel):
@@ -16,18 +24,43 @@ class UserPublic(BaseModel):
     is_active: bool
     email_verified: bool
     created_at: datetime
+    # Read from the ORM object only to derive has_password; never serialised.
+    password_hash: str | None = Field(default=None, exclude=True, repr=False)
+
+    @computed_field
+    @property
+    def has_password(self) -> bool:
+        return self.password_hash is not None
 
 
 class RegisterRequest(BaseModel):
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
-    email: EmailStr
+    email: NormalisedEmail
     password: str = Field(min_length=8, max_length=128)
+    accepted_terms: Literal[True]  # explicit consent; false or missing is a 422
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: NormalisedEmail
     password: str
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(min_length=1, max_length=200)
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: NormalisedEmail
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=1, max_length=200)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class MessageResponse(BaseModel):
+    detail: str
 
 
 class GoogleLoginRequest(BaseModel):
@@ -43,8 +76,9 @@ class TokenResponse(BaseModel):
 class ProfileUpdate(BaseModel):
     first_name: str | None = Field(default=None, min_length=1, max_length=100)
     last_name: str | None = Field(default=None, min_length=1, max_length=100)
-    email: EmailStr | None = None
+    email: NormalisedEmail | None = None
     password: str | None = Field(default=None, min_length=8, max_length=128)
+    current_password: str | None = Field(default=None, max_length=128)  # required to change the email or the password
 
 
 class OfficialSourcePublic(BaseModel):

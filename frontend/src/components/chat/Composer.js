@@ -72,11 +72,13 @@ export default function Composer({ onSend, canSend, draft = '', maxChars = 2000,
           <FaArrowUp aria-hidden="true" size={hero ? 18 : 15} />
         </button>
       </div>
-      {!hero && (
-        <p className="tw-mx-auto tw-mb-0 tw-mt-2 tw-max-w-3xl tw-text-center tw-text-xs tw-text-ink-soft">
-          Información orientativa; no sustituye asesoría legal.
-        </p>
-      )}
+      <p
+        data-testid="chat-disclaimer"
+        className="tw-mx-auto tw-mb-0 tw-mt-2 tw-max-w-3xl tw-text-center tw-text-xs tw-text-ink-soft"
+      >
+        Avizum ofrece información general sobre el reglamento de tránsito y no sustituye a un abogado. Verifica siempre con la
+        fuente oficial citada.
+      </p>
     </form>
   );
 }

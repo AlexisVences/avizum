@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict eUM5kbfcPN6rWtVNjcRw1eNzxJWnuXKfYVCf1EzFX8UPtwbUwuoPsA7gk6o1rE9
+\restrict P0a17aXQ7FepzdUHgi600rHc3tKhRR8aFGjqaW8ekaXID8AuVwmdbzZF7EFLJyn
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -67,6 +67,28 @@ COMMENT ON EXTENSION vector IS 'vector data type and ivfflat and hnsw access met
 CREATE TYPE public.agent_authorization_type AS ENUM (
     'via_publica',
     'sistemas_tecnologicos'
+);
+
+
+--
+-- Name: chat_usage_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.chat_usage_status AS ENUM (
+    'reserved',
+    'settled',
+    'cancelled',
+    'error'
+);
+
+
+--
+-- Name: email_token_purpose; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.email_token_purpose AS ENUM (
+    'verify',
+    'reset'
 );
 
 
@@ -240,6 +262,43 @@ ALTER SEQUENCE public.authorized_agents_id_seq OWNED BY public.authorized_agents
 
 
 --
+-- Name: chat_usage; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chat_usage (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    settled_at timestamp with time zone,
+    input_tokens integer DEFAULT 0 NOT NULL,
+    output_tokens integer DEFAULT 0 NOT NULL,
+    reserved_input_tokens integer NOT NULL,
+    reserved_output_tokens integer NOT NULL,
+    status public.chat_usage_status NOT NULL
+);
+
+
+--
+-- Name: chat_usage_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.chat_usage_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: chat_usage_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.chat_usage_id_seq OWNED BY public.chat_usage.id;
+
+
+--
 -- Name: conversations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -270,6 +329,41 @@ CREATE SEQUENCE public.conversations_id_seq
 --
 
 ALTER SEQUENCE public.conversations_id_seq OWNED BY public.conversations.id;
+
+
+--
+-- Name: email_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_tokens (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    purpose public.email_token_purpose NOT NULL,
+    token_hash character varying(64) NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: email_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.email_tokens_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: email_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.email_tokens_id_seq OWNED BY public.email_tokens.id;
 
 
 --
@@ -528,7 +622,9 @@ CREATE TABLE public.users (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     google_sub character varying(64),
     email_verified_at timestamp with time zone,
-    token_version integer DEFAULT 0 NOT NULL
+    token_version integer DEFAULT 0 NOT NULL,
+    terms_accepted_at timestamp with time zone,
+    terms_version character varying(40)
 );
 
 
@@ -574,10 +670,24 @@ ALTER TABLE ONLY public.authorized_agents ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
+-- Name: chat_usage id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_usage ALTER COLUMN id SET DEFAULT nextval('public.chat_usage_id_seq'::regclass);
+
+
+--
 -- Name: conversations id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.conversations ALTER COLUMN id SET DEFAULT nextval('public.conversations_id_seq'::regclass);
+
+
+--
+-- Name: email_tokens id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_tokens ALTER COLUMN id SET DEFAULT nextval('public.email_tokens_id_seq'::regclass);
 
 
 --
@@ -662,11 +772,27 @@ ALTER TABLE ONLY public.authorized_agents
 
 
 --
+-- Name: chat_usage chat_usage_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_usage
+    ADD CONSTRAINT chat_usage_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: conversations conversations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.conversations
     ADD CONSTRAINT conversations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: email_tokens email_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_tokens
+    ADD CONSTRAINT email_tokens_pkey PRIMARY KEY (id);
 
 
 --
@@ -816,10 +942,38 @@ CREATE INDEX ix_authorized_agents_source_id ON public.authorized_agents USING bt
 
 
 --
+-- Name: ix_chat_usage_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_chat_usage_created ON public.chat_usage USING btree (created_at);
+
+
+--
+-- Name: ix_chat_usage_user_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_chat_usage_user_created ON public.chat_usage USING btree (user_id, created_at);
+
+
+--
 -- Name: ix_conversations_user_updated; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_conversations_user_updated ON public.conversations USING btree (user_id, updated_at);
+
+
+--
+-- Name: ix_email_tokens_token_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_email_tokens_token_hash ON public.email_tokens USING btree (token_hash);
+
+
+--
+-- Name: ix_email_tokens_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_email_tokens_user_id ON public.email_tokens USING btree (user_id);
 
 
 --
@@ -879,6 +1033,13 @@ CREATE UNIQUE INDEX ix_users_email ON public.users USING btree (email);
 
 
 --
+-- Name: ix_users_email_lower; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX ix_users_email_lower ON public.users USING btree (lower((email)::text));
+
+
+--
 -- Name: uq_official_sources_current_slug; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -918,11 +1079,27 @@ ALTER TABLE ONLY public.authorized_agents
 
 
 --
+-- Name: chat_usage chat_usage_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_usage
+    ADD CONSTRAINT chat_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: conversations conversations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.conversations
     ADD CONSTRAINT conversations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: email_tokens email_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_tokens
+    ADD CONSTRAINT email_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -985,5 +1162,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
-\unrestrict eUM5kbfcPN6rWtVNjcRw1eNzxJWnuXKfYVCf1EzFX8UPtwbUwuoPsA7gk6o1rE9
+\unrestrict P0a17aXQ7FepzdUHgi600rHc3tKhRR8aFGjqaW8ekaXID8AuVwmdbzZF7EFLJyn
 

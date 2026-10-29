@@ -212,3 +212,39 @@ def test_multiples_the_law_writes_in_words_count_as_supported(client):
         search_legislation(ctx, "multa concesión")
         assert check_amounts("La multa va de 500 a 680 veces la UMA.", ctx) == []
         assert [a["valor"] for a in check_amounts("La multa va de 500 a 700 veces la UMA.", ctx)] == ["700 veces la UMA"]
+
+
+def test_unverified_rows_flag_the_fragment_and_its_prose_amounts_stop_counting_as_support(client):
+    _, factory = client
+    with factory() as db:
+        _seed(db, "37_II", verify=False)  # extracted but nobody reviewed it
+        ctx = _context(db)
+        result = search_legislation(ctx, "cinturón")
+        assert _rows(result) == []
+        flagged = [f for f in result["fragmentos"] if "sanciones_sin_verificar" in f]
+        assert flagged and "NO están verificadas" in flagged[0]["sanciones_sin_verificar"]
+        # the article text says "5, 7 o 10 veces la UMA", yet repeating it is now an unsupported amount
+        assert check_amounts("Son 5, 7 o 10 veces la UMA [1].", ctx)[0]["tipo"] == "monto_no_respaldado"
+
+
+def test_stale_rows_are_flagged_as_unverified_too(client):
+    _, factory = client
+    with factory() as db:
+        _seed(db, "37_II")
+        rows = list(db.scalars(select(LegalSanction)))
+        for row in rows:
+            row.chunk_hash = "f" * 64  # the text changed after the review
+        db.commit()
+        result = search_legislation(_context(db), "cinturón")
+        assert _rows(result) == []
+        assert any("sanciones_sin_verificar" in f for f in result["fragmentos"])
+
+
+def test_fully_verified_fragments_are_not_flagged_and_their_amounts_remain_supported(client):
+    _, factory = client
+    with factory() as db:
+        _seed(db, "37_II")
+        ctx = _context(db)
+        result = search_legislation(ctx, "cinturón")
+        assert not any("sanciones_sin_verificar" in f for f in result["fragmentos"])
+        assert check_amounts("Son 5, 7 o 10 veces la UMA [1].", ctx) == []

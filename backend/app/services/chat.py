@@ -13,10 +13,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.models.domain import Conversation, Message, MessageRole, MessageStatus
+from app.models.domain import Conversation, Message, MessageRole, MessageStatus, UsageStatus
 from app.services.agent.agent import AgentRun, run_agent, stream_agent
 from app.services.agent.context import AgentContext
-from app.services.chat_limits import check_can_send
+from app.services.chat_limits import check_can_send, reserve_usage, settle_usage
 
 logger = logging.getLogger(__name__)
 
@@ -53,13 +53,16 @@ class PreparedTurn:
     user_message_id: int
     content: str
     history: list[tuple[str, str]]
+    usage_id: int | None = None  # the chat_usage reservation taken for this turn; settled when the turn ends
 
 
 def begin_turn(
     db: Session, user_id: int, conversation: Conversation, content: str, settings: Settings, now: datetime | None = None
 ) -> PreparedTurn:
-    """Raises `ChatLimitError` (nothing stored) when a limit applies; otherwise stores the question and commits."""
+    """Raises `ChatLimitError` (nothing stored) when a limit applies; otherwise reserves the usage, stores the question
+    and commits both together (this also releases the user's lock), before the model is called."""
     content = check_can_send(db, user_id, conversation.id, content, settings, now=now)
+    usage = reserve_usage(db, user_id, content, settings, now=now)
     history = _history(db, conversation.id)  # earlier turns only: taken before the new question is stored
 
     question = Message(conversation_id=conversation.id, role=MessageRole.USER, content=content)
@@ -68,7 +71,7 @@ def begin_turn(
         conversation.title = " ".join(content.split())[:TITLE_CHARS].rstrip()
     conversation.updated_at = datetime.now(timezone.utc)
     db.commit()
-    return PreparedTurn(conversation.id, question.id, content, history)
+    return PreparedTurn(conversation.id, question.id, content, history, usage.id)
 
 
 def _store_answer(
@@ -97,15 +100,27 @@ def _store_answer(
 
 def run_turn(db: Session, user_id: int, prepared: PreparedTurn, settings: Settings, runtime: ChatRuntime) -> Message:
     ctx = AgentContext(db=db, user_id=user_id, embeddings=runtime.embeddings, user_message=prepared.content, settings=settings)
+    settled = False
     try:
-        run = run_agent(runtime.agent, ctx, prepared.content, prepared.history, settings)
-    except Exception:  # noqa: BLE001 - any provider/network/agent failure must still end in a stored answer
-        logger.exception("agent turn failed for conversation %s", prepared.conversation_id)
-        db.rollback()
-        return _store_answer(db, prepared.conversation_id)
-    if run.anomalies:
-        logger.warning("citation anomalies in conversation %s: %s", prepared.conversation_id, run.anomalies)
-    return _store_answer(db, prepared.conversation_id, run=run)
+        try:
+            run = run_agent(runtime.agent, ctx, prepared.content, prepared.history, settings)
+        except Exception:  # noqa: BLE001 - any provider/network/agent failure must still end in a stored answer
+            logger.exception("agent turn failed for conversation %s", prepared.conversation_id)
+            db.rollback()
+            settled = True
+            settle_usage(db, prepared.usage_id, UsageStatus.ERROR)  # no tokens known: the estimate keeps counting
+            return _store_answer(db, prepared.conversation_id)
+        settled = True
+        settle_usage(
+            db, prepared.usage_id, UsageStatus.ERROR if run.limit_reached else UsageStatus.SETTLED,
+            run.input_tokens, run.output_tokens,
+        )
+        if run.anomalies:
+            logger.warning("citation anomalies in conversation %s: %s", prepared.conversation_id, run.anomalies)
+        return _store_answer(db, prepared.conversation_id, run=run)
+    finally:
+        if not settled:  # an unexpected BaseException: never leave the reservation open
+            settle_usage(db, prepared.usage_id, UsageStatus.ERROR)
 
 
 def send_message(
@@ -128,6 +143,7 @@ def stream_turn(
     stream early the partial text is saved as `cancelled`. The question was committed in `begin_turn`.
     """
     partial: list[str] = []
+    settled = False
     with session_factory() as db:
         ctx = AgentContext(db=db, user_id=user_id, embeddings=runtime.embeddings, user_message=prepared.content, settings=settings)
         try:
@@ -136,6 +152,11 @@ def stream_turn(
                     run = data
                     if run.anomalies:
                         logger.warning("citation anomalies in conversation %s: %s", prepared.conversation_id, run.anomalies)
+                    settled = True
+                    settle_usage(
+                        db, prepared.usage_id, UsageStatus.ERROR if run.limit_reached else UsageStatus.SETTLED,
+                        run.input_tokens, run.output_tokens,
+                    )
                     answer = _store_answer(db, prepared.conversation_id, run=run)
                     yield "citations", run.citations
                     yield "done", {
@@ -148,12 +169,20 @@ def stream_turn(
                     partial.append(data["text"])
                 yield kind, data
         except GeneratorExit:
-            # The client went away (browser aborted). Keep what was generated; the question is already stored.
+            # The client went away (browser aborted). The provider still charges for what was generated, so the
+            # estimate stays; keep the partial text, the question is already stored.
             db.rollback()
+            settled = True
+            settle_usage(db, prepared.usage_id, UsageStatus.CANCELLED)
             _store_answer(db, prepared.conversation_id, status=MessageStatus.CANCELLED, content="".join(partial).strip() or "(respuesta interrumpida)")
             raise
         except Exception:  # noqa: BLE001
             logger.exception("streamed turn failed for conversation %s", prepared.conversation_id)
             db.rollback()
+            settled = True
+            settle_usage(db, prepared.usage_id, UsageStatus.ERROR)
             answer = _store_answer(db, prepared.conversation_id)
             yield "error", {"code": "generacion_fallida", "message": GENERATION_FAILED, "assistant_message_id": answer.id}
+        finally:
+            if not settled:
+                settle_usage(db, prepared.usage_id, UsageStatus.ERROR)

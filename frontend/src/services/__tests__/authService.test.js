@@ -23,3 +23,29 @@ test('a failed Google sign-in shows the server message and stores nothing', asyn
   await expect(authService.loginWithGoogle('bad')).rejects.toThrow('No pudimos verificar tu cuenta de Google');
   expect(localStorage.getItem('token')).toBeNull();
 });
+
+test('stores has_password as tienePassword', async () => {
+  axios.post.mockResolvedValue({ data: { ...session, user: { ...session.user, has_password: false } } });
+  await authService.loginWithGoogle('t');
+  expect(authService.getCurrentUser().tienePassword).toBe(false);
+
+  axios.post.mockResolvedValue({ data: { ...session, user: { ...session.user, has_password: true } } });
+  await authService.login({ email: 'a@b.com', password: 'x' });
+  expect(authService.getCurrentUser().tienePassword).toBe(true);
+});
+
+test('a response without has_password is treated as having a password', async () => {
+  axios.post.mockResolvedValue({ data: session });
+  await authService.login({ email: 'a@b.com', password: 'x' });
+  expect(authService.getCurrentUser().tienePassword).toBe(true);
+});
+
+test('stores email_verified as emailVerificado; missing counts as verified', async () => {
+  axios.post.mockResolvedValue({ data: { ...session, user: { ...session.user, email_verified: false } } });
+  await authService.login({ email: 'a@b.com', password: 'x' });
+  expect(authService.getCurrentUser().emailVerificado).toBe(false);
+
+  axios.post.mockResolvedValue({ data: session });
+  await authService.login({ email: 'a@b.com', password: 'x' });
+  expect(authService.getCurrentUser().emailVerificado).toBe(true);
+});

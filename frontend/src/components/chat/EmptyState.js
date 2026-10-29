@@ -34,9 +34,6 @@ export default function EmptyState({ onSend, canSend, draft }) {
           ))}
         </ul>
       </div>
-      <p className="tw-m-0 tw-shrink-0 tw-px-4 tw-pb-5 tw-text-center tw-text-xs tw-text-ink-soft">
-        Información orientativa; no sustituye asesoría legal.
-      </p>
     </div>
   );
 }

@@ -4,7 +4,9 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
 from app.core.config import Settings
-from app.services.agent.agent import AgentRun, build_agent, run_agent
+from app.services.agent.agent import (
+    UNCITED_ARTICLE_ANSWER, UNSUPPORTED_AMOUNT_ANSWER, AgentRun, build_agent, run_agent,
+)
 from app.services.agent.context import AgentContext
 from app.services.agent.prompt import SYSTEM_PROMPT
 from app.services.agent.tools import TOOLS
@@ -185,10 +187,54 @@ def test_a_hallucinated_marker_never_reaches_the_user(client):
         cfg = settings()
         ctx = AgentContext(db=db, user_id=None, embeddings=FixedQuery(vec(1, 0)), user_message="araña")
         run = run_agent(build_agent(cfg, model=model), ctx, "araña", history=[], settings=cfg)
-        assert run.answer == "Se inmoviliza [1] y la multa es de 5 UMA."
-        # the invented marker is removed, and "5 UMA" is flagged because no fragment of the turn says it
+        # the invented marker is flagged, and "5 UMA" (no fragment of the turn says it) is not shown to the person
         assert run.anomalies == [
             {"tipo": "marca_invalida", "n": 42},
             {"tipo": "monto_no_respaldado", "clase": "uma", "valor": "5 UMA"},
         ]
-        assert [c["n"] for c in run.citations] == [1]
+        assert run.answer == UNSUPPORTED_AMOUNT_ANSWER and "5 UMA" not in run.answer
+        assert run.citations == []
+
+
+def _ask(db, replies, question="¿qué dice la ley?", search_vec=None):
+    model = RecordingModel(messages=iter(replies), seen=[])
+    cfg = settings()
+    ctx = AgentContext(db=db, user_id=None, embeddings=FixedQuery(search_vec or vec(1, 0)), user_message=question)
+    return run_agent(build_agent(cfg, model=model), ctx, question, history=[], settings=cfg)
+
+
+def test_with_no_relevant_support_the_tool_says_so_and_a_made_up_article_or_amount_is_replaced(client):
+    _, factory = client
+    with factory() as db:
+        source = add_source(db, "reglamento-transito", "a")
+        add_chunk(db, source, "33", "Inmovilizador", vec(0, 1), fraction="II", page=35)  # orthogonal: no relevance
+        db.commit()
+        run = _ask(db, [
+            tool_call("buscar_legislacion", {"consulta": "receta de pozole"}),
+            AIMessage(content="Según el artículo 99 la multa es de 30 veces la UMA."),
+        ])
+        assert run.tool_calls[0]["estado"] == "sin_resultados_relevantes"
+        assert run.answer == UNSUPPORTED_AMOUNT_ANSWER
+        assert "artículo 99" not in run.answer and run.citations == []
+
+
+def test_an_article_named_without_any_citation_is_replaced_by_a_no_basis_answer(client):
+    _, factory = client
+    with factory() as db:
+        run = _ask(db, [AIMessage(content="El artículo 123 prohíbe estacionarse ahí.")])  # no tool was even called
+        assert run.answer == UNCITED_ARTICLE_ANSWER
+        assert {"tipo": "articulo_sin_cita"} in run.anomalies
+        assert "no sustituye asesoría legal" in run.answer
+
+
+def test_a_plain_no_basis_or_out_of_scope_reply_passes_through_untouched(client):
+    _, factory = client
+    with factory() as db:
+        text = "Solo cubro tránsito y movilidad de la CDMX; acude a la autoridad de tu entidad."
+        run = _ask(db, [AIMessage(content=text)], question="¿cómo se hace un pozole?")
+        assert run.answer == text and run.anomalies == [] and run.tool_calls == []
+
+
+def test_the_prompt_tells_the_user_to_consult_an_authority_or_lawyer_and_not_to_invent_articles():
+    for rule in ("nunca inventes artículos", "consulta a la autoridad de tránsito o a un abogado", "sanciones_sin_verificar"):
+        assert rule.lower() in SYSTEM_PROMPT.lower(), rule

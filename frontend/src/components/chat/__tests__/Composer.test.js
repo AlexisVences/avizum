@@ -45,3 +45,11 @@ test('a refused message comes back into the box', () => {
   rerender(<Composer onSend={jest.fn()} canSend draft="la pregunta que no se envió" />);
   expect(box()).toHaveValue('la pregunta que no se envió');
 });
+
+test.each(['dock', 'hero'])('the legal disclaimer is rendered exactly once in the %s variant', (variant) => {
+  render(<Composer onSend={jest.fn()} canSend variant={variant} />);
+  expect(screen.getAllByText(/no sustituye a un abogado/)).toHaveLength(1);
+  expect(screen.getByTestId('chat-disclaimer')).toHaveTextContent(
+    'Avizum ofrece información general sobre el reglamento de tránsito y no sustituye a un abogado. Verifica siempre con la fuente oficial citada.'
+  );
+});

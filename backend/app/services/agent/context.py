@@ -82,6 +82,7 @@ class AgentContext:
     # What the tools put in front of the model this turn, so the end-of-turn check (agent/amounts.py) can tell a
     # supported amount from an invented one.
     fragment_texts: list[str] = field(default_factory=list)
+    text_by_chunk: dict = field(default_factory=dict)  # chunk_id -> the text appended to fragment_texts
     served_uma_triples: set = field(default_factory=set)
     served_uma_values: set = field(default_factory=set)
     served_amounts: set = field(default_factory=set)

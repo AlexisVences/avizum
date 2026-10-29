@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import CurrentUser, DbSession, VerifiedUser
 from app.core.config import get_settings
 from app.db.session import get_session_factory
 from app.models.domain import Conversation, Message, MessageFeedback, MessageRole
@@ -153,7 +153,7 @@ def _public(message: Message) -> MessagePublic:
 
 @router.post("/conversations/{conversation_id}/messages", status_code=status.HTTP_201_CREATED, response_model=None)
 def post_message(
-    conversation_id: int, payload: SendMessageRequest, request: Request, user: CurrentUser, db: DbSession,
+    conversation_id: int, payload: SendMessageRequest, request: Request, user: VerifiedUser, db: DbSession,
     runtime: Annotated[ChatRuntime, Depends(get_chat_runtime)], session_factory=Depends(get_session_factory),
 ):
     """JSON by default; with `Accept: text/event-stream` the answer arrives as Server-Sent Events.
@@ -168,7 +168,10 @@ def post_message(
             return SendMessageResponse(user_message=_public(turn.user_message), assistant_message=_public(turn.assistant_message))
         prepared = begin_turn(db, user.id, conversation, payload.content, settings)
     except ChatLimitError as error:
-        raise HTTPException(status_code=error.status_code, detail={"code": error.code, "message": error.message}) from error
+        headers = {"Retry-After": str(error.retry_after)} if error.retry_after else None
+        raise HTTPException(
+            status_code=error.status_code, detail={"code": error.code, "message": error.message}, headers=headers
+        ) from error
 
     def events():
         yield _sse("message_start", {"user_message_id": prepared.user_message_id})

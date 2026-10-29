@@ -239,7 +239,7 @@ def test_reactivar_permite_iniciar_sesion(client):
     _, headers = _me(factory)
     http.post("/api/v1/auth/register", json={
         "first_name": "Ana", "last_name": "L", "email": "ana@example.com",
-        "password": "a secure password"})
+        "password": "a secure password", "accepted_terms": True})
     with factory() as db:
         target = db.query(User).filter_by(email="ana@example.com").one().id
     login = {"email": "ana@example.com", "password": "a secure password"}

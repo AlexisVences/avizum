@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from app.core.config import Settings
-from app.models.domain import Conversation, Message, MessageRole, User
+from app.models.domain import ChatUsage, Conversation, Message, MessageRole, UsageStatus, User
 from app.services.chat_limits import ChatLimitError, check_can_send
 
 MX = ZoneInfo("America/Mexico_City")
@@ -31,6 +31,16 @@ def make_conversation(db, user) -> Conversation:
 
 def add_messages(db, conversation, count, role=MessageRole.USER, at=NOW):
     db.add_all(Message(conversation_id=conversation.id, role=role, content="m", created_at=at) for _ in range(count))
+    db.flush()
+
+
+def add_usage(db, user, count, at=NOW):
+    """The daily limit counts ledger rows (one per accepted turn), not stored messages."""
+    db.add_all(
+        ChatUsage(user_id=user.id, created_at=at, input_tokens=1, output_tokens=1, reserved_input_tokens=1,
+                  reserved_output_tokens=1, status=UsageStatus.SETTLED)
+        for _ in range(count)
+    )
     db.flush()
 
 
@@ -81,13 +91,13 @@ def test_the_daily_limit_counts_only_the_users_own_messages_sent_today_in_mexico
         mine, theirs, old = make_conversation(db, user), make_conversation(db, other), make_conversation(db, user)
         midnight_mx = NOW.replace(hour=0, minute=0, second=0)
 
-        add_messages(db, mine, 30, at=NOW)                                     # today
-        add_messages(db, mine, 10, MessageRole.ASSISTANT, at=NOW)              # assistant answers do not count
-        add_messages(db, theirs, 50, at=NOW)                                   # someone else's
-        add_messages(db, old, 20, at=midnight_mx - timedelta(minutes=30))      # 23:30 yesterday in Mexico City
+        add_usage(db, user, 30, at=NOW)                                        # today
+        add_messages(db, mine, 10, MessageRole.ASSISTANT, at=NOW)              # messages themselves do not count
+        add_usage(db, other, 50, at=NOW)                                       # someone else's
+        add_usage(db, user, 20, at=midnight_mx - timedelta(minutes=30))        # 23:30 yesterday in Mexico City
         assert check_can_send(db, user.id, mine.id, "hola", settings(), now=NOW)
 
-        add_messages(db, mine, 10, at=midnight_mx + timedelta(minutes=1))      # reaches 40 today
+        add_usage(db, user, 10, at=midnight_mx + timedelta(minutes=1))         # reaches 40 today
         blocked = error_of(db, user, mine, "hola")
         assert (blocked.status_code, blocked.code) == (429, "limite_diario")
         assert "40" in blocked.message
@@ -98,6 +108,6 @@ def test_the_limits_are_configurable(client):
     with factory() as db:
         user = make_user(db)
         conversation = make_conversation(db, user)
-        add_messages(db, conversation, 2)
+        add_usage(db, user, 2)
         assert error_of(db, user, conversation, "hola", settings(chat_daily_message_limit=2)).status_code == 429
         assert error_of(db, user, conversation, "x" * 11, settings(chat_max_message_chars=10)).status_code == 422

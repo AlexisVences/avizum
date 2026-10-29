@@ -49,7 +49,7 @@ def test_second_sign_in_reuses_the_account(google):
 
 def test_unverified_password_account_loses_its_password_when_the_owner_links_google(google):
     http, factory, _ = google
-    http.post("/api/v1/auth/register", json={"first_name": "Mal", "last_name": "Actor", "email": "ana@example.com", "password": "Contrase#a-1234"})
+    http.post("/api/v1/auth/register", json={"first_name": "Mal", "last_name": "Actor", "email": "ana@example.com", "password": "Contrase#a-1234", "accepted_terms": True})
     attacker = http.post("/api/v1/auth/login", json={"email": "ana@example.com", "password": "Contrase#a-1234"})
     assert attacker.status_code == 200
     attacker_headers = {"Authorization": f"Bearer {attacker.json()['access_token']}"}
@@ -97,7 +97,12 @@ def test_disabled_when_no_client_id(client, monkeypatch):
 def test_changing_the_email_clears_verification(google):
     http, factory, _ = google
     token = http.post("/api/v1/auth/google", json={"credential": CREDENTIAL}).json()["access_token"]
-    response = http.patch("/api/v1/users/me", json={"email": "otro@example.com"}, headers={"Authorization": f"Bearer {token}"})
+    headers = {"Authorization": f"Bearer {token}"}
+    # A Google-only account has no password to prove ownership with, so it cannot change its email yet.
+    assert http.patch("/api/v1/users/me", json={"email": "otro@example.com"}, headers=headers).status_code == 403
+    assert http.patch("/api/v1/users/me", json={"password": "my first password"}, headers=headers).status_code == 200
+    token = http.post("/api/v1/auth/login", json={"email": "ana@example.com", "password": "my first password"}).json()["access_token"]
+    response = http.patch("/api/v1/users/me", json={"email": "otro@example.com", "current_password": "my first password"}, headers={"Authorization": f"Bearer {token}"})
     assert response.json()["email_verified"] is False
 
 
