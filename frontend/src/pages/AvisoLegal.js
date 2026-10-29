@@ -52,6 +52,10 @@ const AvisoLegal = () => {
                     será utilizada exclusivamente con fines de funcionamiento interno del sistema. Nos comprometemos a respetar
                     y proteger los datos conforme a la Ley de Protección de Datos Personales vigente en México.
                     </p>
+                    <p>
+                    Las respuestas que reciban una calificación negativa, terminen en error o no citen ninguna fuente pueden ser revisadas por el equipo
+                    de Avizum, sin nombre ni correo, para mejorar el servicio.
+                    </p>
                 </section>
 
 

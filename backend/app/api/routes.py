@@ -1,24 +1,22 @@
-from datetime import datetime, time, timezone
-from zoneinfo import ZoneInfo
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 
+from app.api.admin import router as admin_router
 from app.api.conversations import router as conversations_router
-from app.api.deps import AdminUser, CurrentUser, DbSession, OptionalUser
+from app.api.deps import CurrentUser, DbSession, OptionalUser
 from app.core.config import get_settings
 from app.core.rate_limit import limiter, rate_limit, too_many
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models.domain import AgentLookup, Conversation, Message, MessageFeedback, MessageRole, User
-from app.schemas.api import (AdminUserUpdate, AgentPublic, AgentSearchResponse, OfficialSourcePublic, GoogleLoginRequest, LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserPublic)
+from app.models.domain import AgentLookup, User
+from app.schemas.api import (AgentPublic, AgentSearchResponse, OfficialSourcePublic, GoogleLoginRequest, LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserPublic)
 from app.services.agents_registry import EmptyAgentQuery, search_agents
 from app.services.google_auth import InvalidGoogleToken, sign_in_with_google, verify_google_credential
 
-MEXICO_CITY = ZoneInfo("America/Mexico_City")  # the product's calendar: "today" and "this month" follow the user's day
-
 router = APIRouter(prefix="/api/v1")
 router.include_router(conversations_router)
+router.include_router(admin_router)
 
 
 @router.get("/health")
@@ -97,23 +95,6 @@ def update_profile(payload: ProfileUpdate, user: CurrentUser, db: DbSession) -> 
     return user
 
 
-@router.get("/admin/users", response_model=list[UserPublic])
-def list_users(_: AdminUser, db: DbSession) -> list[User]:
-    return list(db.scalars(select(User).order_by(User.id)))
-
-
-@router.patch("/admin/users/{user_id}", response_model=UserPublic)
-def manage_user(user_id: int, payload: AdminUserUpdate, _: AdminUser, db: DbSession) -> User:
-    target = db.get(User, user_id)
-    if target is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(target, field, value)
-    db.commit()
-    db.refresh(target)
-    return target
-
-
 @router.get("/agents/search", response_model=AgentSearchResponse, dependencies=[Depends(rate_limit("agents-search", 30, 60))])
 def search_authorized_agents(
     user: OptionalUser, db: DbSession, q: Annotated[str, Query(min_length=2, max_length=100)]
@@ -132,31 +113,3 @@ def search_authorized_agents(
         results=[AgentPublic.model_validate(match.agent) for match in search.matches],
         source=OfficialSourcePublic.model_validate(search.source) if search.source else None,
     )
-
-
-@router.get("/admin/statistics")
-def statistics(_: AdminUser, db: DbSession) -> dict:
-    now = datetime.now(MEXICO_CITY)
-    day_start = datetime.combine(now.date(), time.min, tzinfo=MEXICO_CITY)
-    month_start = day_start.replace(day=1)
-
-    def user_messages(since: datetime | None = None) -> int:
-        query = select(func.count()).select_from(Message).where(Message.role == MessageRole.USER)
-        if since is not None:
-            query = query.where(Message.created_at >= since)
-        return db.scalar(query) or 0
-
-    def feedback(value: int) -> int:
-        return db.scalar(select(func.count()).select_from(MessageFeedback).where(MessageFeedback.value == value)) or 0
-
-    positive, negative = feedback(1), feedback(-1)
-    return {
-        "messages_today": user_messages(day_start),
-        "messages_month": user_messages(month_start),
-        "messages_total": user_messages(),
-        "conversations_total": db.scalar(select(func.count()).select_from(Conversation)) or 0,
-        "agent_lookups_month": db.scalar(select(func.count()).select_from(AgentLookup).where(AgentLookup.created_at >= month_start)) or 0,
-        "feedback_positive": positive,
-        "feedback_negative": negative,
-        "feedback_positive_rate": positive / (positive + negative) if positive + negative else None,
-    }

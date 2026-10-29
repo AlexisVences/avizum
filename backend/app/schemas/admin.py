@@ -1,0 +1,134 @@
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Generic, Literal, TypeVar
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.models.domain import UserRole
+
+T = TypeVar("T")
+
+
+class Page(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
+
+
+class AdminUserRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    first_name: str
+    last_name: str
+    email: EmailStr
+    role: UserRole
+    is_active: bool
+    email_verified: bool
+    created_at: datetime
+    last_activity_at: datetime | None
+    questions_count: int
+
+
+class AdminUserUpdate(BaseModel):
+    role: UserRole | None = None
+    is_active: bool | None = None
+
+
+class AdminUserDelete(BaseModel):
+    confirm_email: str = Field(max_length=320)
+
+
+class AuditRow(BaseModel):
+    id: int
+    created_at: datetime
+    actor_name: str | None
+    action: str
+    target_user_id: int | None
+    target_name: str | None
+    detail: dict[str, str | int | bool | None]
+
+
+class AttentionItem(BaseModel):
+    kind: str
+    label: str
+    count: int
+    href: str
+
+
+class DayPoint(BaseModel):
+    date: date
+    questions: int
+
+
+class Overview(BaseModel):
+    days: int
+    since: datetime
+    questions: int
+    active_users: int
+    new_users: int
+    answers_with_error: int
+    error_rate: float | None
+    feedback_up: int
+    feedback_down: int
+    feedback_rate: float | None
+    feedback_rated: int
+    tokens_input: int
+    tokens_output: int
+    cost_usd: Decimal  # serialized as a string so the client never receives a float
+    agent_lookups: int
+    series: list[DayPoint]
+    attention: list[AttentionItem]
+
+
+class ReviewCitation(BaseModel):
+    """Only the fields the agent stores in a citation; any other stored key is dropped."""
+    source_slug: str | None = None
+    source_title: str | None = None
+    article: str | None = None
+    fraction: str | None = None
+    page: int | None = None
+    url: str | None = None
+    n: int | None = None
+    orden: int | None = None
+
+
+class ReviewMarkBody(BaseModel):
+    note: str | None = Field(default=None, max_length=500)
+
+
+class ReviewMark(BaseModel):
+    message_id: int
+    reviewed: bool
+    note: str | None
+
+
+class ReviewItem(BaseModel):
+    """One answer in the quality queue. Nothing here identifies the person who asked."""
+    message_id: int
+    asked_at: datetime
+    reasons: list[Literal["negative", "error", "uncited"]]
+    question: str
+    answer: str
+    citations: list[ReviewCitation]
+    tools: list[str]
+    reviewed: bool
+    note: str | None
+
+
+class SourceRow(BaseModel):
+    slug: str
+    title: str
+    kind: str
+    url: str
+    last_reform_date: date | None
+    retrieved_at: datetime
+    chunk_count: int
+    versions: int
+    review_due: bool
+    review_due_since: date | None
+
+
+class SourcesStatus(BaseModel):
+    sources: list[SourceRow]
+    pending_sanctions: int

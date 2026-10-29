@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict V8b1UegtLxA7EvJca3r9XCP60X8qUCI3u5JomcBXgwHbiEcwSu03gP0T7unWV2b
+\restrict eUM5kbfcPN6rWtVNjcRw1eNzxJWnuXKfYVCf1EzFX8UPtwbUwuoPsA7gk6o1rE9
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -125,6 +125,40 @@ CREATE FUNCTION public.immutable_unaccent(text) RETURNS text
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: admin_audit_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.admin_audit_log (
+    id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    actor_id integer,
+    action character varying(40) NOT NULL,
+    target_user_id integer,
+    detail jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+
+--
+-- Name: admin_audit_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.admin_audit_log_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: admin_audit_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.admin_audit_log_id_seq OWNED BY public.admin_audit_log.id;
+
 
 --
 -- Name: agent_lookups; Type: TABLE; Schema: public; Owner: -
@@ -370,6 +404,39 @@ ALTER SEQUENCE public.message_feedback_id_seq OWNED BY public.message_feedback.i
 
 
 --
+-- Name: message_reviews; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.message_reviews (
+    id integer NOT NULL,
+    message_id integer NOT NULL,
+    reviewer_id integer,
+    note character varying(500),
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: message_reviews_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.message_reviews_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: message_reviews_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.message_reviews_id_seq OWNED BY public.message_reviews.id;
+
+
+--
 -- Name: messages; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -486,6 +553,13 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: admin_audit_log id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.admin_audit_log ALTER COLUMN id SET DEFAULT nextval('public.admin_audit_log_id_seq'::regclass);
+
+
+--
 -- Name: agent_lookups id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -528,6 +602,13 @@ ALTER TABLE ONLY public.message_feedback ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: message_reviews id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews ALTER COLUMN id SET DEFAULT nextval('public.message_reviews_id_seq'::regclass);
+
+
+--
 -- Name: messages id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -546,6 +627,14 @@ ALTER TABLE ONLY public.official_sources ALTER COLUMN id SET DEFAULT nextval('pu
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: admin_audit_log admin_audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.admin_audit_log
+    ADD CONSTRAINT admin_audit_log_pkey PRIMARY KEY (id);
 
 
 --
@@ -602,6 +691,22 @@ ALTER TABLE ONLY public.legal_sanctions
 
 ALTER TABLE ONLY public.message_feedback
     ADD CONSTRAINT message_feedback_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: message_reviews message_reviews_message_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews
+    ADD CONSTRAINT message_reviews_message_id_key UNIQUE (message_id);
+
+
+--
+-- Name: message_reviews message_reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews
+    ADD CONSTRAINT message_reviews_pkey PRIMARY KEY (id);
 
 
 --
@@ -666,6 +771,13 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ix_admin_audit_log_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_admin_audit_log_created_at ON public.admin_audit_log USING btree (created_at DESC);
 
 
 --
@@ -774,6 +886,14 @@ CREATE UNIQUE INDEX uq_official_sources_current_slug ON public.official_sources 
 
 
 --
+-- Name: admin_audit_log admin_audit_log_actor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.admin_audit_log
+    ADD CONSTRAINT admin_audit_log_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: agent_lookups agent_lookups_agent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -838,6 +958,22 @@ ALTER TABLE ONLY public.message_feedback
 
 
 --
+-- Name: message_reviews message_reviews_message_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews
+    ADD CONSTRAINT message_reviews_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.messages(id) ON DELETE CASCADE;
+
+
+--
+-- Name: message_reviews message_reviews_reviewer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.message_reviews
+    ADD CONSTRAINT message_reviews_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: messages messages_conversation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -849,5 +985,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
-\unrestrict V8b1UegtLxA7EvJca3r9XCP60X8qUCI3u5JomcBXgwHbiEcwSu03gP0T7unWV2b
+\unrestrict eUM5kbfcPN6rWtVNjcRw1eNzxJWnuXKfYVCf1EzFX8UPtwbUwuoPsA7gk6o1rE9
 

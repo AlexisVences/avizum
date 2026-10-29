@@ -36,7 +36,7 @@ const LoginPage = () => {
 
       // Redirigir según el rol
       if (currentUser && currentUser.rol === 'admin') {
-        navigate('/BienvenidaAdmin');
+        navigate('/admin');
       } else {
         navigate('/Bienvenida');
       }
