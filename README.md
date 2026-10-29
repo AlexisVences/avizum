@@ -46,12 +46,20 @@ Avizum puts it in one place, in plain Spanish, and never invents an answer. If t
     <td align="center"><sub>Answer with numbered citations that open the official PDF</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/verificar-agente.png" alt="Officer verification by badge number"></td>
+    <td width="50%"><img src="docs/images/home-verificar.png" alt="Officer verification from the landing page"></td>
     <td width="50%"><img src="docs/images/bienvenida.png" alt="Logged-in home with the driver's guide"></td>
   </tr>
   <tr>
-    <td align="center"><sub>Officer verification against the registry</sub></td>
+    <td align="center"><sub>Officer verification against the official registry, with source (officer's name blurred)</sub></td>
     <td align="center"><sub>Home and searchable driver's guide</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/admin-resumen.png" alt="Admin console: usage overview"></td>
+    <td width="50%"><img src="docs/images/admin-fuentes.png" alt="Admin console: official sources freshness"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Admin console: usage, cost and quality at a glance</sub></td>
+    <td align="center"><sub>Admin console: freshness of the official sources</sub></td>
   </tr>
 </table>
 
