@@ -4,7 +4,7 @@ export const createUser = async (userData) => {
   const response = await apiFetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ first_name: userData.nombre, last_name: userData.apellido, email: userData.email, password: userData.password }),
+    body: JSON.stringify({ first_name: userData.nombre, last_name: userData.apellido, email: userData.email, password: userData.password, accepted_terms: userData.acceptedTerms === true }),
   });
   const data = await response.json();
 

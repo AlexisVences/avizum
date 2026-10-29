@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import GestionarPerfil from '../GestionarPerfil';
 import authService from '../../services/authService';
 import { updateUser } from '../../services/userService';
+import { resendVerification } from '../../services/emailAccountService';
 
 // react-router-dom v7 and framer-motion (ESM) don't load under CRA's Jest.
 jest.mock('react-router-dom', () => ({
@@ -18,6 +19,7 @@ jest.mock('../../components/NavBar2', () => () => null);
 jest.mock('../../components/Footer', () => () => null);
 jest.mock('../../services/authService', () => ({ __esModule: true, default: { getCurrentUser: jest.fn() } }));
 jest.mock('../../services/userService', () => ({ updateUser: jest.fn() }));
+jest.mock('../../services/emailAccountService', () => ({ resendVerification: jest.fn() }));
 
 const usuario = { id: 7, nombre: 'Alex', apellido: 'Vences', correo: 'alex@correo.com', rol: 'user' };
 
@@ -254,5 +256,46 @@ describe('GestionarPerfil: cuentas sin contraseña (Google)', () => {
         expect(JSON.parse(localStorage.getItem('user')).tienePassword).toBe(true);
         fireEvent.change(screen.getByLabelText('Nueva contraseña'), { target: { value: 'Otra123456' } });
         expect(screen.getByLabelText('Contraseña actual')).toBeRequired();
+    });
+
+    describe('email verification banner', () => {
+        test('is hidden when verified or when the flag is missing', () => {
+            const { unmount } = render(<GestionarPerfil />);
+            expect(screen.queryByText('Tu correo aún no está verificado')).not.toBeInTheDocument();
+            unmount();
+            authService.getCurrentUser.mockReturnValue({ ...usuario, emailVerificado: true });
+            render(<GestionarPerfil />);
+            expect(screen.queryByText('Tu correo aún no está verificado')).not.toBeInTheDocument();
+        });
+
+        test('is shown when not verified; resend disables the button and confirms', async () => {
+            authService.getCurrentUser.mockReturnValue({ ...usuario, emailVerificado: false });
+            let resolver;
+            resendVerification.mockReturnValue(new Promise((r) => { resolver = r; }));
+            render(<GestionarPerfil />);
+            expect(screen.getByText('Tu correo aún no está verificado')).toBeInTheDocument();
+            fireEvent.click(screen.getByRole('button', { name: 'Reenviar correo' }));
+            expect(screen.getByRole('button', { name: 'Enviando...' })).toBeDisabled();
+            resolver();
+            expect(await screen.findByRole('status')).toHaveTextContent(/Te enviamos un correo de verificación/);
+            expect(screen.getByRole('button', { name: 'Reenviar correo' })).toBeDisabled();
+        });
+
+        test('a 429 shows a clear message and allows retrying', async () => {
+            authService.getCurrentUser.mockReturnValue({ ...usuario, emailVerificado: false });
+            resendVerification.mockRejectedValue(Object.assign(new Error('x'), { status: 429 }));
+            render(<GestionarPerfil />);
+            fireEvent.click(screen.getByRole('button', { name: 'Reenviar correo' }));
+            expect(await screen.findByRole('alert')).toHaveTextContent(/Espera unos minutos/);
+            expect(screen.getByRole('button', { name: 'Reenviar correo' })).toBeEnabled();
+        });
+
+        test('other failures show the error message', async () => {
+            authService.getCurrentUser.mockReturnValue({ ...usuario, emailVerificado: false });
+            resendVerification.mockRejectedValue(new Error('No pudimos conectar con el servidor.'));
+            render(<GestionarPerfil />);
+            fireEvent.click(screen.getByRole('button', { name: 'Reenviar correo' }));
+            expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos conectar con el servidor.');
+        });
     });
 });

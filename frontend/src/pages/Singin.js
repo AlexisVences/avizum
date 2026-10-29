@@ -16,6 +16,9 @@ const SignUp = () => {
         password: '',
         confirmPassword: '',
     });
+    const [accepted, setAccepted] = useState(false);
+    const [termsError, setTermsError] = useState('');
+    const [registered, setRegistered] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -47,13 +50,15 @@ const SignUp = () => {
             return;
         }
 
+        if (!accepted) {
+            setTermsError('Debes aceptar los Términos de uso y el Aviso de privacidad para crear tu cuenta.');
+            return;
+        }
+
         setLoading(true);
         try {
-            // Usamos el servicio importado en lugar de fetch directo
-            await createUser(formData);
-
-            // Redirigir a la página de login después de crear el usuario
-            navigate('/Login');
+            await createUser({ ...formData, acceptedTerms: true });
+            setRegistered(true);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -80,6 +85,16 @@ const SignUp = () => {
                             </div>
                         )}
 
+                        {registered ? (
+                            <div role="status" className="tw-text-sm tw-text-ink">
+                                <p className="tw-mt-0 tw-mb-4">
+                                    Cuenta creada. Te enviamos un correo para verificar tu cuenta.
+                                </p>
+                                <Link to="/Login" className="tw-font-semibold tw-text-azul hover:tw-text-magenta tw-no-underline">
+                                    Ir a iniciar sesión
+                                </Link>
+                            </div>
+                        ) : (
                         <form onSubmit={handleSubmit}>
                             <div className="tw-grid tw-grid-cols-2 tw-gap-3 tw-mb-4">
                                 <Input label="Nombre" id="nombre" value={formData.nombre} onChange={handleChange} required />
@@ -114,15 +129,42 @@ const SignUp = () => {
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 required
-                                className="tw-mb-6"
+                                className="tw-mb-4"
                             />
+
+                            <div className="tw-mb-6">
+                                <div className="tw-flex tw-items-start tw-gap-2">
+                                    <input
+                                        id="acceptTerms"
+                                        type="checkbox"
+                                        checked={accepted}
+                                        onChange={(e) => { setAccepted(e.target.checked); if (e.target.checked) setTermsError(''); }}
+                                        aria-required="true"
+                                        aria-invalid={termsError ? 'true' : 'false'}
+                                        aria-describedby={termsError ? 'acceptTerms-error' : undefined}
+                                        className="tw-mt-1"
+                                    />
+                                    <label htmlFor="acceptTerms" className="tw-text-sm tw-text-ink">
+                                        He leído y acepto los{" "}
+                                        <a href="/terminos" target="_blank" rel="noopener noreferrer" className="tw-font-semibold tw-text-azul hover:tw-text-magenta">Términos de uso</a>
+                                        {" "}y el{" "}
+                                        <a href="/Aviso-legal" target="_blank" rel="noopener noreferrer" className="tw-font-semibold tw-text-azul hover:tw-text-magenta">Aviso de privacidad</a>
+                                    </label>
+                                </div>
+                                {termsError && (
+                                    <p id="acceptTerms-error" role="alert" className="tw-text-danger tw-text-xs tw-mt-1 tw-mb-0">
+                                        {termsError}
+                                    </p>
+                                )}
+                            </div>
 
                             <Button type="submit" variant="dark" size="lg" disabled={loading} className="tw-w-full">
                                 {loading ? 'Creando cuenta...' : 'Crear cuenta'}
                             </Button>
                         </form>
+                        )}
 
-                        {GOOGLE_CLIENT_ID && (
+                        {!registered && GOOGLE_CLIENT_ID && (
                             <>
                                 <div className="tw-flex tw-items-center tw-gap-3 tw-my-5 tw-text-xs tw-text-ink-soft">
                                     <span className="tw-h-px tw-flex-1 tw-bg-rule" />o<span className="tw-h-px tw-flex-1 tw-bg-rule" />

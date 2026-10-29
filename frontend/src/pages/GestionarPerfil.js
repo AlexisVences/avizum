@@ -7,6 +7,7 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { updateUser } from "../services/userService";
 import authService from "../services/authService";
+import { resendVerification } from "../services/emailAccountService";
 
 const Perfil = () => {
     const storedUser = authService.getCurrentUser();
@@ -22,6 +23,25 @@ const Perfil = () => {
     const [tienePassword, setTienePassword] = useState(storedUser?.tienePassword !== false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+    // A missing flag (old sessions) counts as verified.
+    const noVerificado = storedUser?.emailVerificado === false || storedUser?.email_verified === false;
+    const [reenvio, setReenvio] = useState({ enviando: false, ok: false, error: null });
+
+    const reenviarVerificacion = async () => {
+        setReenvio({ enviando: true, ok: false, error: null });
+        try {
+            await resendVerification();
+            setReenvio({ enviando: false, ok: true, error: null });
+        } catch (err) {
+            setReenvio({
+                enviando: false,
+                ok: false,
+                error: err.status === 429
+                    ? "Ya enviamos un correo hace poco. Espera unos minutos antes de pedir otro."
+                    : err.message || "No pudimos reenviar el correo. Intenta de nuevo.",
+            });
+        }
+    };
 
     useEffect(() => {
         const user = authService.getCurrentUser();
@@ -179,6 +199,30 @@ const Perfil = () => {
                                 className="tw-mb-4 tw-bg-danger/5 tw-border tw-border-danger/30 tw-text-danger tw-text-sm tw-text-center tw-rounded tw-px-4 tw-py-3 tw-animate-fade-in-up"
                             >
                                 {error || "No hay usuario autenticado"}
+                            </div>
+                        )}
+
+                        {storedUser && noVerificado && (
+                            <div className="tw-mb-4 tw-bg-gris tw-border tw-border-rule tw-rounded tw-px-4 tw-py-3 tw-text-sm tw-text-ink">
+                                <div className="tw-flex tw-items-center tw-justify-between tw-gap-3">
+                                    <span>Tu correo aún no está verificado</span>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={reenviarVerificacion}
+                                        disabled={reenvio.enviando || reenvio.ok}
+                                    >
+                                        {reenvio.enviando ? "Enviando..." : "Reenviar correo"}
+                                    </Button>
+                                </div>
+                                {reenvio.ok && (
+                                    <p role="status" className="tw-text-verde tw-font-semibold tw-m-0 tw-mt-2">
+                                        Te enviamos un correo de verificación. Revisa tu bandeja.
+                                    </p>
+                                )}
+                                {reenvio.error && (
+                                    <p role="alert" className="tw-text-danger tw-m-0 tw-mt-2">{reenvio.error}</p>
+                                )}
                             </div>
                         )}
 

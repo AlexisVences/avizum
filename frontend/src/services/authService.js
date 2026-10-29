@@ -11,6 +11,8 @@ const storeSession = (data) => {
     rol: data.user.role,
     // Sessions stored before this flag existed have none: assume a password.
     tienePassword: data.user.has_password !== false,
+    // Missing flag (old sessions) counts as verified.
+    emailVerificado: data.user.email_verified !== false,
   };
   localStorage.setItem('token', data.access_token);
   localStorage.setItem('user', JSON.stringify(userData));

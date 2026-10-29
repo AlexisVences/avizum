@@ -2,9 +2,13 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Avisolegal from "./pages/AvisoLegal"
+import Terminos from "./pages/Terminos"
 import AcercaDe from "./pages/AcercaDe";
 import Contacto from "./pages/Contacto";
 import Login from "./pages/Login"
+import VerificarCorreo from "./pages/VerificarCorreo";
+import OlvideContrasena from "./pages/OlvideContrasena";
+import RestablecerContrasena from "./pages/RestablecerContrasena";
 import Signin from "./pages/Singin"
 import Bienvenida from "./pages/Bienvenida"
 import GestionarPeril from "./pages/GestionarPerfil"
@@ -31,9 +35,13 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/Aviso-legal" element={<Avisolegal/>} />
+            <Route path="/terminos" element={<Terminos />} />
             <Route path="/Acerca-de" element={<AcercaDe/>} />            
             <Route path="/Contacto" element={<Contacto/>} />
             <Route path="/Login" element={<Login/>} />      
+            <Route path="/verificar-correo" element={<VerificarCorreo />} />
+            <Route path="/olvide-contrasena" element={<OlvideContrasena />} />
+            <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
             <Route path="/Sing-in" element={<Signin/>} />
             <Route path="/Bienvenida" element={<RutaProtegida> <Bienvenida/> </RutaProtegida>} />
             <Route path="/Gestionar-perfil" element={<RutaProtegida> <GestionarPeril/> </RutaProtegida>} />
@@ -46,6 +54,7 @@ function App() {
               <Route path="actividad" element={<Actividad />} />
             </Route>
             <Route path="/BienvenidaAdmin" element={<Navigate to="/admin" replace />} />
+            <Route path="/AdministrarUsuario" element={<Navigate to="/admin" replace />} />
             <Route path="/Estadisticas" element={<Navigate to="/admin" replace />} />
             <Route path="/ConsultarAgenteTransito" element={<ConsultarAgenteTransito />} />
             <Route path="/guia/calculadoras" element={<Navigate to="/Bienvenida#calculadoras" replace />} />
