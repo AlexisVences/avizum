@@ -1,0 +1,144 @@
+name: CI
+
+# Corre en cada pull request y en cada push a main.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      db:
+        # Misma imagen y versión mayor que docker-compose.yml.
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: avizum
+          POSTGRES_PASSWORD: change-me
+          POSTGRES_DB: avizum
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U avizum -d avizum"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # La migración de humo usa la base "avizum"; pytest crea y usa "avizum_test" por su cuenta.
+      DATABASE_URL: postgresql+psycopg://avizum:change-me@localhost:5432/avizum
+      TEST_DATABASE_URL: postgresql+psycopg://avizum:change-me@localhost:5432/avizum_test
+      JWT_SECRET_KEY: ci-only-not-a-secret
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Instalar dependencias
+        run: uv sync --frozen --group dev
+
+      - name: Migraciones (prueba de humo)
+        run: uv run alembic upgrade head
+
+      - name: Pruebas
+        run: uv run pytest
+
+      # Ruff no se activa todavía: hay configuración pero `ruff check .` reporta ~175 errores
+      # (131 corregibles con --fix). Activar este paso cuando el árbol quede limpio.
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Pruebas
+        run: npm test -- --watchAll=false
+        env:
+          CI: "true"
+
+      - name: Build
+        run: npm run build
+        env:
+          # CRA trata los warnings de ESLint como errores cuando CI=true, y hoy hay warnings
+          # (jsx-a11y/anchor-is-valid, import/no-anonymous-default-export). Se compila igual;
+          # los errores reales siguen rompiendo el build.
+          CI: "false"
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # continue-on-error en ambos pasos refleja el estado real: hoy fallan por hallazgos conocidos
+      # y no se pueden corregir dentro de este cambio. Quitar la línea cuando se resuelvan; el
+      # resultado sigue visible como anotación en el job.
+      - name: pip-audit (backend, dependencias de producción)
+        # Hoy: dnspython 2.8.0 (CVE-2026-114605), corregido en 2.9.0 (actualizar backend/uv.lock).
+        continue-on-error: true
+        run: |
+          uv export --project backend --frozen --no-dev --no-emit-project -o "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit --disable-pip --no-deps -r "$RUNNER_TEMP/requirements.txt"
+
+      - name: npm audit (frontend)
+        # Hoy: 22 high y 2 critical. react-scripts y todo el toolchain de build están en
+        # "dependencies", así que --omit=dev no los excluye; el npm audit fix --force propuesto
+        # no es viable (react-scripts@0.0.0).
+        continue-on-error: true
+        working-directory: frontend
+        run: |
+          npm ci --ignore-scripts
+          npm audit --audit-level=high --omit=dev
+
+  semgrep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+
+      # No bloqueante todavía: con --error hoy hay 2 hallazgos fuera de los directorios heredados
+      # (frontend/public/index.html missing-integrity y frontend/scripts/build_cdmx_map.py
+      # dynamic-urllib-use-detected). Quitar continue-on-error al resolverlos o marcarlos con nosemgrep.
+      # backend/node-api y ai son de referencia y no se ejecutan, por eso se excluyen.
+      - name: Semgrep
+        continue-on-error: true
+        run: uvx semgrep scan --config auto --error --exclude backend/node-api --exclude ai .
