@@ -39,14 +39,14 @@ def sign_in_with_google(db, identity: GoogleIdentity):
     """Return the user for this Google identity, creating or linking the account. Returns None if it is disabled."""
     from datetime import datetime, timezone
 
-    from sqlalchemy import select
+    from sqlalchemy import func, select
 
     from app.models.domain import User
 
     now = datetime.now(timezone.utc)
     user = db.scalar(select(User).where(User.google_sub == identity.sub))
     if user is None:
-        user = db.scalar(select(User).where(User.email == identity.email))
+        user = db.scalar(select(User).where(func.lower(User.email) == identity.email))
         if user is not None:
             if user.email_verified_at is None:
                 # Someone may have registered this address with a password without proving they own it. Whoever

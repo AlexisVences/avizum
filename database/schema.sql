@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict eUM5kbfcPN6rWtVNjcRw1eNzxJWnuXKfYVCf1EzFX8UPtwbUwuoPsA7gk6o1rE9
+\restrict syRlm7315Bffqu8Qv2lDaRSLXhdwnL8b86yNtJRAfZe5rDfEIlHmLrg7SjFhdhG
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -879,6 +879,13 @@ CREATE UNIQUE INDEX ix_users_email ON public.users USING btree (email);
 
 
 --
+-- Name: ix_users_email_lower; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX ix_users_email_lower ON public.users USING btree (lower((email)::text));
+
+
+--
 -- Name: uq_official_sources_current_slug; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -985,5 +992,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
-\unrestrict eUM5kbfcPN6rWtVNjcRw1eNzxJWnuXKfYVCf1EzFX8UPtwbUwuoPsA7gk6o1rE9
+\unrestrict syRlm7315Bffqu8Qv2lDaRSLXhdwnL8b86yNtJRAfZe5rDfEIlHmLrg7SjFhdhG
 

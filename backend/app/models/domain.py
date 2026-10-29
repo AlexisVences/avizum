@@ -32,6 +32,7 @@ class User(Timestamped, Base):
     token_version: Mapped[int] = mapped_column(default=0, server_default="0", nullable=False)  # bump to revoke every issued token
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role", values_callable=lambda e: [m.value for m in e]), default=UserRole.USER, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    __table_args__ = (Index("ix_users_email_lower", func.lower(email), unique=True),)
 
     @property
     def email_verified(self) -> bool:
