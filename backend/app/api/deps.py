@@ -55,6 +55,14 @@ def optional_user(
     return user
 
 
+def verified_user(user: Annotated[User, Depends(current_user)]) -> User:
+    """Like `current_user`, but answers 403 for unverified e-mail when REQUIRE_VERIFIED_EMAIL is on."""
+    if get_settings().require_verified_email and user.email_verified_at is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Verifica tu correo para continuar")
+    return user
+
+
 CurrentUser = Annotated[User, Depends(current_user)]
 AdminUser = Annotated[User, Depends(admin_user)]
 OptionalUser = Annotated[User | None, Depends(optional_user)]
+VerifiedUser = Annotated[User, Depends(verified_user)]

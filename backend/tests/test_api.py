@@ -2,7 +2,7 @@ from app.core.security import create_access_token, hash_password
 
 
 def register(client, email="ana@example.com"):
-    return client.post("/api/v1/auth/register", json={"first_name": "Ana", "last_name": "López", "email": email, "password": "a secure password"})
+    return client.post("/api/v1/auth/register", json={"first_name": "Ana", "last_name": "López", "email": email, "password": "a secure password", "accepted_terms": True})
 
 
 def auth_headers(client):
@@ -35,7 +35,7 @@ def test_registration_rejects_duplicate_email(client):
 
 def test_registration_rejects_short_password(client):
     http, _ = client
-    response = http.post("/api/v1/auth/register", json={"first_name": "Ana", "last_name": "López", "email": "short@example.com", "password": "short1"})
+    response = http.post("/api/v1/auth/register", json={"first_name": "Ana", "last_name": "López", "email": "short@example.com", "password": "short1", "accepted_terms": True})
     assert response.status_code == 422
 
 

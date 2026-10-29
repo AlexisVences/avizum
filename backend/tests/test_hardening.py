@@ -39,7 +39,7 @@ def test_login_is_limited_per_address_and_per_account(client):
 def test_register_is_limited_per_address(client):
     http, _ = client
     codes = [
-        http.post("/api/v1/auth/register", json={"first_name": "A", "last_name": "B", "email": f"u{i}@example.com", "password": "Contrase#a-1234"}).status_code
+        http.post("/api/v1/auth/register", json={"first_name": "A", "last_name": "B", "email": f"u{i}@example.com", "password": "Contrase#a-1234", "accepted_terms": True}).status_code
         for i in range(6)
     ]
     assert codes[5] == 429

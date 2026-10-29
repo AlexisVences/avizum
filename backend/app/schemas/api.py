@@ -38,11 +38,29 @@ class RegisterRequest(BaseModel):
     last_name: str = Field(min_length=1, max_length=100)
     email: NormalisedEmail
     password: str = Field(min_length=8, max_length=128)
+    accepted_terms: Literal[True]  # explicit consent; false or missing is a 422
 
 
 class LoginRequest(BaseModel):
     email: NormalisedEmail
     password: str
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(min_length=1, max_length=200)
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: NormalisedEmail
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=1, max_length=200)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class MessageResponse(BaseModel):
+    detail: str
 
 
 class GoogleLoginRequest(BaseModel):

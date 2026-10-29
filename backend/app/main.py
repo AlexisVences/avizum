@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.health import router as health_router
 from app.api.routes import router
 from app.core.config import get_settings
+from app.core.logging import configure_logging
+from app.core.observability import RequestContextMiddleware, init_sentry, unhandled_exception_handler
 
 
 SECURITY_HEADERS = {
@@ -41,12 +44,17 @@ def create_app() -> FastAPI:
     if settings.environment == "production" and (problems := settings.production_problems()):
         raise RuntimeError("Unsafe production configuration: " + "; ".join(problems))
     production = settings.environment == "production"
+    configure_logging(settings.log_level, settings.use_json_logs)
+    init_sentry(settings)
     app = FastAPI(title="Avizum API", version="1.0.0", docs_url=None if production else "/docs",
                   redoc_url=None, openapi_url=None if production else "/openapi.json")
     if settings.cors_origin_list:
         app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_credentials=True, allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"], allow_headers=["Authorization", "Content-Type"])
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(RequestContextMiddleware)  # outermost user middleware: its id covers CORS and security headers
+    app.add_exception_handler(Exception, unhandled_exception_handler)
     app.include_router(router)
+    app.include_router(health_router)
     return app
 
 

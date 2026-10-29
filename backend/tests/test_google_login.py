@@ -49,7 +49,7 @@ def test_second_sign_in_reuses_the_account(google):
 
 def test_unverified_password_account_loses_its_password_when_the_owner_links_google(google):
     http, factory, _ = google
-    http.post("/api/v1/auth/register", json={"first_name": "Mal", "last_name": "Actor", "email": "ana@example.com", "password": "Contrase#a-1234"})
+    http.post("/api/v1/auth/register", json={"first_name": "Mal", "last_name": "Actor", "email": "ana@example.com", "password": "Contrase#a-1234", "accepted_terms": True})
     attacker = http.post("/api/v1/auth/login", json={"email": "ana@example.com", "password": "Contrase#a-1234"})
     assert attacker.status_code == 200
     attacker_headers = {"Authorization": f"Bearer {attacker.json()['access_token']}"}

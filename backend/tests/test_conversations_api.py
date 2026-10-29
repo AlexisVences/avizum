@@ -6,7 +6,7 @@ from app.models.domain import Conversation, Message, MessageFeedback, MessageRol
 
 
 def signup(http, email: str) -> dict:
-    http.post("/api/v1/auth/register", json={"first_name": "Ana", "last_name": "López", "email": email, "password": "a secure password"})
+    http.post("/api/v1/auth/register", json={"first_name": "Ana", "last_name": "López", "email": email, "password": "a secure password", "accepted_terms": True})
     token = http.post("/api/v1/auth/login", json={"email": email, "password": "a secure password"}).json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 

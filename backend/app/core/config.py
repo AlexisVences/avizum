@@ -6,6 +6,10 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+# Version of the terms a user accepted at registration; bump it when the published text changes.
+TERMS_VERSION = "2026-10-29-borrador"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     database_url: str = "postgresql+psycopg://localhost/avizum"
@@ -17,6 +21,16 @@ class Settings(BaseSettings):
     # Set only behind a reverse proxy you control (it must overwrite X-Forwarded-For); otherwise anyone could forge it.
     trust_proxy_headers: bool = False
     google_client_id: str | None = None  # OAuth client ID (public) of the web app; unset disables Google sign-in
+    frontend_url: str = "http://localhost:3000"  # base of the links in e-mails (no trailing slash)
+    resend_api_key: SecretStr | None = None  # unset: mails are only logged (ConsoleMailer)
+    mail_from: str = "Avizum <no-reply@example.com>"
+    require_verified_email: bool = False  # when true, endpoints using `verified_user` answer 403 until verified
+    log_level: str = "INFO"
+    log_format: str = "auto"  # "json", "text" or "auto" (json in production, text otherwise)
+    sentry_dsn: SecretStr | None = None  # unset: error tracking is off and nothing leaves the server
+    sentry_environment: str | None = None  # defaults to ENVIRONMENT
+    sentry_traces_sample_rate: float = 0.0
+    git_sha: str | None = None  # reported as the Sentry release when set
     openai_api_key: SecretStr | None = None
     openai_embedding_model: str = "text-embedding-3-small"
     openai_chat_model: str = "gpt-5-mini"
@@ -42,9 +56,17 @@ class Settings(BaseSettings):
         problems = []
         if self.jwt_secret_key == "development-only-change-me" or len(self.jwt_secret_key) < 32:
             problems.append("JWT_SECRET_KEY must be a random value of at least 32 characters")
+        if self.resend_api_key and "example.com" in self.mail_from:
+            problems.append("MAIL_FROM still uses the example.com placeholder")
         if any("localhost" in origin for origin in self.cors_origin_list):
             problems.append("CORS_ORIGINS still allows localhost")
         return problems
+
+    @property
+    def use_json_logs(self) -> bool:
+        if self.log_format == "auto":
+            return self.environment == "production"
+        return self.log_format == "json"
 
     @property
     def cors_origin_list(self) -> list[str]:

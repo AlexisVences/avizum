@@ -19,6 +19,8 @@ dependencies = [
   "google-auth>=2.62.0",
   "requests>=2.34.2",
   "dnspython==2.9.0",
+  "resend>=2.50.0",
+  "sentry-sdk[fastapi]>=2.73.0",
 ]
 
 [dependency-groups]

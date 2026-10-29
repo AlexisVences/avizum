@@ -6,7 +6,7 @@ PASSWORD = "a secure password"
 
 
 def register(http, email="ana@example.com"):
-    return http.post("/api/v1/auth/register", json={"first_name": "Ana", "last_name": "López", "email": email, "password": PASSWORD})
+    return http.post("/api/v1/auth/register", json={"first_name": "Ana", "last_name": "López", "email": email, "password": PASSWORD, "accepted_terms": True})
 
 
 def login(http, email="ana@example.com", password=PASSWORD):

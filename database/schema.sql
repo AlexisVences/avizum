@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict syRlm7315Bffqu8Qv2lDaRSLXhdwnL8b86yNtJRAfZe5rDfEIlHmLrg7SjFhdhG
+\restrict LeC6S0J8g7hRu7YTQ6q7QDlBFgtT2PiuUlEUnasne9XkkEcEbUdMOrhIp9A7fKG
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -67,6 +67,16 @@ COMMENT ON EXTENSION vector IS 'vector data type and ivfflat and hnsw access met
 CREATE TYPE public.agent_authorization_type AS ENUM (
     'via_publica',
     'sistemas_tecnologicos'
+);
+
+
+--
+-- Name: email_token_purpose; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.email_token_purpose AS ENUM (
+    'verify',
+    'reset'
 );
 
 
@@ -270,6 +280,41 @@ CREATE SEQUENCE public.conversations_id_seq
 --
 
 ALTER SEQUENCE public.conversations_id_seq OWNED BY public.conversations.id;
+
+
+--
+-- Name: email_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.email_tokens (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    purpose public.email_token_purpose NOT NULL,
+    token_hash character varying(64) NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    used_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: email_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.email_tokens_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: email_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.email_tokens_id_seq OWNED BY public.email_tokens.id;
 
 
 --
@@ -528,7 +573,9 @@ CREATE TABLE public.users (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     google_sub character varying(64),
     email_verified_at timestamp with time zone,
-    token_version integer DEFAULT 0 NOT NULL
+    token_version integer DEFAULT 0 NOT NULL,
+    terms_accepted_at timestamp with time zone,
+    terms_version character varying(40)
 );
 
 
@@ -578,6 +625,13 @@ ALTER TABLE ONLY public.authorized_agents ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public.conversations ALTER COLUMN id SET DEFAULT nextval('public.conversations_id_seq'::regclass);
+
+
+--
+-- Name: email_tokens id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_tokens ALTER COLUMN id SET DEFAULT nextval('public.email_tokens_id_seq'::regclass);
 
 
 --
@@ -667,6 +721,14 @@ ALTER TABLE ONLY public.authorized_agents
 
 ALTER TABLE ONLY public.conversations
     ADD CONSTRAINT conversations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: email_tokens email_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_tokens
+    ADD CONSTRAINT email_tokens_pkey PRIMARY KEY (id);
 
 
 --
@@ -823,6 +885,20 @@ CREATE INDEX ix_conversations_user_updated ON public.conversations USING btree (
 
 
 --
+-- Name: ix_email_tokens_token_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_email_tokens_token_hash ON public.email_tokens USING btree (token_hash);
+
+
+--
+-- Name: ix_email_tokens_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_email_tokens_user_id ON public.email_tokens USING btree (user_id);
+
+
+--
 -- Name: ix_legal_chunks_embedding_hnsw; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -933,6 +1009,14 @@ ALTER TABLE ONLY public.conversations
 
 
 --
+-- Name: email_tokens email_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_tokens
+    ADD CONSTRAINT email_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: legal_chunks legal_chunks_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -992,5 +1076,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
-\unrestrict syRlm7315Bffqu8Qv2lDaRSLXhdwnL8b86yNtJRAfZe5rDfEIlHmLrg7SjFhdhG
+\unrestrict LeC6S0J8g7hRu7YTQ6q7QDlBFgtT2PiuUlEUnasne9XkkEcEbUdMOrhIp9A7fKG
 

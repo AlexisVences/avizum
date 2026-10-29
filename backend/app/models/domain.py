@@ -32,11 +32,33 @@ class User(Timestamped, Base):
     token_version: Mapped[int] = mapped_column(default=0, server_default="0", nullable=False)  # bump to revoke every issued token
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role", values_callable=lambda e: [m.value for m in e]), default=UserRole.USER, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    terms_accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # NULL: account predates consent
+    terms_version: Mapped[str | None] = mapped_column(String(40))
     __table_args__ = (Index("ix_users_email_lower", func.lower(email), unique=True),)
 
     @property
     def email_verified(self) -> bool:
         return self.email_verified_at is not None
+
+
+class EmailTokenPurpose(str, enum.Enum):
+    VERIFY = "verify"
+    RESET = "reset"
+
+
+class EmailToken(Base):
+    """One-time token mailed to a user. Only the sha256 of the token is stored."""
+
+    __tablename__ = "email_tokens"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    purpose: Mapped[EmailTokenPurpose] = mapped_column(
+        Enum(EmailTokenPurpose, name="email_token_purpose", values_callable=lambda e: [m.value for m in e]), nullable=False
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class AuthorizationType(str, enum.Enum):
