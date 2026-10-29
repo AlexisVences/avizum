@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict LeC6S0J8g7hRu7YTQ6q7QDlBFgtT2PiuUlEUnasne9XkkEcEbUdMOrhIp9A7fKG
+\restrict P0a17aXQ7FepzdUHgi600rHc3tKhRR8aFGjqaW8ekaXID8AuVwmdbzZF7EFLJyn
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg12+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg12+2)
@@ -67,6 +67,18 @@ COMMENT ON EXTENSION vector IS 'vector data type and ivfflat and hnsw access met
 CREATE TYPE public.agent_authorization_type AS ENUM (
     'via_publica',
     'sistemas_tecnologicos'
+);
+
+
+--
+-- Name: chat_usage_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.chat_usage_status AS ENUM (
+    'reserved',
+    'settled',
+    'cancelled',
+    'error'
 );
 
 
@@ -247,6 +259,43 @@ CREATE SEQUENCE public.authorized_agents_id_seq
 --
 
 ALTER SEQUENCE public.authorized_agents_id_seq OWNED BY public.authorized_agents.id;
+
+
+--
+-- Name: chat_usage; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chat_usage (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    settled_at timestamp with time zone,
+    input_tokens integer DEFAULT 0 NOT NULL,
+    output_tokens integer DEFAULT 0 NOT NULL,
+    reserved_input_tokens integer NOT NULL,
+    reserved_output_tokens integer NOT NULL,
+    status public.chat_usage_status NOT NULL
+);
+
+
+--
+-- Name: chat_usage_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.chat_usage_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: chat_usage_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.chat_usage_id_seq OWNED BY public.chat_usage.id;
 
 
 --
@@ -621,6 +670,13 @@ ALTER TABLE ONLY public.authorized_agents ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
+-- Name: chat_usage id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_usage ALTER COLUMN id SET DEFAULT nextval('public.chat_usage_id_seq'::regclass);
+
+
+--
 -- Name: conversations id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -713,6 +769,14 @@ ALTER TABLE ONLY public.alembic_version
 
 ALTER TABLE ONLY public.authorized_agents
     ADD CONSTRAINT authorized_agents_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: chat_usage chat_usage_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_usage
+    ADD CONSTRAINT chat_usage_pkey PRIMARY KEY (id);
 
 
 --
@@ -878,6 +942,20 @@ CREATE INDEX ix_authorized_agents_source_id ON public.authorized_agents USING bt
 
 
 --
+-- Name: ix_chat_usage_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_chat_usage_created ON public.chat_usage USING btree (created_at);
+
+
+--
+-- Name: ix_chat_usage_user_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_chat_usage_user_created ON public.chat_usage USING btree (user_id, created_at);
+
+
+--
 -- Name: ix_conversations_user_updated; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1001,6 +1079,14 @@ ALTER TABLE ONLY public.authorized_agents
 
 
 --
+-- Name: chat_usage chat_usage_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_usage
+    ADD CONSTRAINT chat_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: conversations conversations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1076,5 +1162,5 @@ ALTER TABLE ONLY public.messages
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LeC6S0J8g7hRu7YTQ6q7QDlBFgtT2PiuUlEUnasne9XkkEcEbUdMOrhIp9A7fKG
+\unrestrict P0a17aXQ7FepzdUHgi600rHc3tKhRR8aFGjqaW8ekaXID8AuVwmdbzZF7EFLJyn
 

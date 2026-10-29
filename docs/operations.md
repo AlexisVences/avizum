@@ -47,11 +47,27 @@ hosted. Leave `SENTRY_DSN` empty to keep everything on your own infrastructure.
 
 ## Chat spending limits
 
-Every answer calls OpenAI, so the chat has a durable budget computed from the database (stored token usage times
-`LLM_PRICE_INPUT_PER_MILLION` / `LLM_PRICE_OUTPUT_PER_MILLION`) over a rolling 24 hours, so it holds across workers and
-restarts. `DAILY_USER_COST_USD_LIMIT` (default 0.25, roughly 50 normal questions) caps each account, administrators
-included; `GLOBAL_DAILY_COST_USD_LIMIT` (default 0 = off) is a circuit breaker over all users. When either is reached the
-API answers `429` with a Spanish message and `Retry-After`, stores nothing and does not call the model. Set a limit to 0
-to disable it. With the global breaker on, each chat request runs one sum over the last 24 hours of assistant messages
-(no index on `messages.created_at`); it is fine at the current volume, add an index if the table grows large.
-`REQUIRE_VERIFIED_EMAIL=true` makes the message-sending endpoints answer `403` until the e-mail is verified.
+Every answer calls OpenAI, so the chat has a durable budget over a rolling 24 hours, computed from the append-only
+`chat_usage` ledger (one row per accepted turn) times `LLM_PRICE_INPUT_PER_MILLION` / `LLM_PRICE_OUTPUT_PER_MILLION`,
+so it holds across workers and restarts. The daily message limit (`CHAT_DAILY_MESSAGE_LIMIT`, Mexico City calendar day)
+counts the same rows. `DAILY_USER_COST_USD_LIMIT` (default 0.25, roughly 50 normal questions) caps each account,
+administrators included; `GLOBAL_DAILY_COST_USD_LIMIT` (default 0 = off) is a circuit breaker over all users. When a
+limit is reached the API answers `429` with a Spanish message and `Retry-After`, stores nothing, creates no ledger row
+and does not call the model. Set a cost limit to 0 to disable it. `REQUIRE_VERIFIED_EMAIL=true` makes the
+message-sending endpoints answer `403` until the e-mail is verified.
+
+- **Deleting conversations does not reset any limit.** The ledger has no foreign key to conversations or messages;
+  its rows only disappear when the user's account is deleted.
+- **Reservation.** Under a per-user advisory lock (`pg_advisory_xact_lock`) the checks and a `reserved` ledger row are
+  committed together with the stored question, before the model is called, so parallel requests of one user cannot all
+  pass before any spend is recorded. The reservation is `CHAT_RESERVE_INPUT_TOKENS` (default 12000) plus the question
+  length / 3 as input and `CHAT_MAX_OUTPUT_TOKENS` (1800) as output, about 0.0066 USD; a turn that would push the
+  24 h total over the cap is refused. A user has at most one turn in flight (any `reserved` row younger than
+  `CHAT_IN_FLIGHT_SECONDS` gives `409 respuesta_en_curso`).
+- **Settlement.** A completed turn stores its real tokens (`settled`). Failed turns (`error`) and client cancels
+  (`cancelled`) keep the estimate unless the run reported tokens, because the provider still charges for them.
+- **Stuck reservation.** If the process dies mid-turn the row stays `reserved`: after the in-flight window it stops
+  blocking the user but keeps counting its estimate (about 0.0066 USD) until it leaves the 24 h window. A row whose
+  actual tokens are 0 (usage unknown) also counts the estimate.
+- The limits no longer read `messages`; the global breaker sums the last 24 hours using `ix_chat_usage_created`.
+  Migration `20261029_16` backfills the last 48 hours from existing user messages so limits do not reset at deploy.

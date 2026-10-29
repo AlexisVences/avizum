@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     openai_chat_model: str = "gpt-5-mini"
     # Chat limits (spec section 2). Reasoning tokens count toward the output cap.
     chat_max_output_tokens: int = 1800  # measured: a 400-word answer used ~1,100 incl. reasoning; 1,200 was too tight
+    # Tokens reserved per turn before the model runs (see app/services/chat_limits.py). Input: system prompt, history
+    # and tool results of up to several model calls, plus the question itself (chars/3) on top of this base.
+    # Output: chat_max_output_tokens is used as the output reservation.
+    chat_reserve_input_tokens: int = 12000
     chat_max_agent_steps: int = 6  # model calls per turn: up to 5 rounds of tools plus the final answer
     chat_context_messages: int = 12  # history sent to the model; the full history is still stored and shown
     chat_daily_message_limit: int = 40  # user messages per day per user (Mexico City calendar)

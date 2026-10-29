@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from sqlalchemy import select
 
-from app.models.domain import Conversation, Message, MessageFeedback, MessageRole, MessageStatus, User
+from app.models.domain import ChatUsage, Conversation, Message, MessageFeedback, MessageRole, MessageStatus, UsageStatus, User
 
 
 def signup(http, email: str) -> dict:
@@ -333,10 +333,14 @@ def budget_settings(monkeypatch, **values):
 
 
 def spend(factory, owner_email: str, conversation_id: int, *, tokens_in=0, tokens_out=0, age=timedelta(0)):
-    seed_message(
-        factory, conversation_id, MessageRole.ASSISTANT, "r",
-        input_tokens=tokens_in, output_tokens=tokens_out, created_at=datetime.now(timezone.utc) - age,
-    )
+    """Records past usage in the ledger (accounting moved there from `messages`; the conversation is not linked)."""
+    with factory() as db:
+        db.add(ChatUsage(
+            user_id=user_id(factory, owner_email), created_at=datetime.now(timezone.utc) - age,
+            settled_at=datetime.now(timezone.utc) - age, input_tokens=tokens_in, output_tokens=tokens_out,
+            reserved_input_tokens=0, reserved_output_tokens=0, status=UsageStatus.SETTLED,
+        ))
+        db.commit()
 
 
 def post(http, headers, conversation_id, text="¿Qué hago?"):

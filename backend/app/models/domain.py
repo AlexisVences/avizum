@@ -193,6 +193,39 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class UsageStatus(str, enum.Enum):
+    RESERVED = "reserved"
+    SETTLED = "settled"
+    CANCELLED = "cancelled"
+    ERROR = "error"
+
+
+class ChatUsage(Base):
+    """Append-only ledger of chat turns, the source of the spending and daily-message limits.
+
+    Deliberately NO foreign key to conversations or messages: deleting a conversation must never delete usage.
+    Rows only disappear with the user's account (cascade). A row is reserved (with a conservative estimate) before
+    the model runs and settled afterwards; tokens stay 0 when the real usage is unknown, and then the estimate counts."""
+
+    __tablename__ = "chat_usage"
+    __table_args__ = (
+        Index("ix_chat_usage_user_created", "user_id", "created_at"),
+        Index("ix_chat_usage_created", "created_at"),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    settled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    reserved_input_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    reserved_output_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[UsageStatus] = mapped_column(
+        Enum(UsageStatus, name="chat_usage_status", values_callable=lambda e: [m.value for m in e]),
+        default=UsageStatus.RESERVED, nullable=False,
+    )
+
+
 class MessageFeedback(Base):
     __tablename__ = "message_feedback"
     __table_args__ = (
