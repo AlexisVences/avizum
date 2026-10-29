@@ -83,8 +83,9 @@ flowchart LR
 - **Modular monolith, not microservices.** One FastAPI app, one PostgreSQL database (relational data, vectors and full-text search together), one deployable. Route handlers stay thin; reusable logic lives in `app/services/`.
 - **Identity comes from the token, never the request.** Ownership checks always compare against the JWT subject, and foreign resources answer 404. There is no self-service admin signup.
 - **Passwords use Argon2** (`pwdlib`). JWT is a Bearer token.
-- **Alembic is the schema source of truth.** The 244 backend tests run against real PostgreSQL, not SQLite, so Postgres-only behavior (native enums, generated `tsvector` columns, pgvector) is actually exercised.
+- **Alembic is the schema source of truth.** The 412 backend tests run against real PostgreSQL, not SQLite, so Postgres-only behavior (native enums, generated `tsvector` columns, pgvector) is actually exercised.
 - **A user's message is stored before the answer is generated**, so it survives a failed or cancelled generation; partial answers are saved as `cancelled`.
+- **Official sources are watched daily.** A scheduled GitHub Actions workflow checks the official publications and opens an Issue when a source changes, so the corpus does not go stale silently.
 - **Official sources are versioned.** Each is downloaded over verified TLS and stored with its SHA-256, reform date and retrieval date, so an answer traces to an exact document version. The legacy pickle-based FAISS index was removed rather than trusted.
 
 ## The legal assistant
@@ -155,7 +156,7 @@ Comparing models, `gpt-5-nano` cited worse (35 answers that used tools and cited
 | Backend | Python 3.11+, FastAPI, SQLAlchemy 2, Pydantic v2, Alembic, `uv` |
 | Database | PostgreSQL 16 (Docker Compose for local development) |
 | Auth | JWT (Bearer), Argon2 password hashing |
-| Testing | pytest against PostgreSQL (244 tests), React Testing Library |
+| Testing | pytest against PostgreSQL (412 tests), React Testing Library |
 | AI | LangChain v1 agent (`gpt-5-mini`), pgvector + Spanish full-text hybrid retrieval with RRF, SSE streaming |
 | Evaluation | Scripted runs, deterministic checks and per-case review (`backend/scripts/eval_*.py`) |
 
@@ -215,9 +216,13 @@ All routes are under `/api/v1`. Interactive docs are served at `/docs`.
 | `GET` | `/conversations/{id}/messages` | owner | Messages with citations and the viewer's own vote |
 | `POST` | `/conversations/{id}/messages` | owner | Ask the assistant: JSON, or Server-Sent Events with `Accept: text/event-stream` (limits: 2,000 chars, 40/day, 200 per conversation) |
 | `PUT` `DELETE` | `/messages/{id}/feedback` | owner | 👍 / 👎 on an assistant answer |
+| `GET` | `/admin/overview` | admin | Usage overview for a period |
 | `GET` | `/admin/users` | admin | List users |
-| `PATCH` | `/admin/users/{id}` | admin | Change a user's role |
-| `GET` | `/admin/statistics` | admin | Usage statistics |
+| `PATCH` `DELETE` | `/admin/users/{id}` | admin | Change a role or remove a user (the last admin is protected) |
+| `GET` | `/admin/audit` | admin | Audit log of administrative actions |
+| `GET` | `/admin/review-queue` | admin | Answers queued for quality review (no personal data) |
+| `POST` | `/admin/review-queue/{id}/review` | admin | Mark an answer as reviewed |
+| `GET` | `/admin/sources` | admin | Freshness of the official sources |
 
 ## Repository layout
 

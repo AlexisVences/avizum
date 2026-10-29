@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/ui/Button';
 import SloganAnimado from '../components/SloganAnimado';
+import CdmxMapBackground from '../components/chat/CdmxMapBackground';
 import infraccionimage from '../assets/infraccion.png';
 import { buscarAgentes } from '../services/agentesService';
 import ResultadoBusquedaAgentes from '../components/agentes/ResultadoBusquedaAgentes';
@@ -13,23 +14,27 @@ import marcoJuridico from '../content/guia/articulos/marco-juridico.json';
 const OFRECEMOS = [
     {
         folio: '01 · ASESORÍA ↗',
-        title: 'Pregúntale a la IA legal',
-        description: 'Respuestas inmediatas basadas en el Reglamento de Tránsito y la Ley de Movilidad de la CDMX.',
+        title: 'Asesoría legal con IA',
+        description: 'Pregunta con tus palabras y recibe una respuesta con el artículo y la página oficial en que se apoya.',
+        to: '/asesoria-ia',
     },
     {
-        folio: '02 · MULTAS ↗',
-        title: 'Entiende tu infracción',
-        description: 'Qué artículo aplica, verificar el monto, cuántos puntos suma y cómo impugnarla si corresponde.',
+        folio: '02 · RECURSOS ↗',
+        title: 'Guía del conductor',
+        description: 'Leyes, trámites, multas y consejos para manejar, comprar y cuidar tu auto en la CDMX.',
+        to: '/Bienvenida#guia',
     },
     {
         folio: '03 · AGENTES ↗',
-        title: 'Verifica al oficial',
-        description: 'Confirma con su número de placa si está autorizado para infraccionar en vía pública.',
+        title: 'Consultar agentes facultados',
+        description: 'Verifica por placa o nombre si un agente de tránsito aparece en la lista oficial de personal autorizado para multar.',
+        to: '/ConsultarAgenteTransito',
     },
     {
-        folio: '04 · GUÍAS ↗',
-        title: 'Aprende el reglamento',
-        description: 'Tipos de infracción, seguros obligatorios y procedimientos explicados sin jerga legal.',
+        folio: '04 · CÁLCULO ↗',
+        title: 'Calculadoras',
+        description: 'Convierte multas de UMA a pesos y consulta cuándo te toca verificar según tu placa.',
+        to: '/Bienvenida#calculadoras',
     },
 ];
 
@@ -66,7 +71,8 @@ const Home = () => {
         <>
             <Navbar />
             <main className="tw-pt-16">
-                <section className="tw-bg-gris tw-px-6 tw-pt-10 tw-pb-12">
+                <section className="tw-relative tw-isolate tw-overflow-hidden tw-bg-gris tw-px-6 tw-pt-10 tw-pb-12">
+                    <CdmxMapBackground labelSize={10} labelOpacity={0.5} />
                     <div className="tw-mx-auto tw-max-w-[640px]">
                         {/* <span className="tw-block tw-font-mono tw-text-[11.5px] tw-uppercase tw-tracking-widest tw-text-azul tw-font-bold tw-mb-3.5">
                             Asesoría de tránsito · CDMX
@@ -133,11 +139,11 @@ const Home = () => {
                         <div className="tw-font-mono tw-text-[11px] tw-tracking-widest tw-uppercase tw-text-ink-soft tw-mb-[18px]">
                             Servicios a tu disposición
                         </div>
-                        <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 tw-gap-px tw-bg-rule tw-border tw-border-rule tw-rounded tw-overflow-hidden">
+                        <div className="tw-grid tw-grid-cols-1 sm:tw-grid-cols-2 lg:tw-grid-cols-4 tw-gap-px tw-bg-rule tw-border tw-border-rule tw-rounded tw-overflow-hidden">
                             {OFRECEMOS.map((item) => (
                                 <Link
                                     key={item.folio}
-                                    to="/Login"
+                                    to={item.to}
                                     className="tw-block tw-bg-paper-raised tw-px-[22px] tw-pt-[22px] tw-pb-5 tw-no-underline tw-text-inherit hover:tw-bg-gris/40 tw-transition-colors"
                                 >
                                     <div className="tw-font-mono tw-text-[11px] tw-font-bold tw-tracking-wide tw-text-magenta tw-mb-2.5">
@@ -179,7 +185,7 @@ const Home = () => {
                             <img
                                 src={infraccionimage}
                                 alt="Ilustración sobre Avizum"
-                                className="tw-max-w-[90%] tw-h-auto tw-rounded-lg tw-border tw-border-rule tw-shadow-sm tw-inline-block"
+                                className="tw-max-w-[90%] tw-h-auto tw-inline-block"
                             />
                         </div>
                     </div>

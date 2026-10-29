@@ -10,15 +10,16 @@ const VIEW = { x: -1000, y: -600, width: 2000, height: 1200 };
 const GAP = 70; // between the map's box and a name
 const LABEL_COLOR = '#B3BCC9';
 
-const Label = ({ x, y, anchor = 'start', size = 15, spacing = '0.28em', children }) => (
-  <text x={x} y={y} textAnchor={anchor} fontSize={size} letterSpacing={spacing} fill={LABEL_COLOR} fontFamily="Public Sans, sans-serif" fontWeight="600">
+const Label = ({ x, y, anchor = 'start', size = 15, spacing = '0.28em', opacity = 1, children }) => (
+  <text x={x} y={y} textAnchor={anchor} fontSize={size} letterSpacing={spacing} fill={LABEL_COLOR} fillOpacity={opacity} fontFamily="Public Sans, sans-serif" fontWeight="600">
     {children}
   </text>
 );
 
 // `names` prints the alcaldías around the map: right for the empty screen, off during a conversation so they never sit
 // under the text of an answer. `glow` adds the soft brand aura (blue in the middle, magenta along the bottom) under the map.
-export default function CdmxMapBackground({ names = true, glow = false }) {
+// `labelSize` / `labelOpacity` shrink and fade the names and the corner marks for places where the map is only a texture.
+export default function CdmxMapBackground({ names = true, glow = false, labelSize = 15, labelOpacity = 1 }) {
   const { box, alcaldias, labels } = cdmxMap;
   return (
     <div aria-hidden="true" className="tw-pointer-events-none tw-absolute tw-inset-0 -tw-z-10 tw-overflow-hidden">
@@ -46,15 +47,15 @@ export default function CdmxMapBackground({ names = true, glow = false }) {
         {names && labels.map((label) => {
           const right = label.side === 'right';
           return (
-            <Label key={label.text} x={right ? box.maxX + GAP : box.minX - GAP} y={label.y} anchor={right ? 'start' : 'end'}>
+            <Label key={label.text} x={right ? box.maxX + GAP : box.minX - GAP} y={label.y} anchor={right ? 'start' : 'end'} size={labelSize} opacity={labelOpacity}>
               {label.text}
             </Label>
           );
         })}
       </svg>
       {/* Pinned to the screen's corners, so a crop of the map never cuts them. */}
-      <span className="tw-absolute tw-left-[7%] tw-top-[8%] tw-font-sans tw-text-sm tw-font-semibold tw-tracking-[0.4em] tw-text-[#B3BCC9]">CDMX</span>
-      <span className="tw-absolute tw-right-[5%] tw-top-[6%] tw-flex tw-flex-col tw-items-center tw-gap-1 tw-font-sans tw-text-xs tw-font-semibold tw-text-[#B3BCC9]">
+      <span style={{ opacity: labelOpacity }} className="tw-absolute tw-left-[7%] tw-top-[8%] tw-font-sans tw-text-sm tw-font-semibold tw-tracking-[0.4em] tw-text-[#B3BCC9]">CDMX</span>
+      <span style={{ opacity: labelOpacity }} className="tw-absolute tw-right-[5%] tw-top-[6%] tw-flex tw-flex-col tw-items-center tw-gap-1 tw-font-sans tw-text-xs tw-font-semibold tw-text-[#B3BCC9]">
         <svg width="26" height="30" viewBox="-14 -30 28 46" focusable="false"><path d="M0 -30 L14 14 L0 6 L-14 14 Z" fill="currentColor" fillOpacity="0.8" /></svg>
         N
       </span>
