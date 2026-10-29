@@ -15,6 +15,11 @@ const Perfil = () => {
     const [userData, setUserData] = useState({ nombre: "", apellido: "", correo: "" });
     const [editando, setEditando] = useState({ nombre: false, apellido: false });
     const [inputs, setInputs] = useState({ nombre: "", apellido: "" });
+    const [editandoCorreo, setEditandoCorreo] = useState(false);
+    const [correoInput, setCorreoInput] = useState("");
+    const [passwordNueva, setPasswordNueva] = useState("");
+    const [passwordActual, setPasswordActual] = useState("");
+    const [tienePassword, setTienePassword] = useState(storedUser?.tienePassword !== false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
@@ -27,6 +32,7 @@ const Perfil = () => {
                 correo: user.correo || "",
             });
             setInputs({ nombre: user.nombre || "", apellido: user.apellido || "" });
+            setCorreoInput(user.correo || "");
         }
     }, []);
 
@@ -38,8 +44,34 @@ const Perfil = () => {
         setEditando({ ...editando, [campo]: !editando[campo] });
     };
 
+    const correoCambia =
+        correoInput.trim().toLowerCase() !== userData.correo.trim().toLowerCase();
+    const passwordCambia = passwordNueva !== "";
+    // Google-only accounts have no current password: setting a first one needs
+    // no confirmation, and changing the email is blocked until they have one.
+    const requierePasswordActual = tienePassword && (correoCambia || passwordCambia);
+
+    const mensajeDeError = (err) => {
+        if (err.status === 403) {
+            if (/set a password/i.test(err.message)) {
+                return "Primero crea una contraseña para tu cuenta y después podrás cambiar tu correo";
+            }
+            return "La contraseña actual no es correcta";
+        }
+        if (err.status === 409) return "Ese correo ya está registrado";
+        return err.message || "Error al guardar los cambios";
+    };
+
     const guardarCambios = async () => {
         setError(null);
+        if (!tienePassword && correoCambia) {
+            setError("Primero crea una contraseña para tu cuenta y después podrás cambiar tu correo");
+            return;
+        }
+        if (requierePasswordActual && !passwordActual) {
+            setError("Ingresa tu contraseña actual para continuar");
+            return;
+        }
         if (!userId) {
             setError("No se puede actualizar el usuario sin ID");
             return;
@@ -50,30 +82,48 @@ const Perfil = () => {
                 nombre: inputs.nombre,
                 apellido: inputs.apellido,
                 rol: storedUser.rol,
-                email: storedUser.correo,
             };
+            if (correoCambia) updatedData.email = correoInput.trim();
+            if (passwordCambia) updatedData.password = passwordNueva;
+            if (requierePasswordActual) updatedData.currentPassword = passwordActual;
             const response = await updateUser(storedUser.correo, updatedData);
 
             if (!response) {
                 throw new Error("No se recibió respuesta del servidor");
             }
 
-            setUserData({ ...userData, nombre: inputs.nombre, apellido: inputs.apellido });
+            const correoFinal = correoCambia ? correoInput.trim() : userData.correo;
+            setUserData({ ...userData, nombre: inputs.nombre, apellido: inputs.apellido, correo: correoFinal });
+            const ahoraTienePassword = tienePassword || passwordCambia;
             localStorage.setItem(
                 "user",
-                JSON.stringify({ ...storedUser, nombre: inputs.nombre, apellido: inputs.apellido })
+                JSON.stringify({
+                    ...storedUser,
+                    nombre: inputs.nombre,
+                    apellido: inputs.apellido,
+                    correo: correoFinal,
+                    tienePassword: ahoraTienePassword,
+                })
             );
+            setTienePassword(ahoraTienePassword);
             setEditando({ nombre: false, apellido: false });
+            setEditandoCorreo(false);
+            setCorreoInput(correoFinal);
+            setPasswordNueva("");
+            setPasswordActual("");
             setSuccessMessage("Cambios guardados correctamente");
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err) {
-            setError(err.message || "Error al guardar los cambios");
+            setError(mensajeDeError(err));
             console.error("Update error:", err);
         }
     };
 
     const cambiosPendientes =
-        inputs.nombre !== userData.nombre || inputs.apellido !== userData.apellido;
+        inputs.nombre !== userData.nombre ||
+        inputs.apellido !== userData.apellido ||
+        correoCambia ||
+        passwordCambia;
 
     const campoEditable = (campo, etiqueta) => (
         <div className="tw-flex tw-items-end tw-gap-2.5">
@@ -144,7 +194,46 @@ const Perfil = () => {
                                 <div className="tw-flex tw-flex-col tw-gap-4">
                                     {campoEditable("nombre", "Nombre")}
                                     {campoEditable("apellido", "Apellido")}
-                                    <Input label="Correo electrónico" type="email" value={userData.correo} disabled readOnly />
+                                    <div className="tw-flex tw-items-end tw-gap-2.5">
+                                        <Input
+                                            label="Correo electrónico"
+                                            type="email"
+                                            value={correoInput}
+                                            onChange={(e) => setCorreoInput(e.target.value)}
+                                            disabled={!editandoCorreo}
+                                            className="tw-flex-1 tw-min-w-0"
+                                        />
+                                        <button
+                                            type="button"
+                                            aria-label="Editar correo"
+                                            aria-pressed={editandoCorreo}
+                                            onClick={() => setEditandoCorreo(!editandoCorreo)}
+                                            className={`tw-shrink-0 tw-inline-flex tw-h-[42px] tw-w-[42px] tw-items-center tw-justify-center tw-rounded tw-border tw-transition-colors ${
+                                                editandoCorreo
+                                                    ? "tw-border-azul tw-bg-azul/5 tw-text-azul"
+                                                    : "tw-border-rule tw-bg-paper-raised tw-text-ink-soft hover:tw-border-ink/40 hover:tw-text-ink"
+                                            }`}
+                                        >
+                                            <FiEdit2 aria-hidden="true" />
+                                        </button>
+                                    </div>
+                                    <Input
+                                        label="Nueva contraseña"
+                                        type="password"
+                                        autoComplete="new-password"
+                                        value={passwordNueva}
+                                        onChange={(e) => setPasswordNueva(e.target.value)}
+                                    />
+                                    {requierePasswordActual && (
+                                        <Input
+                                            label="Contraseña actual"
+                                            type="password"
+                                            autoComplete="current-password"
+                                            required
+                                            value={passwordActual}
+                                            onChange={(e) => setPasswordActual(e.target.value)}
+                                        />
+                                    )}
                                 </div>
 
                                 {cambiosPendientes && (
