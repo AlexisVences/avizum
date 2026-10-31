@@ -37,6 +37,7 @@ test('terms_required muestra alerta, marca el checkbox como inválido y lo enfoc
     const err = Object.assign(new Error('x'), { code: 'terms_required' });
     const onError = setup(jest.fn().mockRejectedValue(err));
     await act(async () => { await mockCredential('cred'); });
+    expect(screen.getByRole('alert')).toHaveTextContent(/Para continuar debes aceptar los Términos de uso y el Aviso de privacidad/);
     expect(screen.getByRole('alert')).toHaveTextContent(/vuelve a presionar el botón de Google/);
     const box = screen.getByRole('checkbox');
     expect(box).toHaveAttribute('aria-invalid', 'true');

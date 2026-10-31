@@ -16,7 +16,7 @@ export default function TermsCheckbox({ id, checked, onChange, error, lead = 'He
                     aria-required="true"
                     aria-invalid={error ? 'true' : 'false'}
                     aria-describedby={error ? `${id}-error` : undefined}
-                    className="tw-mt-1"
+                    className={`tw-mt-1 ${error ? 'tw-outline tw-outline-2 tw-outline-offset-1 tw-outline-danger' : ''}`}
                 />
                 <label htmlFor={id} className="tw-text-sm tw-text-ink">
                     {lead}{" "}
@@ -26,7 +26,7 @@ export default function TermsCheckbox({ id, checked, onChange, error, lead = 'He
                 </label>
             </div>
             {error && (
-                <p id={`${id}-error`} role="alert" className="tw-text-danger tw-text-xs tw-mt-1 tw-mb-0">
+                <p id={`${id}-error`} role="alert" className="tw-mt-2 tw-mb-0 tw-rounded tw-border tw-border-danger/40 tw-bg-danger/5 tw-px-3 tw-py-2 tw-text-sm tw-font-medium tw-text-danger">
                     {error}
                 </p>
             )}

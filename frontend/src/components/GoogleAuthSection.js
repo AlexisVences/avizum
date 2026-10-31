@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import GoogleSignInButton, { GOOGLE_CLIENT_ID } from './GoogleSignInButton';
 import TermsCheckbox from './TermsCheckbox';
 
-const TERMS_MESSAGE = 'Marca la casilla de Términos de uso y Aviso de privacidad y vuelve a presionar el botón de Google para crear tu cuenta.';
+const TERMS_MESSAGE = 'Para continuar debes aceptar los Términos de uso y el Aviso de privacidad. Marca la casilla y vuelve a presionar el botón de Google.';
 
 // Divider, consent checkbox and Google button. The button stays usable without ticking (returning users are never
 // blocked); only if the backend says a new account would be created does the checkbox become required.
@@ -21,6 +21,7 @@ export default function GoogleAuthSection({ text, signIn, onError }) {
         } catch (err) {
             if (err.code === 'terms_required') {
                 setTermsError(TERMS_MESSAGE);
+                checkbox.current?.scrollIntoView?.({ block: 'center' }); // jsdom has no scrollIntoView
                 checkbox.current?.focus();
             } else {
                 onError(err.message);
