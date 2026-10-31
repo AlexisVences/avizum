@@ -174,7 +174,7 @@ def test_has_password_false_for_google_only_then_true_after_setting_one(client, 
     http.app.dependency_overrides[google_verifier] = lambda: (
         lambda credential, client_id: GoogleIdentity("sub-1", "ana@example.com", "Ana", "López")
     )
-    response = http.post("/api/v1/auth/google", json={"credential": "x" * 40})
+    response = http.post("/api/v1/auth/google", json={"credential": "x" * 40, "accepted_terms": True})
     assert response.status_code == 200
     assert response.json()["user"]["has_password"] is False
     headers = {"Authorization": f"Bearer {response.json()['access_token']}"}

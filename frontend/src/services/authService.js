@@ -28,13 +28,16 @@ const login = async (credentials) => {
   }
 };
 
-const loginWithGoogle = async (credential) => {
+const loginWithGoogle = async (credential, acceptedTerms = false) => {
   try {
-    const response = await axios.post(`${API_URL}/auth/google`, { credential });
+    const response = await axios.post(`${API_URL}/auth/google`, { credential, accepted_terms: Boolean(acceptedTerms) });
     storeSession(response.data);
     return response.data;
   } catch (error) {
-    throw new Error(extractErrorMessage(error.response?.data, 'No pudimos iniciar sesión con Google. Intenta de nuevo.'));
+    const failure = new Error(extractErrorMessage(error.response?.data, 'No pudimos iniciar sesión con Google. Intenta de nuevo.'));
+    const detail = error.response?.data?.detail;
+    if (error.response?.status === 400 && detail && typeof detail === 'object' && detail.code) failure.code = detail.code;
+    throw failure;
   }
 };
 

@@ -17,7 +17,7 @@ from app.services.mailer import Mailer, get_mailer
 from app.schemas.api import (AgentPublic, AgentSearchResponse, ForgotPasswordRequest, MessageResponse, ResetPasswordRequest, VerifyEmailRequest, OfficialSourcePublic, GoogleLoginRequest, LoginRequest, ProfileUpdate, RegisterRequest, TokenResponse, UserPublic)
 from app.services.accounts import CurrentPasswordRequired, EmailTaken, apply_profile_update, queue_password_reset_email, queue_verification_email, reset_password, verify_email
 from app.services.agents_registry import EmptyAgentQuery, search_agents
-from app.services.google_auth import InvalidGoogleToken, sign_in_with_google, verify_google_credential
+from app.services.google_auth import InvalidGoogleToken, TermsRequired, sign_in_with_google, verify_google_credential
 
 MailerDep = Annotated[Mailer, Depends(get_mailer)]
 
@@ -73,7 +73,15 @@ def login_with_google(payload: GoogleLoginRequest, db: DbSession, verifier=Depen
         identity = verifier(payload.credential, client_id)
     except InvalidGoogleToken:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "No pudimos verificar tu cuenta de Google")
-    user = sign_in_with_google(db, identity)
+    # The credential is verified first: it proves the caller owns this Google identity, so telling them that no
+    # account exists for it yet reveals nothing the Google flow does not already show them.
+    try:
+        user = sign_in_with_google(db, identity, payload.accepted_terms)
+    except TermsRequired:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, {
+            "code": "terms_required",
+            "message": "Debes aceptar los Términos de uso y el Aviso de privacidad para crear tu cuenta.",
+        })
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
     return TokenResponse(access_token=create_access_token(str(user.id), user.token_version), user=user)

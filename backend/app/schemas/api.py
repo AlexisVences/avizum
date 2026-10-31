@@ -65,6 +65,7 @@ class MessageResponse(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     credential: str = Field(min_length=20, max_length=4096)
+    accepted_terms: bool = False
 
 
 class TokenResponse(BaseModel):

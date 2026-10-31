@@ -15,6 +15,10 @@ class InvalidGoogleToken(Exception):
     pass
 
 
+class TermsRequired(Exception):
+    """A new account would be created but the caller did not accept the terms."""
+
+
 @dataclass(frozen=True)
 class GoogleIdentity:
     sub: str
@@ -35,12 +39,13 @@ def verify_google_credential(credential: str, client_id: str) -> GoogleIdentity:
     return GoogleIdentity(sub=str(info["sub"]), email=email, first_name=first, last_name=(info.get("family_name") or "")[:100])
 
 
-def sign_in_with_google(db, identity: GoogleIdentity):
+def sign_in_with_google(db, identity: GoogleIdentity, accepted_terms: bool = False):
     """Return the user for this Google identity, creating or linking the account. Returns None if it is disabled."""
     from datetime import datetime, timezone
 
     from sqlalchemy import func, select
 
+    from app.core.config import TERMS_VERSION
     from app.models.domain import User
 
     now = datetime.now(timezone.utc)
@@ -56,9 +61,17 @@ def sign_in_with_google(db, identity: GoogleIdentity):
             user.google_sub = identity.sub
             user.email_verified_at = user.email_verified_at or now
         else:
+            if not accepted_terms:
+                raise TermsRequired()
             user = User(first_name=identity.first_name, last_name=identity.last_name, email=identity.email,
-                        password_hash=None, google_sub=identity.sub, email_verified_at=now)
+                        password_hash=None, google_sub=identity.sub, email_verified_at=now,
+                        terms_accepted_at=now, terms_version=TERMS_VERSION)
             db.add(user)
+        db.commit()
+        db.refresh(user)
+    if accepted_terms and user.terms_accepted_at is None:
+        user.terms_accepted_at = now
+        user.terms_version = TERMS_VERSION
         db.commit()
         db.refresh(user)
     return user if user.is_active else None
