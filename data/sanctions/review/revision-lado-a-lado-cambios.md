@@ -8,7 +8,7 @@
 - **Cómo aplicar tus decisiones:** edita `data/sanctions/review/reglamento-transito.cambios.md` (copia la línea de casilla de cada fila, sustituyendo la existente) y ejecuta:
 
 ```
-cd backend && uv run python -m scripts.sanctions apply --reviewer "Nombre" --sheet ../data/sanctions/review/reglamento-transito.cambios.md
+cd backend && uv run python -m scripts.sanctions apply --reviewer "Alexis" --sheet ../data/sanctions/review/reglamento-transito.cambios.md
 ```
 
 - **Qué pasa con cada marca:** `[x]` = verificada y se sirve; `[!]` = rechazada (no se sirve; anota el motivo en la línea de abajo); sin marcar = queda pendiente y no se sirve como monto firme. Una fila verificada pasa a *stale* (deja de servirse) si el texto del fragmento cambia o la fuente deja de ser vigente. La casilla «APROBAR TODA LA TANDA 4» (línea 55 de la hoja) existe, pero **no la marques**: revisa fila por fila con este documento.
@@ -898,3 +898,28 @@ Si está mal:
 | 20 | Art. 47 · humo ostensiblemente contaminante | 159 | No |
 
 Empieza por las marcadas «Sí». Ninguna observación es una validación.
+
+- [x] `reglamento-transito:27:-:1:aaebeb04:fe6b7c37` **fracción II**
+- [x] `reglamento-transito:27:-:2:aaebeb04:332ab75a` **fracción IV**
+- [x] `reglamento-transito:27:-:3:aaebeb04:7bb4d677` **fracción V**
+- [!] `reglamento-transito:50:-:0:563fb289:85cb5ef4` **toda la disposición**
+  - motivo: Incompleta. Omite la excepción del art. 68 párr. 1: vehículos con sustancias tóxicas/peligrosas o con distintivo para personas con discapacidad NO van al depósito; el conductor va al Juez Cívico y se espera a otro conductor. Arresto inconmutable 20–36 h y 6 puntos sí coinciden. Corregir el campo de depósito y reenviar.
+- [!] `reglamento-transito:50:-:1:563fb289:02e19434` **toda la disposición**
+  - motivo: Mal estructurada. La multa de 60 UMA la paga el PROPIETARIO (no el infractor), solo si el infractor no es el propietario y no cumplió su sanción en 30 días, y es requisito para que le entreguen la unidad. "Otras: remitido al depósito" no es consecuencia de este párrafo. Reestructurar (sujeto=propietario, condición, finalidad) y reenviar.
+- [x] `reglamento-transito:66:-:0:03630e42:45b07499` **toda la disposición**
+- [!] `reglamento-transito:33:II:1:b838b480:dfd682ce` **toda la disposición**
+  - motivo: Monto y conducta correctos pero mal anclada. El párrafo de 40 UMA es el último párrafo del art. 33 y aplica a cualquier inmovilizador; la fracción II tiene su propia multa (5/7/10 UMA). Re-anclar a "art. 33, último párrafo" (sujeto: quien retire el inmovilizador) y reenviar.
+- [x] `reglamento-transito:8:VI:0:ec773431:7a2f38ac` **toda la disposición**
+- [x] `reglamento-transito:12:-:0:20958cac:d1626927` **toda la disposición**
+- [!] `reglamento-transito:12:-:1:20958cac:e254e393` **fracción IV**
+  - motivo: Sin sanción expresa. La fracción IV (VEMEPE) no tiene cláusula propia; las de 10/15/20 UMA están bajo I–III y se refieren a remolcar vehículos motorizados sin grúa. Aplicarla a la IV es analogía, contraria a legalidad/tipicidad. No servir monto: responder que la conducta está prohibida pero la fracción no fija multa específica.
+- [x] `reglamento-transito:26:-:0:d6995919:c72b34d8` **fracción I**
+- [x] `reglamento-transito:35:-:0:a5c7a8de:f5194938` **fracción I**
+- [x] `reglamento-transito:36:-:0:8639c9e8:449a86cc` **toda la disposición**
+- [x] `reglamento-transito:39:-:0:9555eed3:82dcf282` **toda la disposición**
+- [x] `reglamento-transito:45:I:0:cc652cb6:ebe69967` **toda la disposición**
+- [x] `reglamento-transito:45:II:0:9572c83d:4a09c3ec` **toda la disposición**
+- [x] `reglamento-transito:45:III:0:c3a62e55:8a2f436d` **toda la disposición**
+- [x] `reglamento-transito:45:IV:0:c0c07aca:7f69dd80` **toda la disposición**
+- [x] `reglamento-transito:47:-:0:6cdcf226:b45f8a46` **toda la disposición**
+- [x] `reglamento-transito:47:-:1:6cdcf226:e2ad7d30` **toda la disposición**
