@@ -1,0 +1,19 @@
+# Secrets and local state
+.env
+.env.*
+!.env.example
+*.pem
+!scripts/certs/*.pem
+# Environments and caches
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.semgrep
+# Not part of the runtime image
+tests
+node-api
+Dockerfile
+.dockerignore

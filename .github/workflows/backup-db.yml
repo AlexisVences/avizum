@@ -1,0 +1,73 @@
+name: Backup DB
+
+# Copia diaria cifrada de la base de datos de produccion (Neon). Procedimiento de restauracion: docs/deployment.md.
+#
+# POR QUE SE CIFRA: este repositorio es PUBLICO y los artefactos de un repositorio publico los puede descargar
+# cualquier usuario de GitHub con sesion iniciada. Un volcado contiene datos personales (correos, conversaciones),
+# asi que sin cifrar equivaldria a publicarlos. Solo se sube un archivo .age cifrado con la clave PUBLICA; la clave
+# privada nunca llega a GitHub. Si falta la clave publica el trabajo FALLA antes de volcar nada (fail closed).
+on:
+  schedule:
+    - cron: "17 9 * * *" # todos los dias 09:17 UTC (madrugada en Ciudad de Mexico)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-db
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Version mayor de PostgreSQL de tu proyecto Neon (pg_dump debe ser >= la del servidor). Cambiala con la
+      # variable de repositorio PG_MAJOR si Neon sube de version.
+      PG_MAJOR: ${{ vars.PG_MAJOR || '17' }}
+    steps:
+      - name: Comprobar secretos (falla cerrado)
+        env:
+          DATABASE_URL_BACKUP: ${{ secrets.DATABASE_URL_BACKUP }}
+          AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY || vars.AGE_PUBLIC_KEY }}
+        run: |
+          if [ -z "$DATABASE_URL_BACKUP" ]; then echo "::error::Falta el secreto DATABASE_URL_BACKUP"; exit 1; fi
+          case "$AGE_PUBLIC_KEY" in
+            age1*) ;;
+            *) echo "::error::AGE_PUBLIC_KEY falta o no es una clave publica age (debe empezar por age1). No se genera ningun volcado."; exit 1 ;;
+          esac
+
+      - name: Instalar cliente de PostgreSQL y age
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq "postgresql-client-${PG_MAJOR}" age
+          "/usr/lib/postgresql/${PG_MAJOR}/bin/pg_dump" --version
+          age --version
+
+      - name: Volcar y cifrar (el volcado sin cifrar nunca toca el disco)
+        env:
+          DATABASE_URL_BACKUP: ${{ secrets.DATABASE_URL_BACKUP }}
+          AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY || vars.AGE_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          "/usr/lib/postgresql/${PG_MAJOR}/bin/pg_dump" --format=custom --no-owner --no-privileges "$DATABASE_URL_BACKUP" \
+            | age --recipient "$AGE_PUBLIC_KEY" --output "out/avizum-${stamp}.dump.age"
+          # Un volcado vacio o truncado no debe pasar por copia valida.
+          size="$(stat -c %s "out/avizum-${stamp}.dump.age")"
+          echo "Archivo cifrado: ${size} bytes"
+          [ "$size" -gt 1024 ] || { echo "::error::El volcado cifrado es sospechosamente pequeno"; exit 1; }
+          head -c 21 "out/avizum-${stamp}.dump.age" | grep -q "age-encryption.org" || { echo "::error::La salida no es un archivo age"; exit 1; }
+
+      - name: Subir artefacto cifrado (14 dias)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: avizum-db-backup
+          path: out/*.dump.age # solo archivos cifrados
+          if-no-files-found: error
+          retention-days: 14

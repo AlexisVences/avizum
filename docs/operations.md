@@ -10,10 +10,16 @@
 | `SENTRY_DSN` | Project DSN. Leave empty to disable error tracking entirely |
 | `SENTRY_ENVIRONMENT` | Optional; defaults to `ENVIRONMENT` |
 | `SENTRY_TRACES_SAMPLE_RATE` | `0.0` (default, no tracing) unless you accept the cost |
+| `TRUSTED_PROXY_COUNT` | Number of trusted reverse proxies appending to `X-Forwarded-For` (Render: `1`; Cloudflare in front of Render: `2`); `0` ignores the header. Per-IP rate limits use the Nth entry from the right |
 | `GIT_SHA` | Commit sha injected by the deploy; reported as the Sentry release |
 
 Run uvicorn normally; the app silences uvicorn's own access log and writes one line per request itself
 (`logger=app.access`: method, route template, status, duration_ms, request_id, user_id).
+
+## Deploying
+
+Step-by-step deployment (Cloudflare Pages, Render, Neon, Resend, backups) is in `docs/deployment.md`. The API container runs
+a single uvicorn worker on purpose: the rate limiter keeps its counters in process memory.
 
 ## Request ids
 

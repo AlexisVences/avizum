@@ -18,7 +18,10 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     cors_origins: str = "http://localhost:3000"
-    # Set only behind a reverse proxy you control (it must overwrite X-Forwarded-For); otherwise anyone could forge it.
+    # Number of reverse proxies in front of the app that each append the address they saw to X-Forwarded-For. 0 (default)
+    # ignores the header entirely, so it cannot be forged in development or when the app is exposed directly.
+    trusted_proxy_count: int = 0
+    # Legacy switch, equivalent to trusted_proxy_count=1 when that one is 0.
     trust_proxy_headers: bool = False
     google_client_id: str | None = None  # OAuth client ID (public) of the web app; unset disables Google sign-in
     frontend_url: str = "http://localhost:3000"  # base of the links in e-mails (no trailing slash)

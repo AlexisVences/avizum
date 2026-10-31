@@ -50,12 +50,18 @@ limiter = SlidingWindowLimiter()
 
 
 def client_ip(request: Request) -> str:
-    """The caller's address. Behind a trusted reverse proxy the real one is the last X-Forwarded-For entry the proxy
-    appended; trusting the header without a proxy would let anyone pick their own identity and skip the limit."""
-    if get_settings().trust_proxy_headers:
-        forwarded = request.headers.get("x-forwarded-for", "")
-        if forwarded:
-            return forwarded.split(",")[-1].strip()
+    """The caller's address.
+
+    With `trusted_proxy_count` = N, N proxies we control each appended the peer address they saw to X-Forwarded-For, so
+    the client is the Nth entry from the right; anything further left was supplied by the client and is ignored (a
+    forged `X-Forwarded-For: 1.2.3.4` only adds entries on the left). With N = 0 the header is never read. If the
+    header has fewer than N entries the proxy chain is not what was configured, so fall back to the socket address."""
+    settings = get_settings()
+    count = getattr(settings, "trusted_proxy_count", 0) or (1 if getattr(settings, "trust_proxy_headers", False) else 0)
+    if count > 0:
+        entries = [part.strip() for part in request.headers.get("x-forwarded-for", "").split(",") if part.strip()]
+        if len(entries) >= count:
+            return entries[-count]
     return request.client.host if request.client else "unknown"
 
 

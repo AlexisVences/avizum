@@ -168,6 +168,10 @@ Comparing models, `gpt-5-nano` cited worse (35 answers that used tools and cited
 | AI | LangChain v1 agent (`gpt-5-mini`), pgvector + Spanish full-text hybrid retrieval with RRF, SSE streaming |
 | Evaluation | Scripted runs, deterministic checks and per-case review (`backend/scripts/eval_*.py`) |
 
+## Deployment
+
+Container image (`backend/Dockerfile`), Cloudflare Pages headers, encrypted backups and the full Render/Neon/Resend walkthrough (in Spanish) are in [`docs/deployment.md`](docs/deployment.md).
+
 ## Quick start
 
 **Prerequisites:** [uv](https://docs.astral.sh/uv/), Node.js 18+, Docker (for PostgreSQL). On WSL, enable Docker Desktop's WSL integration.
