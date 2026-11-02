@@ -11,19 +11,19 @@ _4 filas en 1 fragmentos._
 
 > Artículo 6.- Para garantizar la seguridad de los peatones, los conductores de vehículos están obligados a otorgar: V. Prioridad de uso en las calles de prioridad peatonal, dónde los peatones podrán circular en todo lo ancho de la vía y en cualquier sentido. El conductor de un vehículo no motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones de acuerdo a lo dispuesto en este artículo ⟦será amonestado y/o apercibido verbalmente por los agentes y/o agentes autorizados para infraccionar, y orientado a conducirse de conformidad a las disposiciones aplicables⟧. El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones de acuerdo a lo dispuesto en este artículo será sancionado con base en la siguiente tabla: Tipo de vehículo Sanción con multa equivalente en veces la Unidad de Medida y Actualización vigente Sanción mínima Sanción media Sanción máxima Sanción con puntos de penalización en licencia para conducir ⟦Conductores de vehículos de uso particular. 10 a 20 veces 10 veces 15 veces 20 veces 3 puntos⟧ ⟦Conductores de vehículos de transporte de carga. 40 a 60 veces 40 veces 50 veces 60 veces 3 puntos⟧ ⟦Conductores de vehículos 60 a 80 veces 60 veces 70 veces 80 veces 3 puntos de transporte público de pasajeros.⟧
 
-- [ ] `reglamento-transito:6:V:100:389b2619:4c251424` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos de uso particular _(capturada a mano)_
+- [x] `reglamento-transito:6:V:100:389b2619:4c251424` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos de uso particular _(capturada a mano)_
   - **antes (lo que revisaste):** «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones» → 10/15/20 UMA
   - conducta: «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones (artículo 6, fracciones I a V)»
   - sanción: **10 / 15 / 20 UMA**; 3 pt licencia
-- [ ] `reglamento-transito:6:V:101:389b2619:32c018a9` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos de transporte de carga _(capturada a mano)_
+- [x] `reglamento-transito:6:V:101:389b2619:32c018a9` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos de transporte de carga _(capturada a mano)_
   - **antes (lo que revisaste):** «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones» → 40/50/60 UMA
   - conducta: «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones (artículo 6, fracciones I a V)»
   - sanción: **40 / 50 / 60 UMA**; 3 pt licencia
-- [ ] `reglamento-transito:6:V:102:389b2619:cc112ad2` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos de transporte público de pasajeros _(capturada a mano)_
+- [x] `reglamento-transito:6:V:102:389b2619:cc112ad2` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos de transporte público de pasajeros _(capturada a mano)_
   - **antes (lo que revisaste):** «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones» → 60/70/80 UMA
   - conducta: «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones (artículo 6, fracciones I a V)»
   - sanción: **60 / 70 / 80 UMA**; 3 pt licencia
-- [ ] `reglamento-transito:6:V:103:389b2619:0265964f` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos no motorizados _(capturada a mano)_
+- [x] `reglamento-transito:6:V:103:389b2619:0265964f` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos no motorizados _(capturada a mano)_
   - conducta: «El conductor de un vehículo no motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones (artículo 6, fracciones I a V)»
   - sanción: sin monto en UMA; otras: amonestación y/o apercibimiento verbal, sin multa
 
@@ -67,7 +67,7 @@ _1 filas en 1 fragmentos._
 
 #### Art. 33 · fracción II ★
 
-- [ ] `reglamento-transito:33:II:1:b838b480:7cbd88d9` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)**
+- [x] `reglamento-transito:33:II:1:b838b480:7cbd88d9` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)**
   - conducta: «Aquella persona que retire inmovilizadores sin que el interesado hubiese cubierto los adeudos con motivo de infracciones registradas en el sistema de infracciones del Gobierno de la Ciudad de México, o previa …»
   - cláusula: «Aquella persona que retire inmovilizadores sin que el interesado hubiese cubierto los adeudos con motivo de infracciones registradas en el sistema de infracciones del Gobierno de la Ciudad de México, o previa autorización expresa de Seguridad Ciudadana, será sancionada con una multa de 40 veces la …»
   - sanción: **40 UMA** (monto único)
