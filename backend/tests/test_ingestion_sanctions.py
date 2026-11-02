@@ -230,8 +230,8 @@ def test_exceptions_are_not_conducts_art_12_36_and_47():
     """"Se prohíbe remolcar, excepto cuando: I... II..." — the fractions are exemptions: one row, the header's conduct."""
     for number, snippet in (("12", "remolcar o empujar"), ("36", "realizar el pago correspondiente"), ("47", "acatar los programas ambientales")):
         result = _real_article(number)
-        # 47 also punishes emitting smoke and 12 also prohibits towing with VEMEPE: each is its own row
-        assert len(result.sanctions) == (1 if number == "36" else 2), number
+        # 47 also punishes emitting smoke: its own row (12 IV prohibits towing with VEMEPE but has no fine of its own)
+        assert len(result.sanctions) == (2 if number == "47" else 1), number
         row = result.sanctions[0]
         assert snippet in row.conduct_text and row.fraction is None, number
     assert "Se trate de vehículos de emergencia" not in " ".join(r.conduct_text for r in _real_article("36").sanctions)
@@ -259,6 +259,8 @@ def test_a_clause_that_names_its_own_conduct_is_not_pinned_on_the_fraction():
     rows = _real_article("33", "II").sanctions
     assert [r.uma_min for r in rows] == [D(5), D(40)]
     assert rows[1].conduct_text.startswith("Aquella persona que retire inmovilizadores")
+    # the 40 UMA paragraph is the LAST paragraph of Art. 33, not part of fraction II
+    assert rows[0].fraction == "II" and rows[1].fraction is None and "párrafo final del artículo" in rows[1].applies_to
     licence = _real_article("66").sanctions
     assert len(licence) == 1 and licence[0].conduct_text.startswith("Las personas cuya licencia haya sido cancelada y conduzcan")
     assert licence[0].uma_min == D(180) and "remisión del vehículo al depósito" in licence[0].other_consequences
@@ -270,6 +272,11 @@ def test_an_arrest_without_a_fine_is_a_sanction_too_art_50():
     assert driver.uma_min is None and driver.points_license == 6
     assert "arresto administrativo inconmutable de 20 a 36 horas" in driver.other_consequences
     assert owner.uma_min == D(60) and owner.conduct_text.startswith("En caso de que el infractor no sea el propietario")
+    # the pound exception (Art. 68) travels with the driver's row; the owner's row has no pound consequence of its own
+    assert "salvo que se encuentre dentro de los supuestos previstos en el primer párrafo del artículo 68" in driver.other_consequences
+    assert owner.other_consequences is None
+    assert owner.applies_to == "el propietario del vehículo (no el infractor)"
+    assert owner.context_text == "para solicitar que le sea entregada la unidad"
 
 
 def test_points_on_the_plate_written_as_placa_de_matricula_and_how_they_combine():
@@ -317,10 +324,19 @@ def test_a_conduct_never_ends_in_a_dangling_connector_and_arts_51_52_do_not_repe
     assert _real_article("51", "I").sanctions == [] and _real_article("52").sanctions == []
 
 
-def test_a_prohibition_listed_among_the_exemptions_is_its_own_row_art_12_iv():
-    """"IV. Tratándose de VEMEPE, queda prohibido remolcar…" sits after the exemptions but is not one of them."""
+def test_a_prohibition_listed_among_the_exemptions_gets_no_amount_art_12_iv():
+    """"IV. Tratándose de VEMEPE, queda prohibido remolcar…" has no fine of its own; the I-III fine is not extended by analogy."""
     result = _real_article("12")
-    general, vemepe = result.sanctions
+    (general,) = result.sanctions
     assert general.fraction is None and "VEMEPE" not in general.context_text
-    assert vemepe.fraction == "IV" and "queda prohibido remolcar" in vemepe.conduct_text
-    assert (vemepe.uma_min, vemepe.uma_max) == (general.uma_min, general.uma_max)
+    assert [i.kind for i in result.issues] == ["prohibicion_sin_sancion"] and "IV" in result.issues[0].detail
+
+
+def test_arrest_hours_written_before_the_word_arresto_are_kept_art_34_i():
+    text = (
+        "Artículo 34.- Se prohíbe estacionarse. I. Conducir sin licencia. Los conductores que infrinjan la presente "
+        "disposición serán sancionados con una multa equivalente a 1, 5 o 10 veces la Unidad de Medida y Actualización "
+        "vigente o seis a doce horas de arresto administrativo;"
+    )
+    (row,) = extract_sanctions("34", "I", text).sanctions
+    assert "seis a doce horas de arresto administrativo" in row.other_consequences
