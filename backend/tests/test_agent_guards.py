@@ -34,3 +34,12 @@ def test_images_links_and_bare_urls_are_removed_but_citations_stay():
 def test_text_without_links_is_untouched():
     text = "Son 5 veces la UMA [1]."
     assert strip_external_links(text) == (text, False)
+
+
+def test_a_short_rule_phrase_the_model_repeats_is_not_a_leak():
+    """A legal answer that reuses a 12-19 word phrase of the prompt (agent lists) must not be replaced by the refusal."""
+    phrase = (
+        "Hay dos listas: vía pública (equipos electrónicos portátiles) y sistemas tecnológicos (fotocívicas). "
+        "Indica en cuál aparece"
+    )
+    assert not leaks_system_prompt(f"Con eso consulto. {phrase}.")

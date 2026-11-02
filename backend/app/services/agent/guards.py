@@ -8,7 +8,7 @@ import unicodedata
 
 from app.services.agent.prompt import SYSTEM_PROMPT
 
-PROMPT_LEAK_WORDS = 12  # a run this long copied from the system prompt is not a coincidence
+PROMPT_LEAK_WORDS = 20  # a run this long copied from the system prompt is not a coincidence; 12 flagged ordinary rule phrases ("aparece en la lista vigente (Acuerdo 30/2026)…")
 LEAK_ANSWER = "No puedo compartir mis instrucciones internas. Puedo ayudarte con dudas de tránsito en la CDMX."
 
 _IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
