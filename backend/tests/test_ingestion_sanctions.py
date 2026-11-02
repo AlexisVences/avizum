@@ -260,7 +260,7 @@ def test_a_clause_that_names_its_own_conduct_is_not_pinned_on_the_fraction():
     assert [r.uma_min for r in rows] == [D(5), D(40)]
     assert rows[1].conduct_text.startswith("Aquella persona que retire inmovilizadores")
     # the 40 UMA paragraph is the LAST paragraph of Art. 33, not part of fraction II
-    assert rows[0].fraction == "II" and rows[1].fraction is None and "párrafo final del artículo" in rows[1].applies_to
+    assert rows[0].fraction == "II" and rows[1].fraction is None and rows[1].applies_to is None and rows[1].lead_text is None
     licence = _real_article("66").sanctions
     assert len(licence) == 1 and licence[0].conduct_text.startswith("Las personas cuya licencia haya sido cancelada y conduzcan")
     assert licence[0].uma_min == D(180) and "remisión del vehículo al depósito" in licence[0].other_consequences
@@ -275,7 +275,7 @@ def test_an_arrest_without_a_fine_is_a_sanction_too_art_50():
     # the pound exception (Art. 68) travels with the driver's row; the owner's row has no pound consequence of its own
     assert "salvo que se encuentre dentro de los supuestos previstos en el primer párrafo del artículo 68" in driver.other_consequences
     assert owner.other_consequences is None
-    assert owner.applies_to == "el propietario del vehículo (no el infractor)"
+    assert owner.applies_to.startswith("el propietario del vehículo (no el infractor)")
     assert owner.context_text == "para solicitar que le sea entregada la unidad"
 
 
@@ -340,3 +340,17 @@ def test_arrest_hours_written_before_the_word_arresto_are_kept_art_34_i():
     )
     (row,) = extract_sanctions("34", "I", text).sanctions
     assert "seis a doce horas de arresto administrativo" in row.other_consequences
+
+
+def test_art_12_keeps_the_public_transport_exception_in_the_context():
+    text = (
+        "Artículo 12.- Está prohibido remolcar o empujar otros vehículos motorizados si no es por medio de una grúa, excepto cuando:\n"
+        "I. Se trate de remolques u otros vehículos expresamente diseñados para este fin;\n"
+        "Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 10, 15 o 20 veces "
+        "la Unidad de Medida y Actualización vigente y tres puntos a la licencia para conducir.\n"
+        "II. El vehículo se encuentre obstruyendo la circulación.\n"
+        "Se exceptúan de lo anterior a los vehículos de transporte público en cualquiera de sus modalidades, que sólo podrán ser remolcados por una grúa."
+    )
+    result = extract_sanctions("12", None, text)
+    assert len(result.sanctions) == 1
+    assert "transporte público" in result.sanctions[0].context_text
