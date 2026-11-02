@@ -340,3 +340,17 @@ def test_arrest_hours_written_before_the_word_arresto_are_kept_art_34_i():
     )
     (row,) = extract_sanctions("34", "I", text).sanctions
     assert "seis a doce horas de arresto administrativo" in row.other_consequences
+
+
+def test_art_12_keeps_the_public_transport_exception_in_the_context():
+    text = (
+        "Artículo 12.- Está prohibido remolcar o empujar otros vehículos motorizados si no es por medio de una grúa, excepto cuando:\n"
+        "I. Se trate de remolques u otros vehículos expresamente diseñados para este fin;\n"
+        "Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 10, 15 o 20 veces "
+        "la Unidad de Medida y Actualización vigente y tres puntos a la licencia para conducir.\n"
+        "II. El vehículo se encuentre obstruyendo la circulación.\n"
+        "Se exceptúan de lo anterior a los vehículos de transporte público en cualquiera de sus modalidades, que sólo podrán ser remolcados por una grúa."
+    )
+    result = extract_sanctions("12", None, text)
+    assert len(result.sanctions) == 1
+    assert "transporte público" in result.sanctions[0].context_text

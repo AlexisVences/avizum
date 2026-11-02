@@ -70,6 +70,7 @@ _PENALTY_VERB = re.compile(
 _OWN_SUBJECT = re.compile(r"^(?:Aquell[ao]s?\s+personas?\s+que|Las?\s+personas?\s+que|Quien(?:es)?\s)", re.I)
 _OWNER_PAYS = re.compile(r"\bel\s+propietario\s+(?:del\s+veh[ií]culo\s+)?deber[aá]\s+cubrir\b", re.I)
 _PURPOSE = re.compile(r",?\s+(para\s+[^.]+)\.?\s*$", re.I)
+_CLOSING_EXCEPTION = re.compile(r"Se\s+exceptúan\s+de\s+lo\s+anterior[^.]*\.", re.I)
 _QUALIFIER = re.compile(r"^(?:en el caso de|tratándose de|si se determina)\b", re.I)
 _PENALTY_WORD = re.compile(r"multa|sanci[oó]n|sancionad|sancionar|infracci|arresto", re.I)
 _ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50}
@@ -377,6 +378,8 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
                 prohibitions.append((marker, exemption))
             elif exemption:
                 parts.append(f"{marker}. {exemption}" if marker else exemption)
+        # "Se exceptúan de lo anterior a los vehículos de transporte público…": a closing paragraph that narrows the exemptions.
+        parts += [m.group(0).strip() for m in _CLOSING_EXCEPTION.finditer(flat)]
         exceptions_text = " ".join(parts)[:1500] or None
         segments = [(None, _HEADER.sub("", flat, count=1))]
 

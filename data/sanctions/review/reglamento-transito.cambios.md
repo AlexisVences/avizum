@@ -5,28 +5,30 @@ Marca `[x]` en cada fila que coincida con el artículo, `[!]` en la que esté ma
 Una fila que no marques **no se sirve** al agente. Lo resaltado `⟦…⟧` es la cláusula de la que salió el monto.
 
 ## Tanda 2 — sanciones que el texto limita a un tipo de vehículo o situación (`applies_to`)
-_2 filas en 1 fragmentos._
-
-#### Art. 50
-
-> Artículo 50.- Queda prohibido conducir vehículos motorizados cuando se tenga una cantidad de alcohol en la sangre superior a 0.8 gramos por litro o de alcohol en aire espirado superior a 0.4 miligramos por litro, así como bajo el influjo de narcóticos, estupefacientes o psicotrópicos. Los conductores de vehículos destinados al servicio de transporte público de pasajeros, transporte escolar o de personal, vehículos de emergencia, de transporte de carga o de transporte de sustancias tóxicas o peligrosas, no deben presentar ninguna cantidad de alcohol en la sangre o en aire espirado, síntomas simples de aliento alcohólico o de estar bajo los efectos de narcóticos, estupefacientes o psicotrópicos al conducir. Los conductores de vehículos motorizados a quienes se les encuentre cometiendo actos que violen las disposiciones del presente Reglamento o que muestren síntomas de que conducen bajo los efectos de alcohol o narcóticos, estupefacientes o psicotrópicos, están obligados a someterse a las pruebas de detección de ingestión de alcohol o de narcóticos, estupefacientes o psicotrópicos, cuando lo solicite la autoridad competente. ⟦En caso de que se certifique que el conductor sobrepase el límite de alcohol permitido, se encuentre en estado de ebriedad o de intoxicación de alcohol, narcóticos, estupefacientes o psicotrópicos al conducir, se sancionará con arresto administrativo inconmutable de 20 a 36 horas, y seis puntos de penalización a la licencia para conducir, sin menoscabo de lo estipulado en la Ley y demás reglamentos aplicables, en tanto que el vehículo será remitido al depósito vehicular, salvo que se encuentre dentro de los supuestos previstos en el primer párrafo del artículo 68 de este Reglamento.⟧ Para la devolución del vehículo en los depósitos, se deberá comprobar el cumplimiento total de la sanción impuesta al infractor, además de cubrir los derechos y requisitos establecidos en los párrafos sexto y séptimo del artículo 67 del Reglamento. ⟦En caso de que el infractor no sea el propietario del vehículo remitido al depósito y el conductor no hubiere dentro de los treinta días posteriores a la imposición de la infracción, cumplido la sanción impuesta en su totalidad, el propietario deberá cubrir una multa de 60 veces la Unidad de Medida y Actualización Vigente, para solicitar que le sea entregada la unidad.⟧
-
-- [x] `reglamento-transito:50:-:0:563fb289:eb05961b` **toda la disposición**
-  - conducta: «En caso de que se certifique que el conductor sobrepase el límite de alcohol permitido, se encuentre en estado de ebriedad o de intoxicación de alcohol, narcóticos, estupefacientes o psicotrópicos al conducir»
-  - sanción: sin monto en UMA; 6 pt licencia; otras: arresto administrativo inconmutable de 20 a 36 horas; remitido al depósito vehicular, salvo que se encuentre dentro de los supuestos previstos en el primer párrafo del artículo 68 de este Reglamento
-- [x] `reglamento-transito:50:-:1:563fb289:2a289eef` **toda la disposición** — **solo si:** el propietario del vehículo (no el infractor), si el conductor no cumplió la sanción en los 30 días siguientes a la infracción
-  - **depende de:** «para solicitar que le sea entregada la unidad»
-  - conducta: «En caso de que el infractor no sea el propietario del vehículo remitido al depósito y el conductor no hubiere dentro de los treinta días posteriores a la imposición de la infracción, cumplido la sanción impuesta en su …»
-  - sanción: **60 UMA** (monto único)
-
-## Tanda 3 — fragmentos con algo que el extractor no pudo resolver
-_0 filas en 6 fragmentos._
+_4 filas en 1 fragmentos._
 
 #### Art. 6 · fracción V
 
-> Artículo 6.- Para garantizar la seguridad de los peatones, los conductores de vehículos están obligados a otorgar: V. Prioridad de uso en las calles de prioridad peatonal, dónde los peatones podrán circular en todo lo ancho de la vía y en cualquier sentido. El conductor de un vehículo no motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones de acuerdo a lo dispuesto en este artículo será amonestado y/o apercibido verbalmente por los agentes y/o agentes autorizados para infraccionar, y orientado a conducirse de conformidad a las disposiciones aplicables. El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones de acuerdo a lo dispuesto en este artículo será sancionado con base en la siguiente tabla: Tipo de vehículo Sanción con multa equivalente en veces la Unidad de Medida y Actualización vigente Sanción mínima Sanción media Sanción máxima Sanción con puntos de penalización en licencia para conducir Conductores de vehículos de uso particular. 10 a 20 veces 10 veces 15 veces 20 veces 3 puntos Conductores de vehículos de transporte de carga. 40 a 60 veces 40 veces 50 veces 60 veces 3 puntos Conductores de vehículos 60 a 80 veces 60 veces 70 veces 80 veces 3 puntos de transporte público de pasajeros.
+> Artículo 6.- Para garantizar la seguridad de los peatones, los conductores de vehículos están obligados a otorgar: V. Prioridad de uso en las calles de prioridad peatonal, dónde los peatones podrán circular en todo lo ancho de la vía y en cualquier sentido. El conductor de un vehículo no motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones de acuerdo a lo dispuesto en este artículo ⟦será amonestado y/o apercibido verbalmente por los agentes y/o agentes autorizados para infraccionar, y orientado a conducirse de conformidad a las disposiciones aplicables⟧. El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones de acuerdo a lo dispuesto en este artículo será sancionado con base en la siguiente tabla: Tipo de vehículo Sanción con multa equivalente en veces la Unidad de Medida y Actualización vigente Sanción mínima Sanción media Sanción máxima Sanción con puntos de penalización en licencia para conducir ⟦Conductores de vehículos de uso particular. 10 a 20 veces 10 veces 15 veces 20 veces 3 puntos⟧ ⟦Conductores de vehículos de transporte de carga. 40 a 60 veces 40 veces 50 veces 60 veces 3 puntos⟧ ⟦Conductores de vehículos 60 a 80 veces 60 veces 70 veces 80 veces 3 puntos de transporte público de pasajeros.⟧
 
-- ⚠️ **tabla:** Art. 6: penalidades en una tabla por tipo de vehículo; capturar a mano
+- [ ] `reglamento-transito:6:V:100:389b2619:4c251424` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos de uso particular _(capturada a mano)_
+  - **antes (lo que revisaste):** «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones» → 10/15/20 UMA
+  - conducta: «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones (artículo 6, fracciones I a V)»
+  - sanción: **10 / 15 / 20 UMA**; 3 pt licencia
+- [ ] `reglamento-transito:6:V:101:389b2619:32c018a9` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos de transporte de carga _(capturada a mano)_
+  - **antes (lo que revisaste):** «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones» → 40/50/60 UMA
+  - conducta: «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones (artículo 6, fracciones I a V)»
+  - sanción: **40 / 50 / 60 UMA**; 3 pt licencia
+- [ ] `reglamento-transito:6:V:102:389b2619:cc112ad2` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos de transporte público de pasajeros _(capturada a mano)_
+  - **antes (lo que revisaste):** «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones» → 60/70/80 UMA
+  - conducta: «El conductor de un vehículo motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones (artículo 6, fracciones I a V)»
+  - sanción: **60 / 70 / 80 UMA**; 3 pt licencia
+- [ ] `reglamento-transito:6:V:103:389b2619:0265964f` **NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)** — **solo si:** vehículos no motorizados _(capturada a mano)_
+  - conducta: «El conductor de un vehículo no motorizado que no respete la preferencia de paso y/o la prioridad de uso de los peatones (artículo 6, fracciones I a V)»
+  - sanción: sin monto en UMA; otras: amonestación y/o apercibimiento verbal, sin multa
+
+## Tanda 3 — fragmentos con algo que el extractor no pudo resolver
+_0 filas en 5 fragmentos._
 
 #### Art. 8 · fracción VII
 
@@ -59,9 +61,9 @@ _0 filas en 6 fragmentos._
 - ⚠️ **cobertura_incompleta:** fracción IV: incisos sin cláusula: ['c']
 
 ## Tanda 4 — una cláusula por fracción, sin incisos (deterministas): revisa la muestra ★ y aprueba la tanda
-_2 filas en 2 fragmentos._
+_1 filas en 1 fragmentos._
 
-- [ ] **APROBAR TODA LA TANDA 4** (revisé las marcadas con ★ y el resto sigue el mismo patrón) <!--fp:d29759edbf-->
+- [ ] **APROBAR TODA LA TANDA 4** (revisé las marcadas con ★ y el resto sigue el mismo patrón) <!--fp:19092fc0f3-->
 
 #### Art. 33 · fracción II ★
 
@@ -69,13 +71,4 @@ _2 filas en 2 fragmentos._
   - conducta: «Aquella persona que retire inmovilizadores sin que el interesado hubiese cubierto los adeudos con motivo de infracciones registradas en el sistema de infracciones del Gobierno de la Ciudad de México, o previa …»
   - cláusula: «Aquella persona que retire inmovilizadores sin que el interesado hubiese cubierto los adeudos con motivo de infracciones registradas en el sistema de infracciones del Gobierno de la Ciudad de México, o previa autorización expresa de Seguridad Ciudadana, será sancionada con una multa de 40 veces la …»
   - sanción: **40 UMA** (monto único)
-
-#### Art. 34 · fracción I
-
-- [x] `reglamento-transito:34:I:0:f027ca97:c3f7a689` **toda la disposición**
-  - **antes (lo que revisaste):** «Efectuar reparaciones a vehículos, salvo en casos de emergencia.» → 1/5/10 UMA
-  - encabezado: «En la vía pública está prohibido:»
-  - conducta: «Efectuar reparaciones a vehículos, salvo en casos de emergencia.»
-  - cláusula: «Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 1, 5 o 10 veces la Unidad de Medida y Actualización vigente o seis a doce horas de arresto administrativo;»
-  - sanción: **1 / 5 / 10 UMA**; otras: o seis a doce horas de arresto administrativo
 
