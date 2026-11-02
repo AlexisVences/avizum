@@ -433,7 +433,7 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
                     ordinal=0, fraction=None if exception_mode or article_level else seg_fraction, inciso=inciso,
                     conduct_text=_clean(conduct)[:CONDUCT_CHARS], clause_text=clause, uma_min=low, uma_mid=mid, uma_max=high,
                     points_license=license_points, points_plate=plate_points, other_consequences=other,
-                    applies_to=applies_to, lead_text=lead or None, points_mode=mode, article_wide=wide_row,
+                    applies_to=applies_to, lead_text=None if article_level else (lead or None), points_mode=mode, article_wide=wide_row,
                     context_text=row_context or context,
                 )
 
@@ -472,11 +472,9 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
                 if _OWNER_PAYS.search(clause):
                     # Art. 50: the 60 UMA are paid by the OWNER, only when the infractor is someone else and has not served the
                     # sanction in time; the fine is the requirement for getting the vehicle back.
-                    subject_applies = "el propietario del vehículo (no el infractor)"
+                    subject_applies = "el propietario del vehículo (no el infractor), si el conductor no cumplió la sanción en los 30 días siguientes a la infracción"
                     purpose = _PURPOSE.search(clause)
                     subject_context = purpose.group(1) if purpose else None
-                elif names_subject and segment[end:].strip() == "":
-                    subject_applies = "párrafo final del artículo (aplica a cualquier caso del artículo, no a la fracción donde está escrito)"
                 sanction = row(
                     None, conduct, subject_applies, wide_row=wide, article_level=names_subject and not exception_mode,
                     row_context=subject_context,

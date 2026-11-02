@@ -260,7 +260,7 @@ def test_a_clause_that_names_its_own_conduct_is_not_pinned_on_the_fraction():
     assert [r.uma_min for r in rows] == [D(5), D(40)]
     assert rows[1].conduct_text.startswith("Aquella persona que retire inmovilizadores")
     # the 40 UMA paragraph is the LAST paragraph of Art. 33, not part of fraction II
-    assert rows[0].fraction == "II" and rows[1].fraction is None and "párrafo final del artículo" in rows[1].applies_to
+    assert rows[0].fraction == "II" and rows[1].fraction is None and rows[1].applies_to is None and rows[1].lead_text is None
     licence = _real_article("66").sanctions
     assert len(licence) == 1 and licence[0].conduct_text.startswith("Las personas cuya licencia haya sido cancelada y conduzcan")
     assert licence[0].uma_min == D(180) and "remisión del vehículo al depósito" in licence[0].other_consequences
@@ -275,7 +275,7 @@ def test_an_arrest_without_a_fine_is_a_sanction_too_art_50():
     # the pound exception (Art. 68) travels with the driver's row; the owner's row has no pound consequence of its own
     assert "salvo que se encuentre dentro de los supuestos previstos en el primer párrafo del artículo 68" in driver.other_consequences
     assert owner.other_consequences is None
-    assert owner.applies_to == "el propietario del vehículo (no el infractor)"
+    assert owner.applies_to.startswith("el propietario del vehículo (no el infractor)")
     assert owner.context_text == "para solicitar que le sea entregada la unidad"
 
 

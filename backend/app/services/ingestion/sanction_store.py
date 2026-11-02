@@ -276,6 +276,8 @@ def render_review(
                 label.append(f"fracción {row.fraction}")
             if row.inciso:
                 label.append(f"inciso {row.inciso})")
+            if not label and chunk.fraction and row.fraction is None:
+                label.append("NIVEL ARTÍCULO (aplica a todo el artículo, no solo a la fracción donde está escrito)")
             who = " · ".join(label) or "toda la disposición"
             points = ", ".join(
                 x for x in (
