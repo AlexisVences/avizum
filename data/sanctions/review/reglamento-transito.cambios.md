@@ -4,8 +4,32 @@
 Marca `[x]` en cada fila que coincida con el artículo, `[!]` en la que esté mal (y anota por qué debajo).
 Una fila que no marques **no se sirve** al agente. Lo resaltado `⟦…⟧` es la cláusula de la que salió el monto.
 
+## Tanda 2 — sanciones que el texto limita a un tipo de vehículo o situación (`applies_to`)
+_3 filas en 2 fragmentos._
+
+#### Art. 33 · fracción II
+
+> Artículo 33.- Aun cuando se encuentre presente el conductor o alguna otra persona, los vehículos motorizados estacionados serán inmovilizados por el agente autorizado para infraccionar, cuando: II. Los vehículos con placas foráneas que se encuentren estacionados en zonas en las que existan sistemas de cobro por estacionamiento en vía pública, en los siguientes casos: a) No se haya cubierto la cuota de estacionamiento en el momento de la revisión; b) Haya concluido el tiempo pagado; c) En caso de haber comprobante de pago, éste no sea visible desde el exterior del vehículo, el número de placas de matrícula no coincida o la fecha del comprobante sea distinta; d) El vehículo esté estacionado fuera de un cajón y/o zona marcada para el estacionamiento, o esté invadiendo u obstruyendo otro cajón o acceso a cochera, con excepción de vehículos que por sus dimensiones rebasen el espacio del cajón marcado y hayan cubierto la cuota de estacionamiento por los espacios utilizados; e) El vehículo estacionado no coincida, por sus dimensiones o naturaleza, con el tipo de vehículo al que está destinado el cajón, de acuerdo a lo indicado por el señalamiento, incluidas las motocicletas que deben ser estacionadas en los lugares especiales para ese tipo de vehículo; f) El permiso renovable para residentes haya perdido vigencia, no sea visible desde el exterior del vehículo o no coincida con la placa de matrícula del vehículo, o el polígono para el cual fue autorizado; Los conductores de vehículos motorizados que infrinjan la presente disposición serán sancionados con una multa equivalente a 5, 7 o 10 veces la Unidad de Medida y Actualización vigente y un punto a la licencia para conducir. Si el inmovilizador fue colocado por lo previsto en la fracción I de este artículo y hay disponibilidad de grúa dentro de los primeros 15 minutos posteriores a la hora registrada en la boleta de infracción, el vehículo se remitirá al depósito sin la aplicación de la sanción económica por retiro del inmovilizador. Transcurridas más de dos horas de haber sido inmovilizado el vehículo por infringir lo previsto en la fracción II de este artículo, si el interesado no cubre las sanciones económicas presentadas con motivo de infracciones al presente Reglamento, registradas en el sistema de infracciones del Gobierno de la Ciudad; así como los derechos establecidos en el artículo 230 fracción III del Código Fiscal de la Ciudad de México, por retiro de inmovilizador, se procederá a la remisión del mismo al depósito correspondiente, debiéndose cubrir los derechos por el arrastre establecidos en las fracciones I o II del artículo 230 del mismo ordenamiento. Cuando el usuario del servicio de estacionamiento en vía pública en zonas con sistemas de cobro impida, dificulte o se niegue a que se ejerzan las facultades de revisión, de elaboración de boletas de infracción, de inmovilización, insulte o denigre al personal autorizado, será presentado ante la autoridad competente. El vehículo será liberado hasta que se hayan cubierto las sanciones económicas y los derechos establecidos en el Código Fiscal, por retiro de inmovilizador correspondientes. O bien, en caso de que el personal dependiente del tercero autorizado por la Secretaría para la administración y operación del Sistema de control y cobro de estacionamiento en vía pública, sea quien promueva una conducta ilícita que pueda dar lugar a la tipificación de un delito, será puesto a disposición del Ministerio Público. El vehículo con placa foránea será liberado cuando no cuente con adeudos motivo de infracciones registradas en el sistema de infracciones del Gobierno de la Ciudad de México y haya cubierto las sanciones económicas, así como los derechos establecidos en el Código Fiscal de la Ciudad de México, por retiro de inmovilizador correspondientes. Se deroga. Seguridad Ciudadana puede auxiliarse de terceros para la inmovilización de vehículos, previo convenio, permiso o autorización que haya celebrado para ello. ⟦Aquella persona que retire inmovilizadores sin que el interesado hubiese cubierto los adeudos con motivo de infracciones registradas en el sistema de infracciones del Gobierno de la Ciudad de México, o previa autorización expresa de Seguridad Ciudadana, será sancionada con una multa de 40 veces la Unidad de Medida y Actualización vigente.⟧
+
+- [ ] `reglamento-transito:33:II:1:b838b480:b0a5a8b3` **toda la disposición** — **solo si:** párrafo final del artículo (aplica a cualquier caso del artículo, no a la fracción donde está escrito)
+  - encabezado: «Aun cuando se encuentre presente el conductor o alguna otra persona, los vehículos motorizados estacionados serán inmovilizados por el agente autorizado para infraccionar, cuando:»
+  - conducta: «Aquella persona que retire inmovilizadores sin que el interesado hubiese cubierto los adeudos con motivo de infracciones registradas en el sistema de infracciones del Gobierno de la Ciudad de México, o previa …»
+  - sanción: **40 UMA** (monto único)
+
+#### Art. 50
+
+> Artículo 50.- Queda prohibido conducir vehículos motorizados cuando se tenga una cantidad de alcohol en la sangre superior a 0.8 gramos por litro o de alcohol en aire espirado superior a 0.4 miligramos por litro, así como bajo el influjo de narcóticos, estupefacientes o psicotrópicos. Los conductores de vehículos destinados al servicio de transporte público de pasajeros, transporte escolar o de personal, vehículos de emergencia, de transporte de carga o de transporte de sustancias tóxicas o peligrosas, no deben presentar ninguna cantidad de alcohol en la sangre o en aire espirado, síntomas simples de aliento alcohólico o de estar bajo los efectos de narcóticos, estupefacientes o psicotrópicos al conducir. Los conductores de vehículos motorizados a quienes se les encuentre cometiendo actos que violen las disposiciones del presente Reglamento o que muestren síntomas de que conducen bajo los efectos de alcohol o narcóticos, estupefacientes o psicotrópicos, están obligados a someterse a las pruebas de detección de ingestión de alcohol o de narcóticos, estupefacientes o psicotrópicos, cuando lo solicite la autoridad competente. ⟦En caso de que se certifique que el conductor sobrepase el límite de alcohol permitido, se encuentre en estado de ebriedad o de intoxicación de alcohol, narcóticos, estupefacientes o psicotrópicos al conducir, se sancionará con arresto administrativo inconmutable de 20 a 36 horas, y seis puntos de penalización a la licencia para conducir, sin menoscabo de lo estipulado en la Ley y demás reglamentos aplicables, en tanto que el vehículo será remitido al depósito vehicular, salvo que se encuentre dentro de los supuestos previstos en el primer párrafo del artículo 68 de este Reglamento.⟧ Para la devolución del vehículo en los depósitos, se deberá comprobar el cumplimiento total de la sanción impuesta al infractor, además de cubrir los derechos y requisitos establecidos en los párrafos sexto y séptimo del artículo 67 del Reglamento. ⟦En caso de que el infractor no sea el propietario del vehículo remitido al depósito y el conductor no hubiere dentro de los treinta días posteriores a la imposición de la infracción, cumplido la sanción impuesta en su totalidad, el propietario deberá cubrir una multa de 60 veces la Unidad de Medida y Actualización Vigente, para solicitar que le sea entregada la unidad.⟧
+
+- [ ] `reglamento-transito:50:-:0:563fb289:eb05961b` **toda la disposición**
+  - conducta: «En caso de que se certifique que el conductor sobrepase el límite de alcohol permitido, se encuentre en estado de ebriedad o de intoxicación de alcohol, narcóticos, estupefacientes o psicotrópicos al conducir»
+  - sanción: sin monto en UMA; 6 pt licencia; otras: arresto administrativo inconmutable de 20 a 36 horas; remitido al depósito vehicular, salvo que se encuentre dentro de los supuestos previstos en el primer párrafo del artículo 68 de este Reglamento
+- [ ] `reglamento-transito:50:-:1:563fb289:f7045681` **toda la disposición** — **solo si:** el propietario del vehículo (no el infractor)
+  - **depende de:** «para solicitar que le sea entregada la unidad»
+  - conducta: «En caso de que el infractor no sea el propietario del vehículo remitido al depósito y el conductor no hubiere dentro de los treinta días posteriores a la imposición de la infracción, cumplido la sanción impuesta en su …»
+  - sanción: **60 UMA** (monto único)
+
 ## Tanda 3 — fragmentos con algo que el extractor no pudo resolver
-_3 filas en 5 fragmentos._
+_0 filas en 6 fragmentos._
 
 #### Art. 6 · fracción V
 
@@ -19,6 +43,12 @@ _3 filas en 5 fragmentos._
 
 - ⚠️ **fraccion_solo_clausula:** fracción VII: el texto es solo la cláusula; aplica a las demás fracciones del artículo — «Los conductores de vehículos motorizados que infrinjan la presente disposición serán sancionados con una multa equivalente a 5, 7 o 10 veces la Unidad de Medida y Actualización vigente y tres puntos d»
 
+#### Art. 12
+
+> Artículo 12.- Está prohibido remolcar o empujar otros vehículos motorizados si no es por medio de una grúa, excepto cuando: I. Se trate de remolques u otros vehículos expresamente diseñados para este fin; Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 10, 15 o 20 veces la Unidad de Medida y Actualización vigente y tres puntos a la licencia para conducir. II. El vehículo se encuentre obstruyendo la circulación; y Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 10, 15 o 20 veces la Unidad de Medida y Actualización vigente y tres puntos a la licencia para conducir. III. El vehículo a remolcar o empujar represente un peligro para sí o para terceros, en éste caso sólo se permitirá hasta ponerlo en un lugar seguro. Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 10, 15 o 20 veces la Unidad de Medida y Actualización vigente y tres puntos a la licencia para conducir. Se exceptúan de lo anterior a los vehículos de transporte público en cualquiera de sus modalidades, que sólo podrán ser remolcados por una grúa. Derogado. IV. Tratándose de VEMEPE, queda prohibido remolcar o empujar otros vehículos no motorizados y motorizados, así como cualquier tipo de remolque o dispositivos de cualquier otro tipo de tracción.
+
+- ⚠️ **prohibicion_sin_sancion:** fracción IV: prohibe una conducta pero el texto no fija una multa propia; no se sirve ningún monto
+
 #### Art. 20
 
 > Artículo 20.- Los conductores de motocicletas y vehículos motorizados eléctricos personales (VEMEPE) deben sujetarse a lo dispuesto en el capítulo II de este Título, exceptuando aquellas provisiones que por la naturaleza propia de los vehículos no sean aplicables. Adicionalmente los conductores de motocicletas y vehículos motorizados eléctricos personales (VEMEPE) deben: I. Utilizar un carril completo de circulación; El motociclista que incumpla lo dispuesto en la presente disposición, será sancionado con una multa equivalente a 5, 7 o 10 veces la Unidad de Medida y Actualización vigente y un punto a la licencia para conducir. II. Adelantar otro vehículo sólo por el lado izquierdo; y El motociclista que incumpla lo dispuesto en la presente disposición, será sancionado con una multa equivalente a 5, 7 o 10 veces la Unidad de Medida y Actualización vigente y un punto a la licencia para conducir. III. Respetar las reglas de preferencia de paso estipuladas en el artículo 10. IV. Los vehículos motorizados eléctricos personales (VEMEPE) Tipo A deberán circular solo por vías secundarias y zonas de tránsito calmado. V. Los vehículos motorizados eléctricos personales (VEMEPE) Tipo B podrán circular por cualquier vía, excepto vías ciclistas, carriles confinados, carriles centrales de vías de acceso controlado y carriles centrales de vías primarias, para tal caso, en donde las vías primarias no cuenten con carriles laterales deberán circular por el carril de extrema derecha. VI. Los vehículos motorizados eléctricos personales (VEMEPE) que se definen como monopatín eléctrico (Tipo A o B), deberán circular solo por vías secundarias y zonas de tránsito calmado; así mismo, podrán hacer uso de las vías ciclistas conservando una velocidad máxima de 25 kilómetros por hora y que no ponga en riesgo a los demás usuarios de la vía. El motociclista que incumpla lo dispuesto en la presente disposición, será sancionado con una multa equivalente a 5, 7 o 10 veces la Unidad de Medida y Actualización vigente y un punto a la licencia para conducir.
@@ -27,20 +57,8 @@ _3 filas en 5 fragmentos._
 
 #### Art. 27
 
-> Artículo 27.- Además de las obligaciones contenidas en los artículos que anteceden, los conductores de vehículos que transporten sustancias tóxicas o peligrosas deben: I. Sujetarse estrictamente a circular por las rutas, horarios y los itinerarios de carga y descarga autorizados y dados a conocer por la Secretaría y por Seguridad Pública; Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 100, 200 o 300 veces la Unidad de Medida y Actualización vigente y, sin perjuicio de lo dispuesto por la Ley. Párrafo modificado G.O. CDMX 10/10/25 II. Abstenerse de realizar paradas que no estén señaladas en la operación del servicio; ⟦Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 100, 200 o 300 veces la Unidad de Medida y Actualización vigente, sin perjuicio de lo dispuesto por la Ley.⟧ Párrafo modificado G.O. CDMX 10/10/25 III. En caso de congestionamiento vehicular que interrumpa la circulación, el conductor deberá solicitar a los agentes prioridad para continuar su marcha, mostrándoles la documentación que ampare el riesgo sobre el producto que transporta, con el propósito de salvaguardar la integridad física de las personas y bienes.; IV. Deberán ir señalizados y balizados de conformidad con lo establecido en las normas oficiales mexicanas con relación a este tipo de transporte; y ⟦Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 200, 300 o 400 veces la Unidad de Medida y Actualización vigente, sin perjuicio de lo dispuesto por la Ley.⟧ Párrafo modificado G.O. CDMX 10/10/25 V. Cumplir con los lineamientos en materia de sustancias peligrosas que para tal efecto expidan las autoridades competentes. ⟦Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 200, 300 o 400 veces la Unidad de Medida y Actualización vigente, sin perjuicio de lo dispuesto por la Ley.⟧ Párrafo modificado G.O. CDMX 10/10/25
+> Artículo 27.- Además de las obligaciones contenidas en los artículos que anteceden, los conductores de vehículos que transporten sustancias tóxicas o peligrosas deben: I. Sujetarse estrictamente a circular por las rutas, horarios y los itinerarios de carga y descarga autorizados y dados a conocer por la Secretaría y por Seguridad Pública; Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 100, 200 o 300 veces la Unidad de Medida y Actualización vigente y, sin perjuicio de lo dispuesto por la Ley. Párrafo modificado G.O. CDMX 10/10/25 II. Abstenerse de realizar paradas que no estén señaladas en la operación del servicio; Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 100, 200 o 300 veces la Unidad de Medida y Actualización vigente, sin perjuicio de lo dispuesto por la Ley. Párrafo modificado G.O. CDMX 10/10/25 III. En caso de congestionamiento vehicular que interrumpa la circulación, el conductor deberá solicitar a los agentes prioridad para continuar su marcha, mostrándoles la documentación que ampare el riesgo sobre el producto que transporta, con el propósito de salvaguardar la integridad física de las personas y bienes.; IV. Deberán ir señalizados y balizados de conformidad con lo establecido en las normas oficiales mexicanas con relación a este tipo de transporte; y Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 200, 300 o 400 veces la Unidad de Medida y Actualización vigente, sin perjuicio de lo dispuesto por la Ley. Párrafo modificado G.O. CDMX 10/10/25 V. Cumplir con los lineamientos en materia de sustancias peligrosas que para tal efecto expidan las autoridades competentes. Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 200, 300 o 400 veces la Unidad de Medida y Actualización vigente, sin perjuicio de lo dispuesto por la Ley. Párrafo modificado G.O. CDMX 10/10/25
 
-- [x] `reglamento-transito:27:-:1:aaebeb04:fe6b7c37` **fracción II**
-  - encabezado: «Además de las obligaciones contenidas en los artículos que anteceden, los conductores de vehículos que transporten sustancias tóxicas o peligrosas deben:»
-  - conducta: «Abstenerse de realizar paradas que no estén señaladas en la operación del servicio»
-  - sanción: **100 / 200 / 300 UMA**
-- [x] `reglamento-transito:27:-:2:aaebeb04:332ab75a` **fracción IV**
-  - encabezado: «Además de las obligaciones contenidas en los artículos que anteceden, los conductores de vehículos que transporten sustancias tóxicas o peligrosas deben:»
-  - conducta: «Deberán ir señalizados y balizados de conformidad con lo establecido en las normas oficiales mexicanas con relación a este tipo de transporte»
-  - sanción: **200 / 300 / 400 UMA**
-- [x] `reglamento-transito:27:-:3:aaebeb04:7bb4d677` **fracción V**
-  - encabezado: «Además de las obligaciones contenidas en los artículos que anteceden, los conductores de vehículos que transporten sustancias tóxicas o peligrosas deben:»
-  - conducta: «Cumplir con los lineamientos en materia de sustancias peligrosas que para tal efecto expidan las autoridades competentes.»
-  - sanción: **200 / 300 / 400 UMA**
 - ⚠️ **fraccion_sin_sancion:** fracciones sin sanción en el texto: III
 
 #### Art. 44 · fracción IV
@@ -50,139 +68,16 @@ _3 filas en 5 fragmentos._
 - ⚠️ **cobertura_incompleta:** fracción IV: incisos sin cláusula: ['c']
 
 ## Tanda 4 — una cláusula por fracción, sin incisos (deterministas): revisa la muestra ★ y aprueba la tanda
-_17 filas en 14 fragmentos._
+_1 filas en 1 fragmentos._
 
-- [ ] **APROBAR TODA LA TANDA 4** (revisé las marcadas con ★ y el resto sigue el mismo patrón) <!--fp:a09f732bda-->
+- [ ] **APROBAR TODA LA TANDA 4** (revisé las marcadas con ★ y el resto sigue el mismo patrón) <!--fp:f8677f8f46-->
 
-#### Art. 8 · fracción VI ★
+#### Art. 34 · fracción I ★
 
-- [x] `reglamento-transito:8:VI:0:ec773431:7a2f38ac` **toda la disposición**
-  - encabezado: «Los conductores de todo tipo de vehículos deben:»
-  - conducta: «Alinearse a la derecha y reducir la velocidad cuando otro vehículo intente adelantarlo;»
-  - cláusula: «Los conductores de vehículos motorizados que infrinjan la presente disposición serán sancionados con una multa equivalente a 5, 7 o 10 veces la Unidad de Medida y Actualización vigente y tres puntos de penalización a la licencia para conducir o en caso de infracciones captadas a través de sistemas …»
-  - sanción: **5 / 7 / 10 UMA**; 3 pt licencia, 1 pt matrícula (según cómo se capte: agente → licencia; sistema tecnológico/fotomulta → matrícula; no se suman)
-
-#### Art. 12
-
-- [x] `reglamento-transito:12:-:0:20958cac:d1626927` **toda la disposición**
-  - encabezado: «Está prohibido remolcar o empujar otros vehículos motorizados si no es por medio de una grúa, excepto cuando:»
-  - **depende de:** «I. Se trate de remolques u otros vehículos expresamente diseñados para este fin; II. El vehículo se encuentre obstruyendo la circulación; y III. El vehículo a remolcar o empujar represente un peligro para sí o para terceros, en éste caso sólo se permitirá hasta ponerlo en un lugar seguro.»
-  - conducta: «Está prohibido remolcar o empujar otros vehículos motorizados si no es por medio de una grúa, excepto cuando:»
-  - cláusula: «Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 10, 15 o 20 veces la Unidad de Medida y Actualización vigente y tres puntos a la licencia para conducir.»
-  - sanción: **10 / 15 / 20 UMA**; 3 pt licencia
-- [!] `reglamento-transito:12:-:1:20958cac:e254e393` **fracción IV**
-  - encabezado: «Está prohibido remolcar o empujar otros vehículos motorizados si no es por medio de una grúa, excepto cuando:»
-  - conducta: «Tratándose de VEMEPE, queda prohibido remolcar o empujar otros vehículos no motorizados y motorizados, así como cualquier tipo de remolque o dispositivos de cualquier otro tipo de tracción.»
-  - cláusula: «Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 10, 15 o 20 veces la Unidad de Medida y Actualización vigente y tres puntos a la licencia para conducir.»
-  - sanción: **10 / 15 / 20 UMA**; 3 pt licencia
-  - **[!] por qué:** Sin sanción expresa. La fracción IV (VEMEPE) no tiene cláusula propia; las de 10/15/20 UMA están bajo I–III y se refieren a remolcar vehículos motorizados sin grúa. Aplicarla a la IV es analogía, contraria a legalidad/tipicidad. No servir monto: responder que la conducta está prohibida pero la fracción no fija multa específica.
-
-#### Art. 26
-
-- [x] `reglamento-transito:26:-:0:d6995919:c72b34d8` **fracción I**
-  - encabezado: «Queda prohibido a los conductores de vehículos de transporte de carga:»
-  - conducta: «Circular por carriles centrales y segundos niveles de las vías de acceso controlado cuando se trate de vehículos de peso bruto vehicular de diseño superior a 3,857 Kg o donde el señalamiento restrictivo así lo indique»
-  - cláusula: «Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 100, 200 o 300 veces la Unidad de Medida y Actualización vigente y tres puntos a la licencia para conducir, sin perjuicio de lo dispuesto por la Ley.»
-  - sanción: **100 / 200 / 300 UMA**; 3 pt licencia
-
-#### Art. 33 · fracción II
-
-- [!] `reglamento-transito:33:II:1:b838b480:dfd682ce` **toda la disposición**
-  - encabezado: «Aun cuando se encuentre presente el conductor o alguna otra persona, los vehículos motorizados estacionados serán inmovilizados por el agente autorizado para infraccionar, cuando:»
-  - conducta: «Aquella persona que retire inmovilizadores sin que el interesado hubiese cubierto los adeudos con motivo de infracciones registradas en el sistema de infracciones del Gobierno de la Ciudad de México, o previa …»
-  - cláusula: «Aquella persona que retire inmovilizadores sin que el interesado hubiese cubierto los adeudos con motivo de infracciones registradas en el sistema de infracciones del Gobierno de la Ciudad de México, o previa autorización expresa de Seguridad Ciudadana, será sancionada con una multa de 40 veces la …»
-  - sanción: **40 UMA** (monto único)
-  - **[!] por qué:** Monto y conducta correctos pero mal anclada. El párrafo de 40 UMA es el último párrafo del art. 33 y aplica a cualquier inmovilizador; la fracción II tiene su propia multa (5/7/10 UMA). Re-anclar a "art. 33, último párrafo" (sujeto: quien retire el inmovilizador) y reenviar.
-
-#### Art. 35
-
-- [x] `reglamento-transito:35:-:0:a5c7a8de:f5194938` **fracción I**
-  - encabezado: «Está prohibido abandonar en la vía pública un vehículo o remolque que se encuentre inservible, destruido o inutilizado. Se entiende por estado de abandono, los vehículos que:»
-  - conducta: «Que no sean movidos por más de 15 días, o acumulen residuos que generen un foco de infección, malos olores o fauna nociva»
-  - cláusula: «El incumplimiento a la presente disposición, se sancionará con una multa equivalente a 10, 15 o 20 veces la Unidad de Medida y Actualización vigente.»
-  - sanción: **10 / 15 / 20 UMA**
-
-#### Art. 36
-
-- [x] `reglamento-transito:36:-:0:8639c9e8:449a86cc` **toda la disposición**
-  - encabezado: «Los conductores de vehículos motorizados que accedan a vías concesionadas o permisionadas están obligados a realizar el pago correspondiente de acuerdo a las tarifas establecidas, salvo que:»
-  - **depende de:** «I. Exista algún anuncio por parte de la autoridad que indique el libre acceso a causa de alguna contingencia o por necesidades de interés público; II. Se trate de vehículos de transporte público de pasajeros cuyas rutas incluyan tramos en estas vías; y III. Se trate de vehículos de emergencia que se dirijan a atender alguna incidencia.»
-  - conducta: «Los conductores de vehículos motorizados que accedan a vías concesionadas o permisionadas están obligados a realizar el pago correspondiente de acuerdo a las tarifas establecidas, salvo que:»
-  - cláusula: «El incumplimiento del pago de las tarifas establecidas por parte de los conductores, se sancionará con una multa equivalente a 10, 15 o 20 veces la Unidad de Medida y Actualización vigente.»
-  - sanción: **10 / 15 / 20 UMA**
-
-#### Art. 39 ★
-
-- [x] `reglamento-transito:39:-:0:9555eed3:82dcf282` **toda la disposición**
-  - conducta: «Los conductores de automóviles que viajen con pasajeros menores de doce años de edad o que midan menos de 1.45 metros de altura, deberán asegurarse que éstos ocupen una de las plazas traseras sobre la hilera …»
-  - cláusula: «Los conductores que no cumplan con lo establecido en el presente artículo serán sancionados con una multa equivalente a 5, 7 o 10 veces la Unidad de Medida y Actualización vigente un punto de penalización a la placa de matrícula y un punto a la licencia para conducir.»
-  - sanción: **5 / 7 / 10 UMA**; 1 pt licencia, 1 pt matrícula (se aplican ambos: licencia y matrícula)
-
-#### Art. 45 · fracción I
-
-- [x] `reglamento-transito:45:I:0:cc652cb6:ebe69967` **toda la disposición**
-  - encabezado: «Los vehículos motorizados que circulen en el territorio de la Ciudad de México deberán de contar con:»
-  - conducta: «Placas de matrícula frontal y posterior, o permiso vigente expedido por la Secretaría, correspondiente al tipo de vehículo, o en su defecto, la copia certificada de la denuncia de la pérdida de las placas de matrícula …»
-  - cláusula: «El incumplimiento de las obligaciones señaladas en el presente artículo, se sancionarán con una multa equivalente a 20, 25 o 30 veces la Unidad de Medida y Actualización vigente.»
-  - sanción: **20 / 25 / 30 UMA**
-
-#### Art. 45 · fracción II
-
-- [x] `reglamento-transito:45:II:0:9572c83d:4a09c3ec` **toda la disposición**
-  - encabezado: «Los vehículos motorizados que circulen en el territorio de la Ciudad de México deberán de contar con:»
-  - conducta: «La calcomanía de circulación permanente;»
-  - cláusula: «El incumplimiento de las obligaciones señaladas en el presente artículo, se sancionarán con una multa equivalente a 20, 25 o 30 veces la Unidad de Medida y Actualización vigente.»
-  - sanción: **20 / 25 / 30 UMA**
-
-#### Art. 45 · fracción III
-
-- [x] `reglamento-transito:45:III:0:c3a62e55:8a2f436d` **toda la disposición**
-  - encabezado: «Los vehículos motorizados que circulen en el territorio de la Ciudad de México deberán de contar con:»
-  - conducta: «El holograma y constancia de verificación vehicular vigente con excepción de motocicletas y VEMEPE. Los vehículos motorizados de los Estados que conforman la Comisión Ambiental de la Megalópolis y que circulen en el …»
-  - cláusula: «El incumplimiento de las obligaciones señaladas en el presente artículo, se sancionarán con una multa equivalente a 20, 25 o 30 veces la Unidad de Medida y Actualización vigente.»
-  - sanción: **20 / 25 / 30 UMA**
-
-#### Art. 45 · fracción IV
-
-- [x] `reglamento-transito:45:IV:0:c0c07aca:7f69dd80` **toda la disposición**
-  - encabezado: «Los vehículos motorizados que circulen en el territorio de la Ciudad de México deberán de contar con:»
-  - conducta: «Tarjeta de circulación vigente, en formato físico o digital.»
-  - cláusula: «El incumplimiento de las obligaciones señaladas en el presente artículo, se sancionarán con una multa equivalente a 20, 25 o 30 veces la Unidad de Medida y Actualización vigente.»
-  - sanción: **20 / 25 / 30 UMA**
-
-#### Art. 47
-
-- [x] `reglamento-transito:47:-:0:6cdcf226:b45f8a46` **toda la disposición**
-  - encabezado: «Los conductores de vehículos motorizados deberán acatar los programas ambientales y no circular en vehículos que tengan restricciones y/o en las eco zonas o zonas de movilidad sustentable, los días y horas correspondientes. Quedan exceptuados los siguientes vehículos:»
-  - **depende de:** «I. Los de emergencia; II. Los que utilizan tecnologías sustentables; III. Los de transporte escolar; IV. Los de servicios funerarios; V. Los de servicio particular que transporten o que sean conducidos por personas con discapacidad que cuenten con la autorización o placa de matrícula expedidos por la Secretaría; VI. Aquellos en que sea manifiesta o que se acredite una emergencia médica; y VII. Los demás que determinen las disposiciones jurídicas y administrativas aplicables.»
-  - conducta: «Los conductores de vehículos motorizados deberán acatar los programas ambientales y no circular en vehículos que tengan restricciones y/o en las eco zonas o zonas de movilidad sustentable, los días y horas …»
-  - cláusula: «Aquellos conductores de vehículos motorizados que incumplan con lo establecido en este artículo o emitan humo ostensiblemente contaminante sea cual fuere la entidad federativa en la que fueron matriculados, serán sancionados con una multa equivalente a 20, 25 o 30 veces la Unidad de Medida y …»
-  - sanción: **20 / 25 / 30 UMA**
-- [x] `reglamento-transito:47:-:1:6cdcf226:e2ad7d30` **toda la disposición**
-  - encabezado: «Los conductores de vehículos motorizados deberán acatar los programas ambientales y no circular en vehículos que tengan restricciones y/o en las eco zonas o zonas de movilidad sustentable, los días y horas correspondientes. Quedan exceptuados los siguientes vehículos:»
-  - **depende de:** «I. Los de emergencia; II. Los que utilizan tecnologías sustentables; III. Los de transporte escolar; IV. Los de servicios funerarios; V. Los de servicio particular que transporten o que sean conducidos por personas con discapacidad que cuenten con la autorización o placa de matrícula expedidos por la Secretaría; VI. Aquellos en que sea manifiesta o que se acredite una emergencia médica; y VII. Los demás que determinen las disposiciones jurídicas y administrativas aplicables.»
-  - conducta: «emitan humo ostensiblemente contaminante sea cual fuere la entidad federativa en la que fueron matriculados»
-  - cláusula: «Aquellos conductores de vehículos motorizados que incumplan con lo establecido en este artículo o emitan humo ostensiblemente contaminante sea cual fuere la entidad federativa en la que fueron matriculados, serán sancionados con una multa equivalente a 20, 25 o 30 veces la Unidad de Medida y …»
-  - sanción: **20 / 25 / 30 UMA**
-
-#### Art. 50 ★
-
-- [!] `reglamento-transito:50:-:0:563fb289:85cb5ef4` **toda la disposición**
-  - conducta: «En caso de que se certifique que el conductor sobrepase el límite de alcohol permitido, se encuentre en estado de ebriedad o de intoxicación de alcohol, narcóticos, estupefacientes o psicotrópicos al conducir»
-  - cláusula: «En caso de que se certifique que el conductor sobrepase el límite de alcohol permitido, se encuentre en estado de ebriedad o de intoxicación de alcohol, narcóticos, estupefacientes o psicotrópicos al conducir, se sancionará con arresto administrativo inconmutable de 20 a 36 horas, y seis puntos de …»
-  - sanción: sin monto en UMA; 6 pt licencia; otras: arresto administrativo inconmutable de 20 a 36 horas; remitido al depósito vehicular
-  - **[!] por qué:** Incompleta. Omite la excepción del art. 68 párr. 1: vehículos con sustancias tóxicas/peligrosas o con distintivo para personas con discapacidad NO van al depósito; el conductor va al Juez Cívico y se espera a otro conductor. Arresto inconmutable 20–36 h y 6 puntos sí coinciden. Corregir el campo de depósito y reenviar.
-- [!] `reglamento-transito:50:-:1:563fb289:02e19434` **toda la disposición**
-  - conducta: «En caso de que el infractor no sea el propietario del vehículo remitido al depósito y el conductor no hubiere dentro de los treinta días posteriores a la imposición de la infracción, cumplido la sanción impuesta en su …»
-  - cláusula: «En caso de que el infractor no sea el propietario del vehículo remitido al depósito y el conductor no hubiere dentro de los treinta días posteriores a la imposición de la infracción, cumplido la sanción impuesta en su totalidad, el propietario deberá cubrir una multa de 60 veces la Unidad de Medida …»
-  - sanción: **60 UMA** (monto único); otras: remitido al depósito
-  - **[!] por qué:** Mal estructurada. La multa de 60 UMA la paga el PROPIETARIO (no el infractor), solo si el infractor no es el propietario y no cumplió su sanción en 30 días, y es requisito para que le entreguen la unidad. "Otras: remitido al depósito" no es consecuencia de este párrafo. Reestructurar (sujeto=propietario, condición, finalidad) y reenviar.
-
-#### Art. 66
-
-- [x] `reglamento-transito:66:-:0:03630e42:45b07499` **toda la disposición**
-  - **depende de:** «La reexpedición de una licencia que se haya extinguido por penalización procederá sólo después de transcurridos tres años.»
-  - conducta: «Las personas cuya licencia haya sido cancelada y conduzcan algún vehículo en el lapso a que se refiere el párrafo anterior»
-  - cláusula: «Las personas cuya licencia haya sido cancelada y conduzcan algún vehículo en el lapso a que se refiere el párrafo anterior, serán sancionadas con la remisión del vehículo al depósito y una multa de ciento ochenta veces la Unidad de Medida y Actualización vigente.»
-  - sanción: **180 UMA** (monto único); otras: remisión del vehículo al depósito
+- [ ] `reglamento-transito:34:I:0:f027ca97:c3f7a689` **toda la disposición**
+  - **antes (lo que revisaste):** «Efectuar reparaciones a vehículos, salvo en casos de emergencia.» → 1/5/10 UMA
+  - encabezado: «En la vía pública está prohibido:»
+  - conducta: «Efectuar reparaciones a vehículos, salvo en casos de emergencia.»
+  - cláusula: «Los conductores que infrinjan la presente disposición serán sancionados con una multa equivalente a 1, 5 o 10 veces la Unidad de Medida y Actualización vigente o seis a doce horas de arresto administrativo;»
+  - sanción: **1 / 5 / 10 UMA**; otras: o seis a doce horas de arresto administrativo
 

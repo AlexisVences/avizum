@@ -54,9 +54,9 @@ _GENERIC = re.compile(
 _ARTICLE_WIDE = re.compile(r"presente\s+art[ií]culo|este\s+art[ií]culo", re.I)
 _ALTERNATIVE_POINTS = re.compile(r"\bo\s+en\s+caso\s+de\s+infracciones\s+captadas", re.I)
 _OTHER_PHRASE = re.compile(
-    r"(?:\bo\s+)?arresto\s+administrativo[^,;.]*"
-    r"|remisi[oó]n\s+del\s+veh[ií]culo\s+al\s+dep[oó]sito(?:\s+vehicular)?"
-    r"|remitid[oa]\s+al\s+dep[oó]sito(?:\s+vehicular)?"
+    r"(?:\bo\s+)?(?:[\wáéíóú]+\s+a\s+[\wáéíóú]+\s+horas\s+de\s+)?arresto\s+administrativo[^,;.]*"
+    r"|remisi[oó]n\s+del\s+veh[ií]culo\s+al\s+dep[oó]sito(?:\s+vehicular)?(?:,?\s+salvo\s+que[^.;]*)?"
+    r"|remitid[oa]\s+al\s+dep[oó]sito(?:\s+vehicular)?(?:,?\s+salvo\s+que[^.;]*)?"
     r"|retenci[oó]n\s+de\s+(?:las\s+)?placas?(?:\s+de\s+circulaci[oó]n)?"
     r"|cancelaci[oó]n\s+de\s+(?:la\s+)?licencia|suspensi[oó]n\s+de\s+(?:la\s+)?licencia",
     re.I,
@@ -65,6 +65,11 @@ _ARREST = re.compile(r"\barresto\s+administrativo\b", re.I)  # the Reglamento's 
 _PENALTY_VERB = re.compile(
     r"ser[aá]n? sancionad|se sancionar|la multa ser[aá]|multa equivalente|deber[aá] cubrir|una multa de|se impondr", re.I
 )
+# A clause whose subject is named in the clause itself ("Aquella persona que retire inmovilizadores...", "el propietario
+# deberá cubrir..."): the penalty is for THAT person, not for the conduct of the fraction the paragraph sits in.
+_OWN_SUBJECT = re.compile(r"^(?:Aquell[ao]s?\s+personas?\s+que|Las?\s+personas?\s+que|Quien(?:es)?\s)", re.I)
+_OWNER_PAYS = re.compile(r"\bel\s+propietario\s+(?:del\s+veh[ií]culo\s+)?deber[aá]\s+cubrir\b", re.I)
+_PURPOSE = re.compile(r",?\s+(para\s+[^.]+)\.?\s*$", re.I)
 _QUALIFIER = re.compile(r"^(?:en el caso de|tratándose de|si se determina)\b", re.I)
 _PENALTY_WORD = re.compile(r"multa|sanci[oó]n|sancionad|sancionar|infracci|arresto", re.I)
 _ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50}
@@ -338,8 +343,11 @@ def _amount(clause: str) -> tuple[tuple[Decimal | None, Decimal | None, Decimal 
 
 
 def _other(clause: str) -> str | None:
+    # Only what the penalty itself brings: the condition before the penalty verb ("En caso de que el infractor no sea el
+    # propietario del vehículo remitido al depósito...") describes a situation, not a consequence of this clause.
+    verb = _PENALTY_VERB.search(clause)
     phrases: list[str] = []
-    for match in _OTHER_PHRASE.finditer(clause):
+    for match in _OTHER_PHRASE.finditer(clause[verb.start():] if verb else clause):
         text = match.group(0).strip()
         if text and text not in phrases:
             phrases.append(text)
@@ -419,13 +427,14 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
                 previous = re.split(r"(?<=[.;])\s+", before)
                 context = " ".join(previous[-1:]).strip()[:600] or None  # the sentence the clause points back to
 
-            def row(inciso: str | None, conduct: str, applies_to: str | None = None, wide_row: bool = False) -> Sanction:
+            def row(inciso: str | None, conduct: str, applies_to: str | None = None, wide_row: bool = False,
+                    article_level: bool = False, row_context: str | None = None) -> Sanction:
                 return Sanction(
-                    ordinal=0, fraction=None if exception_mode else seg_fraction, inciso=inciso,
+                    ordinal=0, fraction=None if exception_mode or article_level else seg_fraction, inciso=inciso,
                     conduct_text=_clean(conduct)[:CONDUCT_CHARS], clause_text=clause, uma_min=low, uma_mid=mid, uma_max=high,
                     points_license=license_points, points_plate=plate_points, other_consequences=other,
                     applies_to=applies_to, lead_text=lead or None, points_mode=mode, article_wide=wide_row,
-                    context_text=context,
+                    context_text=row_context or context,
                 )
 
             clause_index = len(keyed)
@@ -458,7 +467,20 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
                         f"fracción {seg_fraction}: el texto es solo la cláusula; aplica a las demás fracciones del artículo", clause,
                     ))
                     continue
-                sanction = row(None, conduct, wide_row=wide)
+                subject_applies = subject_context = None
+                names_subject = bool(_OWN_SUBJECT.match(head.strip())) or bool(_OWNER_PAYS.search(clause))
+                if _OWNER_PAYS.search(clause):
+                    # Art. 50: the 60 UMA are paid by the OWNER, only when the infractor is someone else and has not served the
+                    # sanction in time; the fine is the requirement for getting the vehicle back.
+                    subject_applies = "el propietario del vehículo (no el infractor)"
+                    purpose = _PURPOSE.search(clause)
+                    subject_context = purpose.group(1) if purpose else None
+                elif names_subject and segment[end:].strip() == "":
+                    subject_applies = "párrafo final del artículo (aplica a cualquier caso del artículo, no a la fracción donde está escrito)"
+                sanction = row(
+                    None, conduct, subject_applies, wide_row=wide, article_level=names_subject and not exception_mode,
+                    row_context=subject_context,
+                )
                 keyed.append(((seg_index, 0, 0, clause_index), sanction))
                 if wide:
                     wide_template = sanction
@@ -476,12 +498,14 @@ def extract_sanctions(article: str, fraction: str | None, text: str) -> Extracti
                 "cobertura_incompleta", f"fracción {seg_fraction}: incisos sin cláusula: {sorted(set(items) - set(covered))}"
             ))
 
-    if prohibitions and keyed and len(seen_clauses) == 1:
-        base = keyed[0][1]  # the article's single clause also punishes the extra prohibition
-        for marker, text in prohibitions:
-            keyed.append(((len(segments), 0, 0, 20_000), Sanction(**{
-                **base.__dict__, "fraction": marker, "conduct_text": _clean(text)[:CONDUCT_CHARS], "context_text": None,
-            })))
+    if prohibitions and keyed:
+        # "IV. Tratándose de VEMEPE, queda prohibido remolcar...": the fine written under I-III does not reach it. Serving
+        # that amount for IV would be analogy against the principle of legality, so no row: the prohibition is reported.
+        for marker, _text in prohibitions:
+            result.issues.append(Issue(
+                "prohibicion_sin_sancion",
+                f"fracción {marker}: prohibe una conducta pero el texto no fija una multa propia; no se sirve ningún monto",
+            ))
     if without_clause:
         if wide_template is not None:
             # "el presente artículo": fractions with no clause of their own are covered by the article-wide one.

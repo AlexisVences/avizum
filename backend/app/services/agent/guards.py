@@ -26,7 +26,27 @@ def _shingles(words: list[str], size: int) -> set[tuple[str, ...]]:
     return {tuple(words[i : i + size]) for i in range(len(words) - size + 1)}
 
 
-_PROMPT_SHINGLES = _shingles(_words(SYSTEM_PROMPT), PROMPT_LEAK_WORDS)
+# Lines the prompt orders the model to write word for word. Copying them is obeying the prompt, not leaking it, so
+# they are left out of what counts as "the prompt": otherwise every legal answer would be replaced by LEAK_ANSWER.
+REQUIRED_VERBATIM = (
+    "Esta información es orientativa y no sustituye asesoría legal; para tu caso concreto consulta a la autoridad "
+    "de tránsito o a un abogado.",
+)
+
+
+def _prompt_shingles() -> set[tuple[str, ...]]:
+    segments = [_words(SYSTEM_PROMPT)]
+    for line in REQUIRED_VERBATIM:
+        needle = _words(line)
+        remaining: list[list[str]] = []
+        for words in segments:
+            at = next((i for i in range(len(words) - len(needle) + 1) if words[i : i + len(needle)] == needle), None)
+            remaining.extend([words] if at is None else [words[:at], words[at + len(needle) :]])
+        segments = remaining
+    return set().union(*(_shingles(words, PROMPT_LEAK_WORDS) for words in segments))
+
+
+_PROMPT_SHINGLES = _prompt_shingles()
 
 
 def leaks_system_prompt(text: str) -> bool:

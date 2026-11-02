@@ -13,6 +13,16 @@ def test_a_paraphrase_or_normal_answer_is_not_a_leak():
     assert not leaks_system_prompt("La multa es de 5, 7 o 10 veces la UMA [1].\n\nEsta información es orientativa y no sustituye asesoría legal.")
 
 
+def test_the_closing_line_the_prompt_asks_for_is_not_a_leak():
+    """The prompt tells the model to end legal answers with this exact line; copying it is obeying, not leaking."""
+    closing = (
+        "Esta información es orientativa y no sustituye asesoría legal; para tu caso concreto consulta a la "
+        "autoridad de tránsito o a un abogado."
+    )
+    assert closing in SYSTEM_PROMPT.replace("\\\n", "")  # keeps this test honest if the prompt line changes
+    assert not leaks_system_prompt(f"Retirarlo sin autorización se multa con 40 UMA [1].\n\n{closing}")
+
+
 def test_images_links_and_bare_urls_are_removed_but_citations_stay():
     text = "Mira ![x](https://evil.example/p.png?q=1) y [aquí](https://phish.example/login) o www.otro.example/x. Multa [2]."
     cleaned, changed = strip_external_links(text)

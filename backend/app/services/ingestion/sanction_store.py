@@ -291,7 +291,7 @@ def render_review(
             )
             old = before.get((row.article, chunk.fraction, row.ordinal))
             if only_pending and old is not None and old["chunk_hash"] == row.chunk_hash:
-                old_amount = "/".join(str(Decimal(old[k]).normalize()) for k in ("uma_min", "uma_mid", "uma_max") if old[k]) or "sin monto"
+                old_amount = "/".join(format(Decimal(old[k]).normalize(), "f") for k in ("uma_min", "uma_mid", "uma_max") if old[k]) or "sin monto"
                 lines.append(f"  - **antes (lo que revisaste):** «{old['conduct_text'][:140]}» → {old_amount} UMA")
             if row.lead_text:
                 lines.append(f"  - encabezado: «{_clip_words(row.lead_text, 320)}»")

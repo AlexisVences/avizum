@@ -116,7 +116,7 @@ Legal answers have a failure mode that ordinary chatbots don't tolerate: a confi
 The first evaluation found the kind of error that matters most: for the seat belt, the model quoted "10, 15 or 20 UMA" instead of "5, 7 or 10", because two fractions of the same article reuse the same sub-item letters with different amounts. Prose retrieval cannot reliably tell them apart, so the fix was in the data, not the prompt:
 
 - A **deterministic extractor** (no model involved) turns each article of the Reglamento de Tránsito into rows of *conduct → sanction* (UMA range, license points, plate retention, other consequences).
-- **A person verified the rows** against the official text (230 verified). Each row stores a hash of the text it came from; if a reform changes the article, the row becomes `stale` and stops being served until it is re-reviewed. The agent falls back to the prose, and fails closed.
+- **A person verified the rows** against the official text (more than 240 verified). Each row stores a hash of the text it came from; if a reform changes the article, the row becomes `stale` and stops being served until it is re-reviewed. The agent falls back to the prose, and fails closed.
 - The rows travel **in the same tool call** as the retrieved passage, so there is no extra round trip.
 - **Every amount in the final answer is checked** against what the tools actually served in that turn; an amount that appears in no source is flagged.
 
@@ -131,9 +131,24 @@ The first evaluation found the kind of error that matters most: for the seat bel
 
 The authorized-officer registry comes from a single source, SSC *Acuerdo 30/2026* in the Gaceta Oficial. The import validates counts against the totals the decree declares and fails if they don't match; the previous CSV was silently missing records, which is exactly what this check prevents. Press reports are explicitly not accepted as a source.
 
+### How quality is evaluated
+
+Recall alone only says whether the right passage reached the model, not whether the answer is good, so the evaluation is split into layers, each with its own versioned dataset and script (everything lives in `data/eval/` and `backend/scripts/`):
+
+| Layer | What is measured | How |
+|---|---|---|
+| Retrieval | recall@5 / @10 / @20 and MRR | four hand-labelled question sets (main, guide, verification and a 60-question held-out set written after tuning); labels checked against the article text |
+| Answer behaviour | right tool used, forbidden tools avoided, expected figures present, forbidden claims absent | deterministic checks that need no API (`eval_agent`) |
+| Faithfulness and citations | every claim backed by a cited passage; citation markers resolve to real passages | answers read against the official text, plus an LLM-judge script that uses a stronger model than the agent so it does not grade itself (`judge_agent`) |
+| Refusal | declines out-of-scope, other-state, prompt-injection and no-basis questions; rejects false premises | 22 security cases, 8 no-basis cases and 11 false-premise cases |
+| Sanction amounts | exact amount, and never the amount of a neighbouring conduct | 26 cases whose ground truth is the human-verified row, not the retriever or the model |
+| System | latency (mean / p95), cost per answer, execution errors | recorded on every run |
+
+Each run is saved as its own file in `data/eval/runs/` with the answer, tools, citations and token cost, and every pipeline change (chunking, rewriting, reranking) was measured on the same sets before being kept or discarded. Because the model is not deterministic, cases run more than once.
+
 ### Measured
 
-A 74-case agent evaluation (two runs per case, since the model is not deterministic) covers driving, parking, accidents, fines, camera-issued tickets, **11 false-premise questions**, questions with no basis in the corpus, and refusals. A separate 26-case suite checks sanction amounts against the human-verified rows rather than against the retriever or the model. Reviews were done by reading each answer against the official text, not by an automatic judge. Full write-up: [`docs/evaluation/report.md`](docs/evaluation/report.md).
+A 74-case agent evaluation (two runs per case, since the model is not deterministic) covers driving, parking, accidents, fines, camera-issued tickets, **11 false-premise questions**, questions with no basis in the corpus, and refusals. A separate 26-case suite checks sanction amounts against the human-verified rows rather than against the retriever or the model. Reviews were done by reading each answer against the official text, with the LLM-judge script available for regression runs. Results below were measured on 2026-10-16. Full write-up: [`docs/evaluation/report.md`](docs/evaluation/report.md).
 
 | | Result |
 |---|---|
