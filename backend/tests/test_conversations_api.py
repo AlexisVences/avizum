@@ -276,6 +276,7 @@ def test_streaming_the_same_endpoint_emits_the_events_in_order_and_stores_the_tu
                      json={"content": "me pusieron la araña"}) as response:
         assert response.status_code == 200 and response.headers["content-type"].startswith("text/event-stream")
         assert response.headers["cache-control"] == "no-cache"
+        assert response.headers["x-accel-buffering"] == "no"  # proxies (nginx, Render) must not buffer the stream
         events = read_sse(response)
 
     names = [name for name, _ in events]

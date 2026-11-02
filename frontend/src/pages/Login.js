@@ -6,7 +6,7 @@ import Navbar from "../components/Navbar";
 import logo from "../assets/logo.png";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import GoogleSignInButton, { GOOGLE_CLIENT_ID } from "../components/GoogleSignInButton";
+import GoogleAuthSection from "../components/GoogleAuthSection";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -52,7 +52,11 @@ const LoginPage = () => {
     return startSession(() => authService.login(formData));
   };
 
-  const handleGoogle = (credential) => startSession(() => authService.loginWithGoogle(credential));
+  const handleGoogle = async (credential, acceptedTerms) => {
+    setError('');
+    await authService.loginWithGoogle(credential, acceptedTerms);
+    navigate(authService.getCurrentUser()?.rol === 'admin' ? '/admin' : '/Bienvenida');
+  };
 
   return (
     <>
@@ -103,14 +107,7 @@ const LoginPage = () => {
               </Button>
             </form>
 
-            {GOOGLE_CLIENT_ID && (
-              <>
-                <div className="tw-flex tw-items-center tw-gap-3 tw-my-5 tw-text-xs tw-text-ink-soft">
-                  <span className="tw-h-px tw-flex-1 tw-bg-rule" />o<span className="tw-h-px tw-flex-1 tw-bg-rule" />
-                </div>
-                <GoogleSignInButton onCredential={handleGoogle} text="signin_with" />
-              </>
-            )}
+            <GoogleAuthSection text="signin_with" signIn={handleGoogle} onError={setError} />
 
             <p className="tw-text-center tw-text-sm tw-text-ink-soft tw-mt-6 tw-mb-0">
               ¿No tienes cuenta?{" "}

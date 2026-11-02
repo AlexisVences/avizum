@@ -1,0 +1,2 @@
+# Cloudflare Pages: SPA fallback so client-side routes (/login, /chat, ...) survive a page reload.
+/* /index.html 200

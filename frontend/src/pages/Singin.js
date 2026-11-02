@@ -6,7 +6,8 @@ import logo from "../assets/logo.png";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import authService from "../services/authService";
-import GoogleSignInButton, { GOOGLE_CLIENT_ID } from "../components/GoogleSignInButton";
+import GoogleAuthSection from "../components/GoogleAuthSection";
+import TermsCheckbox from "../components/TermsCheckbox";
 
 const SignUp = () => {
     const [formData, setFormData] = useState({
@@ -23,14 +24,10 @@ const SignUp = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleGoogle = async (credential) => {
+    const handleGoogle = async (credential, acceptedTerms) => {
         setError('');
-        try {
-            await authService.loginWithGoogle(credential);
-            navigate(authService.getCurrentUser()?.rol === 'admin' ? '/admin' : '/Bienvenida');
-        } catch (err) {
-            setError(err.message);
-        }
+        await authService.loginWithGoogle(credential, acceptedTerms);
+        navigate(authService.getCurrentUser()?.rol === 'admin' ? '/admin' : '/Bienvenida');
     };
 
     const handleChange = (e) => {
@@ -133,29 +130,12 @@ const SignUp = () => {
                             />
 
                             <div className="tw-mb-6">
-                                <div className="tw-flex tw-items-start tw-gap-2">
-                                    <input
-                                        id="acceptTerms"
-                                        type="checkbox"
-                                        checked={accepted}
-                                        onChange={(e) => { setAccepted(e.target.checked); if (e.target.checked) setTermsError(''); }}
-                                        aria-required="true"
-                                        aria-invalid={termsError ? 'true' : 'false'}
-                                        aria-describedby={termsError ? 'acceptTerms-error' : undefined}
-                                        className="tw-mt-1"
-                                    />
-                                    <label htmlFor="acceptTerms" className="tw-text-sm tw-text-ink">
-                                        He leído y acepto los{" "}
-                                        <a href="/terminos" target="_blank" rel="noopener noreferrer" className="tw-font-semibold tw-text-azul hover:tw-text-magenta">Términos de uso</a>
-                                        {" "}y el{" "}
-                                        <a href="/Aviso-legal" target="_blank" rel="noopener noreferrer" className="tw-font-semibold tw-text-azul hover:tw-text-magenta">Aviso de privacidad</a>
-                                    </label>
-                                </div>
-                                {termsError && (
-                                    <p id="acceptTerms-error" role="alert" className="tw-text-danger tw-text-xs tw-mt-1 tw-mb-0">
-                                        {termsError}
-                                    </p>
-                                )}
+                                <TermsCheckbox
+                                    id="acceptTerms"
+                                    checked={accepted}
+                                    error={termsError}
+                                    onChange={(value) => { setAccepted(value); if (value) setTermsError(''); }}
+                                />
                             </div>
 
                             <Button type="submit" variant="dark" size="lg" disabled={loading} className="tw-w-full">
@@ -164,13 +144,8 @@ const SignUp = () => {
                         </form>
                         )}
 
-                        {!registered && GOOGLE_CLIENT_ID && (
-                            <>
-                                <div className="tw-flex tw-items-center tw-gap-3 tw-my-5 tw-text-xs tw-text-ink-soft">
-                                    <span className="tw-h-px tw-flex-1 tw-bg-rule" />o<span className="tw-h-px tw-flex-1 tw-bg-rule" />
-                                </div>
-                                <GoogleSignInButton onCredential={handleGoogle} text="signup_with" />
-                            </>
+                        {!registered && (
+                            <GoogleAuthSection text="signup_with" signIn={handleGoogle} onError={setError} />
                         )}
 
                         <p className="tw-text-center tw-text-sm tw-text-ink-soft tw-mt-6 tw-mb-0">

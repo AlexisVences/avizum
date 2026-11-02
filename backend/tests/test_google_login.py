@@ -29,7 +29,7 @@ def google(client, monkeypatch):
 
 def test_first_google_sign_in_creates_a_verified_account_without_password(google):
     http, factory, _ = google
-    response = http.post("/api/v1/auth/google", json={"credential": CREDENTIAL})
+    response = http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True})
     assert response.status_code == 200
     body = response.json()
     assert body["user"]["email"] == "ana@example.com" and body["user"]["email_verified"] is True
@@ -41,7 +41,7 @@ def test_first_google_sign_in_creates_a_verified_account_without_password(google
 
 def test_second_sign_in_reuses_the_account(google):
     http, factory, _ = google
-    http.post("/api/v1/auth/google", json={"credential": CREDENTIAL})
+    http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True})
     http.post("/api/v1/auth/google", json={"credential": CREDENTIAL})
     with factory() as db:
         assert db.query(User).count() == 1
@@ -67,7 +67,7 @@ def test_unverified_password_account_loses_its_password_when_the_owner_links_goo
 
 def test_google_only_account_cannot_sign_in_with_a_password(google):
     http, _, _ = google
-    http.post("/api/v1/auth/google", json={"credential": CREDENTIAL})
+    http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True})
     assert http.post("/api/v1/auth/login", json={"email": "ana@example.com", "password": "anything-123"}).status_code == 401
 
 
@@ -81,7 +81,7 @@ def test_invalid_token_is_rejected(google):
 
 def test_inactive_account_cannot_sign_in(google):
     http, factory, _ = google
-    http.post("/api/v1/auth/google", json={"credential": CREDENTIAL})
+    http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True})
     with factory() as db:
         db.query(User).update({"is_active": False})
         db.commit()
@@ -96,7 +96,7 @@ def test_disabled_when_no_client_id(client, monkeypatch):
 
 def test_changing_the_email_clears_verification(google):
     http, factory, _ = google
-    token = http.post("/api/v1/auth/google", json={"credential": CREDENTIAL}).json()["access_token"]
+    token = http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True}).json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     # A Google-only account has no password to prove ownership with, so it cannot change its email yet.
     assert http.patch("/api/v1/users/me", json={"email": "otro@example.com"}, headers=headers).status_code == 403
@@ -120,3 +120,65 @@ def test_verifier_rejects_tokens_without_a_verified_email(monkeypatch):
         google_auth.verify_google_credential(CREDENTIAL, "cid")
     info.update(iss="accounts.google.com", given_name="Ana", family_name="López")
     assert google_auth.verify_google_credential(CREDENTIAL, "cid").first_name == "Ana"
+
+
+def test_new_google_account_without_acceptance_is_refused(google):
+    http, factory, _ = google
+    for body in ({"credential": CREDENTIAL}, {"credential": CREDENTIAL, "accepted_terms": False}):
+        response = http.post("/api/v1/auth/google", json=body)
+        assert response.status_code == 400
+        assert response.json()["detail"] == {
+            "code": "terms_required",
+            "message": "Debes aceptar los Términos de uso y el Aviso de privacidad para crear tu cuenta.",
+        }
+    with factory() as db:
+        assert db.query(User).count() == 0
+
+
+def test_new_google_account_with_acceptance_stores_consent(google):
+    from app.core.config import TERMS_VERSION
+
+    http, factory, _ = google
+    response = http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True})
+    assert response.status_code == 200
+    with factory() as db:
+        user = db.query(User).one()
+        assert user.terms_accepted_at is not None and user.terms_version == TERMS_VERSION
+
+
+def test_existing_account_signs_in_without_the_flag(google):
+    http, factory, _ = google
+    http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True})
+    assert http.post("/api/v1/auth/google", json={"credential": CREDENTIAL}).status_code == 200
+    with factory() as db:
+        assert db.query(User).count() == 1
+
+
+def test_existing_account_without_consent_records_it_when_flag_is_true(google):
+    from app.core.config import TERMS_VERSION
+
+    http, factory, _ = google
+    with factory() as db:
+        db.add(User(first_name="Ana", last_name="López", email="ana@example.com", password_hash=None, google_sub="sub-1"))
+        db.commit()
+    assert http.post("/api/v1/auth/google", json={"credential": CREDENTIAL}).status_code == 200
+    with factory() as db:
+        assert db.query(User).one().terms_accepted_at is None
+    assert http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True}).status_code == 200
+    with factory() as db:
+        user = db.query(User).one()
+        assert user.terms_accepted_at is not None and user.terms_version == TERMS_VERSION
+
+
+def test_already_accepted_account_keeps_its_original_timestamp(google):
+    http, factory, _ = google
+    http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True})
+    old = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    with factory() as db:
+        user = db.query(User).one()
+        user.terms_accepted_at, user.terms_version = old, "old-version"
+        db.commit()
+    assert http.post("/api/v1/auth/google", json={"credential": CREDENTIAL, "accepted_terms": True}).status_code == 200
+    with factory() as db:
+        user = db.query(User).one()
+        assert user.terms_accepted_at == old and user.terms_version == "old-version"

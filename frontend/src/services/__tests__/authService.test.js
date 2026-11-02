@@ -13,7 +13,7 @@ beforeEach(() => localStorage.clear());
 test('Google sign-in sends the credential and stores the same session as a password login', async () => {
   axios.post.mockResolvedValue({ data: session });
   await authService.loginWithGoogle('google-id-token');
-  expect(axios.post).toHaveBeenCalledWith(expect.stringMatching(/\/auth\/google$/), { credential: 'google-id-token' });
+  expect(axios.post).toHaveBeenCalledWith(expect.stringMatching(/\/auth\/google$/), { credential: 'google-id-token', accepted_terms: false });
   expect(localStorage.getItem('token')).toBe('jwt-123');
   expect(authService.getCurrentUser()).toMatchObject({ id: 7, correo: 'ana@example.com', rol: 'user' });
 });
@@ -48,4 +48,17 @@ test('stores email_verified as emailVerificado; missing counts as verified', asy
   axios.post.mockResolvedValue({ data: session });
   await authService.login({ email: 'a@b.com', password: 'x' });
   expect(authService.getCurrentUser().emailVerificado).toBe(true);
+});
+
+test('Google sign-in sends accepted_terms true when ticked', async () => {
+  axios.post.mockResolvedValue({ data: session });
+  await authService.loginWithGoogle('google-id-token', true);
+  expect(axios.post).toHaveBeenCalledWith(expect.stringMatching(/\/auth\/google$/), { credential: 'google-id-token', accepted_terms: true });
+});
+
+test('terms_required is surfaced as an error code and stores nothing', async () => {
+  axios.post.mockRejectedValue({ response: { status: 400, data: { detail: { code: 'terms_required', message: 'Debes aceptar' } } } });
+  await expect(authService.loginWithGoogle('t')).rejects.toMatchObject({ code: 'terms_required' });
+  expect(localStorage.getItem('token')).toBeNull();
+  expect(localStorage.getItem('user')).toBeNull();
 });
